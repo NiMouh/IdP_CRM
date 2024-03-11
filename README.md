@@ -1,0 +1,108 @@
+# Projeto IAA
+O trabalho consiste em desenvolver um IdP (*Identity Provider*) que suporte serviços com diferentes graus de criticidade e aplique MFA, de forma dinâmica, de acordo com os requisitos do serviço e o risco percebido pelo utilizador.
+
+## Descrição de Serviços
+
+O sistema CRM desenvolvido para a Teka Telecomunicações é uma ferramenta abrangente projetada para gestão todas as facetas dos projetos e atividades de negócios relacionados. 
+
+Uma característica fundamental é a capacidade de gestão um repositório de projetos, fornecendo informações detalhadas sobre cada obra, incluindo dados sobre stakeholder's, contactos com clientes diretos e indiretos (prospect's) que solicitam cotações diretamente à Teka Telecomunicações e os materiais necessários para a execução de cada projeto. Além disso, o sistema mantém informações de gestão de clientes, como endereços das sedes e filiais dos clientes.
+
+Além disso, o sistema possui outros componentes de grande relevância como o planeamento, execução e relatório de atividades destinadas a capturar negócios relacionados com os projetos. Isso permite uma abordagem estruturada para angariar e gestão negócios, garantindo que todas as etapas do processo sejam registadas e acompanhadas de forma eficiente.
+
+## Arquitetura
+
+### Linguagens e Ferramentas
+
+1. Linguagens de programação:
+   - [React](https://reactjs.org/)
+2. Base de dados:
+   - [PL/SQL](https://www.oracle.com/database/)
+3. Frameworks:
+   - [OAuth2](https://oauth.net/2/)
+
+### Entidades e relações
+
+Atores:
+- Diretor da Obra
+- Vendedor
+- Técnico de Telecomunicações
+- Fornecedor
+- Trabalhador de Fábrica
+
+### Diagrama de Entidades e Relações (POR COLOCAR)
+
+### Diagrama de Casos de Uso (POR COLOCAR)
+
+### Modelo Hierárquico dos Utilizadores (POR COLOCAR)
+
+### Modelo de Controlo de Acesso
+
+Para a implementação do controlo de acesso, foi feito um mapeamento das funções dos utilizadores para os recursos do sistema. 
+
+Com isto, foi desenvolida a seguinte estrutura baseada:
+
+| Acessos                         | Vendedor | Di. da Obra | Fornecedor | Tec. Telecom | Trab. de Fábrica |
+| ------------------------------- | -------- | ----------- | ---------- | ------------ | ---------------- |
+| Morada e contactos dos Clientes | Sim      | Sim         | Não        | Não          | Não              |
+| Contactos do diretor da obra    | Sim      | -           | Sim        | Não          | Não              |
+| Morada da obra                  | Sim      | Sim         | Não        | Não          | Não              |
+| Material da obra                | Sim      | Sim         | Sim        | Sim          | Sim              |
+| Material em stock               | Não      | Não         | Sim        | Não          | Sim              |
+| Tabela de preços                | Sim      | Sim         | Sim        | Não          | Não              |
+| Escalão de desconto             | Sim      | Não         | Sim        | Não          | Não              |
+| Status da obra                  | Sim      | Sim         | Não        | Não          | Não              |
+
+## *Authentication* e *Authorization flow* (POR ESCREVER)
+
+A framework OAuth 2.0 diversos modos de obter tokens de acesso e como estes são geridos no processo de autenticação. A escolha do fluxo de autenticação depende do tipo de aplicação, nível de confiança com a aplicação cliente e a fadiga do utilizador.
+
+Para obter uma melhor resposta a qual *flow* de autenticação usar, foram feitas as seguintes questões:
+
+### A aplicação cliente é uma *Single-Page App*?
+
+Dada a abundância de dados envolvidos, o sistema foi desenvolvido como uma *Multi-page App*. Isso garante que a complexidade de desenvolvimento seja mantida baixa, enquanto proporciona um tempo de carregamento inicial rápido. Isso significa que os utilizadores podem acessar informações de maneira mais imediata, sem sacrificar a eficiência ou a usabilidade do sistema.
+
+### A aplicação cliente é o *Resource Owner*?
+
+### A aplicação cliente é um *Web Server*?
+
+### A aplicação cliente é completamente confiável com as credenciais do utilizador?
+
+### A aplicação cliente precisa de comunicar com *Resource Servers* diferentes?
+
+Dados os requisitos do sistema e feita a análise das questões acima, o *flow* de autenticação escolhido foi o (-).
+
+## Modelo de gestão de risco
+
+Durante o processo de autenticação, o IdP avalia o risco percebido pelo utilizador e o serviço que está a ser acedido.
+
+### Identificação de riscos (POR ESCREVER)
+
+Para a identificação dos riscos associados ao sistema, foi feita uma enumeração das possíveis ameaças e vulnerabilidades que podem afetar a segurança do sistema.
+
+Ameaças:
+1. Corrupção/Perda de dados associados a projetos e clientes;
+2. Controlo de acesso quebrado;
+3. Disponibilidade do sistema ser comprometida;
+4. Acesso não autorizado a dados sensíveis;
+5. Ataques de *phishing* (roubo de credenciais);
+6. Ataques de *spoofing* (falsificação de identidade);
+
+Vulnerabilidades:
+1. Registo de atividades não monitorizado (logs);
+2. Regras de controlo de acesso mal definidas;
+3. *Password Spraying* (ataque de força bruta);
+4. *Cross-site scripting* (XSS);
+5. Ataques de *SQL injection*;
+6. Ataques de *DDoS* (negação de serviço distribuída);
+7. Ataques de *Broken Authentication*;
+
+
+
+### Análise/Avaliação de riscos (POR ESCREVER)
+
+A partir desta enumeração, foi feita uma análise de risco para determinar a probabilidade de ocorrência e o impacto de cada risco identificado. A análise de risco foi feita com base numa matriz de risco, que considera a probabilidade de ocorrência e o impacto de cada risco.
+
+| Descrição do risco | Probabilidade | Impacto | Risco |
+| ------------------ | ------------- | ------- | ----- |
+| Risco 1            |               |         |       |
