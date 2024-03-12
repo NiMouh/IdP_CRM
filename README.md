@@ -39,7 +39,7 @@ Atores:
 
 Para a implementação do controlo de acesso, foi feito um mapeamento das funções dos utilizadores para os recursos do sistema. 
 
-Com isto, foi desenvolida a seguinte estrutura baseada:
+Com isto, foi desenvolvida a seguinte estrutura baseada:
 
 | Acessos                         | Vendedor | Di. da Obra | Fornecedor | Tec. Telecom | Trab. de Fábrica |
 | ------------------------------- | -------- | ----------- | ---------- | ------------ | ---------------- |
@@ -64,13 +64,17 @@ Dada a abundância de dados envolvidos, o sistema foi desenvolvido como uma *Mul
 
 ### A aplicação cliente é o *Resource Owner*?
 
+Como a solução da aplicação cliente é uma aplicação *web*, a abordagem onde o *Resource Owner* é o *Client* não é a mais adequada. Isso porque a aplicação cliente não é confiável com as credenciais do utilizador, podendo trazer riscos de segurança.
+
 ### A aplicação cliente é um *Web Server*?
 
-### A aplicação cliente é completamente confiável com as credenciais do utilizador?
+Sim, a aplicação cliente é um *Web Server*.
 
 ### A aplicação cliente precisa de comunicar com *Resource Servers* diferentes?
 
-Dados os requisitos do sistema e feita a análise das questões acima, o *flow* de autenticação escolhido foi o (-).
+Não, a aplicação cliente apenas precisa de comunicar com o *Resource Server* da Teka Telecomunicações.
+
+Dados os requisitos do sistema e feita a análise das questões acima, o *flow* de autenticação escolhido foi o *Authorization Code*.
 
 ## Modelo de gestão de risco
 
@@ -101,8 +105,59 @@ Vulnerabilidades:
 
 ### Análise/Avaliação de riscos (POR ESCREVER)
 
-A partir desta enumeração, foi feita uma análise de risco para determinar a probabilidade de ocorrência e o impacto de cada risco identificado. A análise de risco foi feita com base numa matriz de risco, que considera a probabilidade de ocorrência e o impacto de cada risco.
+A partir desta enumeração, foi feita uma análise de risco para determinar a probabilidade de ocorrência e o impacto de cada risco identificado. 
 
-| Descrição do risco | Probabilidade | Impacto | Risco |
-| ------------------ | ------------- | ------- | ----- |
-| Risco 1            |               |         |       |
+A análise de risco foi feita com base numa análise quantitativa, onde:
+
+| Probabilidade/Impacto | Muito Baixo | Baixo | Médio | Alto | Muito Alto |
+| --------------------- | ----------- | ----- | ----- | ---- | ---------- |
+| Improvável            | 1           | 2     | 3     | 4    | 5          |
+| Pouco provável        | 2           | 4     | 6     | 8    | 10         |
+| Provável              | 3           | 6     | 9     | 12   | 15         |
+| Bastante provável     | 4           | 8     | 12    | 16   | 20         |
+| Muito provável        | 5           | 10    | 15    | 20   | 25         |
+
+Onde a probabilidade representa:
+
+| Nível de probabilidade | Descrição         | Número médio de Ocorrências |
+| ---------------------- | ----------------- | --------------------------- |
+| Nível 1                | Improvável        | 0-1                         |
+| Nível 2                | Pouco provável    | 1-2                         |
+| Nível 3                | Provável          | 2-3                         |
+| Nível 4                | Bastante provável | 3-4                         |
+| Nível 5                | Muito provável    | 4+                          |
+
+E o impacto representa:
+
+| Nível de impacto | Impacto     | Descrição do impacto            |
+| ---------------- | ----------- | ------------------------------- |
+| Nível 1          | Muito Baixo | Um posto de trabalho parado     |
+| Nível 2          | Baixo       | Um sistema/processo parado      |
+| Nível 3          | Médio       | Um departamento parado          |
+| Nível 4          | Alto        | Mais que um departamento parado |
+| Nível 5          | Muito Alto  | A empresa parada                |
+
+
+Obtendo-se a seguinte matriz de risco:
+
+| Risco = f(Ameaça, Vulnerabilidade)                                          | Probabilidade | Impacto | Valor do Risco = (P * I) |
+| --------------------------------------------------------------------------- | ------------- | ------- | ------------------------ |
+| Comprometimento de dados sensíveis causados por *phishing*                  | -             | -       | -                        |
+| Acesso de colaborados a documentos sensíveis, por privilégios mal definidos | -             | -       | -                        |
+| Disponibilidade do sistema comprometida por *DDoS*                          | -             | -       | -                        |
+| Acesso não autorizado a dados sensíveis, causado por *SQL injection*        | -             | -       | -                        |
+| Manipulação de dados sensíveis por *Cross-site scripting*                   | -             | -       | -                        |
+
+### Identificação de controlos a implementar (POR ESCREVER)
+
+Com base nos riscos anteriormente enumerados, foram identificados os controlos a implementar para mitigar os mesmos. 
+
+A presente tabela, mostra os controlos identificados junto do novo valor do risco:
+
+| Risco = f(Ameaça, Vulnerabilidade)                                          | Probabilidade(2) | Impacto(2) | Controlo a implementar | Novo Valor do Risco |
+| --------------------------------------------------------------------------- | ---------------- | ---------- | ---------------------- | ------------------- |
+| Comprometimento de dados sensíveis causados por *phishing*                  | -                | -          | -                      | -                   |
+| Acesso de colaborados a documentos sensíveis, por privilégios mal definidos | -                | -          | -                      | -                   |
+| Disponibilidade do sistema comprometida por *DDoS*                          | -                | -          | -                      | -                   |
+| Acesso não autorizado a dados sensíveis, causado por *SQL injection*        | -                | -          | -                      | -                   |
+| Manipulação de dados sensíveis por *Cross-site scripting*                   | -                | -          | -                      | -                   |
