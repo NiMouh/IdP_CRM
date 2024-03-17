@@ -14,6 +14,7 @@ Além disso, o sistema possui outros componentes de grande relevância como o pl
 ### Linguagens e Ferramentas
 
 1. Linguagens de programação:
+   - [JavaScript](https://developer.mozilla.org/pt-BR/docs/Web/JavaScript)
    - [React](https://reactjs.org/)
 2. Base de dados:
    - [PL/SQL](https://www.oracle.com/database/)
@@ -29,11 +30,11 @@ Atores:
 - Fornecedor
 - Trabalhador de Fábrica
 
-### Diagrama de Entidades e Relações (POR COLOCAR)
+### Diagrama de Sequencial (Feito p/ Ana)
 
-### Diagrama de Casos de Uso (POR COLOCAR)
+### Diagrama de Casos de Uso (2 casos de uso p/ Ana Vidal, 2 casos de uso p/ Simão Andrade)
 
-### Modelo Hierárquico dos Utilizadores (POR COLOCAR)
+### Modelo Hierárquico dos Utilizadores (Simão Andrade)
 
 ### Modelo de Controlo de Acesso
 
@@ -52,7 +53,7 @@ Com isto, foi desenvolvida a seguinte estrutura baseada:
 | Escalão de desconto             | Sim      | Não         | Sim        | Não          | Não              |
 | Status da obra                  | Sim      | Sim         | Não        | Não          | Não              |
 
-## *Authentication* e *Authorization flow* (POR ESCREVER)
+## *Authentication* e *Authorization flow* (Por analisar p/ Simão Andrade)
 
 A framework OAuth 2.0 diversos modos de obter tokens de acesso e como estes são geridos no processo de autenticação. A escolha do fluxo de autenticação depende do tipo de aplicação, nível de confiança com a aplicação cliente e a fadiga do utilizador.
 
@@ -76,11 +77,13 @@ Não, a aplicação cliente apenas precisa de comunicar com o *Resource Server* 
 
 Dados os requisitos do sistema e feita a análise das questões acima, o *flow* de autenticação escolhido foi o *Authorization Code*.
 
+### Diagrama de *Authorization Code* (Simão Andrade)
+
 ## Modelo de gestão de risco
 
 Durante o processo de autenticação, o IdP avalia o risco percebido pelo utilizador e o serviço que está a ser acedido.
 
-### Identificação de riscos (POR ESCREVER)
+### Identificação de riscos (por analisar (Ana Vidal))
 
 Para a identificação dos riscos associados ao sistema, foi feita uma enumeração das possíveis ameaças e vulnerabilidades que podem afetar a segurança do sistema.
 
@@ -103,7 +106,7 @@ Vulnerabilidades:
 
 
 
-### Análise/Avaliação de riscos (POR ESCREVER)
+### Análise/Avaliação de riscos (Fiz as tabelas, mas falta a análise (Ana Vidal))
 
 A partir desta enumeração, foi feita uma análise de risco para determinar a probabilidade de ocorrência e o impacto de cada risco identificado. 
 
@@ -148,7 +151,7 @@ Obtendo-se a seguinte matriz de risco:
 | Acesso não autorizado a dados sensíveis, causado por *SQL injection*        | -             | -       | -                        |
 | Manipulação de dados sensíveis por *Cross-site scripting*                   | -             | -       | -                        |
 
-### Identificação de controlos a implementar (POR ESCREVER)
+### Identificação de controlos a implementar (Simão Andrade)
 
 Com base nos riscos anteriormente enumerados, foram identificados os controlos a implementar para mitigar os mesmos. 
 
@@ -161,3 +164,6 @@ A presente tabela, mostra os controlos identificados junto do novo valor do risc
 | Disponibilidade do sistema comprometida por *DDoS*                          | -                | -          | -                      | -                   |
 | Acesso não autorizado a dados sensíveis, causado por *SQL injection*        | -                | -          | -                      | -                   |
 | Manipulação de dados sensíveis por *Cross-site scripting*                   | -                | -          | -                      | -                   |
+
+
+### Pontuação de risco (Ana Vidal)
