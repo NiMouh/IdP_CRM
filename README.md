@@ -31,6 +31,9 @@ Atores:
 - Trabalhador de Fábrica
 
 ### Diagrama de Sequencial (Feito p/ Ana)
+<p align = "center" >
+   <img="TPIAA/Diagrama_CRM_IAA"
+</p>
 
 ### Diagrama de Casos de Uso (2 casos de uso p/ Ana Vidal, 2 casos de uso p/ Simão Andrade)
 
