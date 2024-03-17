@@ -32,7 +32,7 @@ Atores:
 
 ### Diagrama de Sequencial (Feito p/ Ana)
 <p align = "center" >
-   <img="TPIAA/Diagrama_CRM_IAA.png"
+   <img scr="TPIAA/Diagrama_CRM_IAA.png"
 </p>
 
 ### Diagrama de Casos de Uso (2 casos de uso p/ Ana Vidal, 2 casos de uso p/ Simão Andrade)
