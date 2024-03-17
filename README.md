@@ -129,44 +129,44 @@ A partir desta enumeração, foi feita uma **análise quantitativa** de risco pa
 
 Onde a **matriz de risco** é a seguinte:
 
-| Probabilidade/Impacto | Muito Baixo | Baixo | Médio | Alto | Muito Alto |
-| --------------------- | ----------- | ----- | ----- | ---- | ---------- |
-| Improvável            | 1           | 2     | 3     | 4    | 5          |
-| Pouco provável        | 2           | 4     | 6     | 8    | 10         |
-| Provável              | 3           | 6     | 9     | 12   | 15         |
-| Bastante provável     | 4           | 8     | 12    | 16   | 20         |
-| Muito provável        | 5           | 10    | 15    | 20   | 25         |
+| Probabilidade/Impacto | Muito Baixo | Baixo | Médio | Alto  | Muito Alto |
+| --------------------- | :---------: | :---: | :---: | :---: | :--------: |
+| Improvável            |      1      |   2   |   3   |   4   |     5      |
+| Pouco provável        |      2      |   4   |   6   |   8   |     10     |
+| Provável              |      3      |   6   |   9   |  12   |     15     |
+| Bastante provável     |      4      |   8   |  12   |  16   |     20     |
+| Muito provável        |      5      |  10   |  15   |  20   |     25     |
 
 Cuja **probabilidade** representa:
 
-| Nível de probabilidade | Descrição         | Número médio de Ocorrências |
-| ---------------------- | ----------------- | --------------------------- |
-| Nível 1                | Improvável        | 0-1                         |
-| Nível 2                | Pouco provável    | 1-2                         |
-| Nível 3                | Provável          | 2-3                         |
-| Nível 4                | Bastante provável | 3-4                         |
-| Nível 5                | Muito provável    | 4+                          |
+| Nível de probabilidade |     Descrição     | Número médio de Ocorrências |
+| ---------------------- | :---------------: | :-------------------------: |
+| Nível 1                |    Improvável     |             0-1             |
+| Nível 2                |  Pouco provável   |             1-2             |
+| Nível 3                |     Provável      |             2-3             |
+| Nível 4                | Bastante provável |             3-4             |
+| Nível 5                |  Muito provável   |             4+              |
 
 Cujo **impacto** representa:
 
-| Nível de impacto | Impacto     | Descrição do impacto            |
-| ---------------- | ----------- | ------------------------------- |
-| Nível 1          | Muito Baixo | Um posto de trabalho parado     |
-| Nível 2          | Baixo       | Um sistema/processo parado      |
-| Nível 3          | Médio       | Um departamento parado          |
-| Nível 4          | Alto        | Mais que um departamento parado |
-| Nível 5          | Muito Alto  | A empresa parada                |
+| Nível de impacto |   Impacto   |      Descrição do impacto       |
+| ---------------- | :---------: | :-----------------------------: |
+| Nível 1          | Muito Baixo |   Um posto de trabalho parado   |
+| Nível 2          |    Baixo    |   Um sistema/processo parado    |
+| Nível 3          |    Médio    |     Um departamento parado      |
+| Nível 4          |    Alto     | Mais que um departamento parado |
+| Nível 5          | Muito Alto  |        A empresa parada         |
 
 
 Obtendo-se a seguinte **tabela de risco**:
 
 | Risco = f(Ameaça, Vulnerabilidade)                                          | Probabilidade | Impacto | Valor do Risco = (P * I) |
-| --------------------------------------------------------------------------- | ------------- | ------- | ------------------------ |
-| Comprometimento de dados sensíveis causados por *phishing*                  | 4             | 3       | 12                       |
-| Acesso de colaborados a documentos sensíveis, por privilégios mal definidos | 1             | 2       | 2                        |
-| Integridade dos dados comprometida por falta de validação de entrada        | 4             | 4       | 16                       |
-| Exposição de informações sensíveis devido a falha na autenticação           | 3             | 4       | 12                       |
-| Roubo de credenciais devido a ataques de força bruta                        | 3             | 4       | 12                       |
+| --------------------------------------------------------------------------- | :-----------: | :-----: | :----------------------: |
+| Comprometimento de dados sensíveis causados por *phishing*                  |       4       |    3    |            12            |
+| Acesso de colaborados a documentos sensíveis, por privilégios mal definidos |       1       |    2    |            2             |
+| Integridade dos dados comprometida por falta de validação de entrada        |       4       |    4    |            16            |
+| Exposição de informações sensíveis devido a falha na autenticação           |       3       |    4    |            12            |
+| Roubo de credenciais devido a ataques de força bruta                        |       3       |    4    |            12            |
 
 ### Identificação de controlos a implementar (Simão Andrade)
 
@@ -175,12 +175,12 @@ Com base nos riscos anteriormente enumerados, foram identificados os controlos a
 A presente tabela, mostra os controlos identificados junto do novo valor do risco:
 
 | Risco = f(Ameaça, Vulnerabilidade)                                          | Controlo a implementar                                                   | Probabilidade(2) | Impacto(2) | Valor do Risco (Novo) |
-| --------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ---------------- | ---------- | --------------------- |
-| Comprometimento de dados sensíveis causados por *phishing*                  | Uso de autenticação *MFA*                                                | 2                | 3          | 6                     |
-| Acesso de colaborados a documentos sensíveis, por privilégios mal definidos | Definição de políticas de controlo de acesso                             | 1                | 1          | 1                     |
-| Integridade dos dados comprometida por falta de validação de entrada        | Implementação de validação de *inputs*                                   | 3                | 3          | 9                     |
-| Exposição de informações sensíveis devido a falha na autenticação           | Gestão de *tokens* de autenticação                                       | 2                | 3          | 6                     |
-| Roubo de credenciais devido a ataques de força bruta                        | Implementação de bloqueio de contas/*timeout*'s após tentativas falhadas | 2                | 3          | 6                     |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------ | :--------------: | :--------: | :-------------------: |
+| Comprometimento de dados sensíveis causados por *phishing*                  | Uso de autenticação *MFA*                                                |        2         |     3      |           6           |
+| Acesso de colaborados a documentos sensíveis, por privilégios mal definidos | Definição de políticas de controlo de acesso                             |        1         |     1      |           1           |
+| Integridade dos dados comprometida por falta de validação de entrada        | Implementação de validação de *inputs*                                   |        3         |     3      |           9           |
+| Exposição de informações sensíveis devido a falha na autenticação           | Gestão de *tokens* de autenticação                                       |        2         |     3      |           6           |
+| Roubo de credenciais devido a ataques de força bruta                        | Implementação de bloqueio de contas/*timeout*'s após tentativas falhadas |        2         |     3      |           6           |
 
 
 ### Pontuação de Risco de Registo de *Logins* por Utilizadores (Ana Vidal)
@@ -198,11 +198,11 @@ Para um vendedor, os riscos associados ao registo de logins podem ser um pouco d
 Agora, podemos realizar uma avaliação de risco semelhante à anterior, atribuindo valores de probabilidade e impacto para esses riscos e calculando a pontuação de risco total.
 
 | Risco                                          | Probabilidade | Impacto | Valor do Risco = (P * I) |
-| ---------------------------------------------- | ------------- | ------- | ------------------------ |
-| Exposição de informações do cliente            | 3             | 4       | 12                       |
-| Acesso não autorizado às informações de vendas | 4             | 3       | 12                       |
-| Risco de phishing                              | 3             | 3       | 9                        |
-| Fraude de identidade                           | 2             | 2       | 4                        |
+| ---------------------------------------------- | :-----------: | :-----: | :----------------------: |
+| Exposição de informações do cliente            |       3       |    4    |            12            |
+| Acesso não autorizado às informações de vendas |       4       |    3    |            12            |
+| Risco de phishing                              |       3       |    3    |            9             |
+| Fraude de identidade                           |       2       |    2    |            4             |
 
 Pontuação total de risco = 12 (exposição de informações do cliente) + 12 (acesso não autorizado às informações de vendas) + 9 (risco de phishing) + 4 (fraude de identidade)
 
