@@ -1,4 +1,5 @@
 # Projeto IAA
+
 O trabalho consiste em desenvolver um IdP (*Identity Provider*) que suporte serviços com diferentes graus de criticidade e aplique MFA, de forma dinâmica, de acordo com os requisitos do serviço e o risco percebido pelo utilizador.
 
 ## Descrição de Serviços
@@ -40,22 +41,34 @@ Atores:
 
 ### Modelo Hierárquico dos Utilizadores (Simão Andrade)
 
-### Modelo de Controlo de Acesso
+### Controlo de Acesso
+
+#### Níveis de Acesso
+
+Com base nas funções desempenhadas pelos utilizadores do sistema e sensibilidade dos recursos acedidos, foi desenvolvida a seguinte hierarquia de acesso:
+
+<p align="center">
+  <img src="Hierarquia_CRM.png" alt="Hierarquia dos Utilizadores" width="700"/>
+</p>
+
+Sendo, o **Nível 3** o acesso **mais restrito** e o **Nível 1** o acesso **mais permissivo**.
+
+#### Mapeamento de recursos
 
 Para a implementação do controlo de acesso, foi feito um mapeamento das funções dos utilizadores para os recursos do sistema. 
 
-Com isto, foi desenvolvida a seguinte estrutura baseada:
+Com isto, foi definida a seguinte estrutura baseada:
 
-| Acessos                         | Vendedor | Di. da Obra | Fornecedor | Tec. Telecom | Trab. de Fábrica |
-| ------------------------------- | -------- | ----------- | ---------- | ------------ | ---------------- |
-| Morada e contactos dos Clientes | Sim      | Sim         | Não        | Não          | Não              |
-| Contactos do diretor da obra    | Sim      | -           | Sim        | Não          | Não              |
-| Morada da obra                  | Sim      | Sim         | Não        | Não          | Não              |
-| Material da obra                | Sim      | Sim         | Sim        | Sim          | Sim              |
-| Material em stock               | Não      | Não         | Sim        | Não          | Sim              |
-| Tabela de preços                | Sim      | Sim         | Sim        | Não          | Não              |
-| Escalão de desconto             | Sim      | Não         | Sim        | Não          | Não              |
-| Status da obra                  | Sim      | Sim         | Não        | Não          | Não              |
+| Acessos                         | Vendedor | Dir. da Obra | Fornecedor | Tec. Telecom | Trab. de Fábrica |
+| ------------------------------- | -------- | ------------ | ---------- | ------------ | ---------------- |
+| Morada e contactos dos Clientes | Sim      | Sim          | Não        | Não          | Não              |
+| Contactos do diretor da obra    | Sim      | -            | Sim        | Não          | Não              |
+| Morada da obra                  | Sim      | Sim          | Não        | Não          | Não              |
+| Material da obra                | Sim      | Sim          | Sim        | Sim          | Sim              |
+| Material em stock               | Não      | Não          | Sim        | Não          | Sim              |
+| Tabela de preços                | Sim      | Sim          | Sim        | Não          | Não              |
+| Escalão de desconto             | Sim      | Não          | Sim        | Não          | Não              |
+| Status da obra                  | Sim      | Sim          | Não        | Não          | Não              |
 
 ## *Authentication* e *Authorization flow* (Por analisar p/ Simão Andrade)
 
