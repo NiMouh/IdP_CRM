@@ -32,7 +32,8 @@ Atores:
 
 ### Diagrama de Sequencial (Feito p/ Ana)
 <p align = "center" >
-   <img scr="Diagrama_CRM_IAA.png"
+   <img src = "Diagrama_CRM_IAA.png" alt = "Diagrama de Sequencial" width = "700px" height = "400px>
+
 </p>
 
 ### Diagrama de Casos de Uso (2 casos de uso p/ Ana Vidal, 2 casos de uso p/ Simão Andrade)
