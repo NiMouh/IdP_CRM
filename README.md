@@ -1,12 +1,12 @@
 # Projeto IAA
 
-O trabalho consiste em desenvolver um IdP (*Identity Provider*) que suporte serviços com diferentes graus de criticidade e aplique MFA, de forma dinâmica, de acordo com os requisitos do serviço e o risco percebido pelo utilizador.
+O trabalho consiste em desenvolver um *IdP* (*Identity Provider*) que suporte serviços com diferentes graus de criticidade e aplique *MFA* (*Multi-Factor Authentication*), de forma dinâmica, de acordo com os requisitos do serviço e o risco percebido pelo utilizador.
 
 ## Descrição de Serviços
 
 O sistema CRM desenvolvido para a Teka Telecomunicações é uma ferramenta abrangente projetada para gestão todas as facetas dos projetos e atividades de negócios relacionados. 
 
-Uma característica fundamental é a capacidade de gestão um repositório de projetos, fornecendo informações detalhadas sobre cada obra, incluindo dados sobre stakeholder's, contactos com clientes diretos e indiretos (prospect's) que solicitam cotações diretamente à Teka Telecomunicações e os materiais necessários para a execução de cada projeto. Além disso, o sistema mantém informações de gestão de clientes, como endereços das sedes e filiais dos clientes.
+Uma característica fundamental é a capacidade de gestão um repositório de projetos, fornecendo informações detalhadas sobre cada obra, incluindo dados sobre *stakeholder*'s, contactos com clientes diretos e indiretos (*prospect*'s) que solicitam cotações diretamente à Teka Telecomunicações e os materiais necessários para a execução de cada projeto. Além disso, o sistema mantém informações de gestão de clientes, como endereços das sedes e filiais dos clientes.
 
 Além disso, o sistema possui outros componentes de grande relevância como o planeamento, execução e relatório de atividades destinadas a capturar negócios relacionados com os projetos. Isso permite uma abordagem estruturada para angariar e gestão negócios, garantindo que todas as etapas do processo sejam registadas e acompanhadas de forma eficiente.
 
@@ -72,13 +72,13 @@ Com isto, foi definida a seguinte estrutura baseada:
 
 ## *Authentication* e *Authorization flow* (Por analisar p/ Simão Andrade)
 
-A framework OAuth 2.0 diversos modos de obter tokens de acesso e como estes são geridos no processo de autenticação. A escolha do fluxo de autenticação depende do tipo de aplicação, nível de confiança com a aplicação cliente e a fadiga do utilizador.
+A *framework* OAuth 2.0 diversos modos de obter tokens de acesso e como estes são geridos no processo de autenticação. A escolha do fluxo de autenticação depende do tipo de aplicação, nível de confiança com a aplicação cliente e a fadiga do utilizador.
 
 Para obter uma melhor resposta a qual *flow* de autenticação usar, foram feitas as seguintes questões:
 
-### A aplicação cliente é uma *Single-Page App*?
+### A aplicação cliente é uma *SPA* (*Single-Page App*)?
 
-Dada a abundância de dados envolvidos, o sistema foi desenvolvido como uma *Multi-page App*. Isso garante que a complexidade de desenvolvimento seja mantida baixa, enquanto proporciona um tempo de carregamento inicial rápido. Isso significa que os utilizadores podem acessar informações de maneira mais imediata, sem sacrificar a eficiência ou a usabilidade do sistema.
+Dada a abundância de dados envolvidos, o sistema foi desenvolvido como uma *MPA* (*Multi-page App*). Isso garante que a complexidade de desenvolvimento seja mantida baixa, enquanto proporciona um tempo de carregamento inicial rápido. Isso significa que os utilizadores podem acessar informações de maneira mais imediata, sem sacrificar a eficiência ou a usabilidade do sistema.
 
 ### A aplicação cliente é o *Resource Owner*?
 
@@ -98,7 +98,7 @@ Dados os requisitos do sistema e feita a análise das questões acima, o *flow* 
 
 ## Modelo de gestão de risco
 
-Durante o processo de autenticação, o IdP avalia o risco percebido pelo utilizador e o serviço que está a ser acedido.
+Durante o processo de autenticação, o *IdP* avalia o risco percebido pelo utilizador e o serviço que está a ser acedido.
 
 ### Identificação de riscos (por analisar (Ana Vidal))
 
@@ -174,37 +174,38 @@ Com base nos riscos anteriormente enumerados, foram identificados os controlos a
 
 A presente tabela, mostra os controlos identificados junto do novo valor do risco:
 
-| Risco = f(Ameaça, Vulnerabilidade)                                          | Probabilidade(2) | Impacto(2) | Controlo a implementar | Novo Valor do Risco |
-| --------------------------------------------------------------------------- | ---------------- | ---------- | ---------------------- | ------------------- |
-| Comprometimento de dados sensíveis causados por *phishing*                  | -                | -          | -                      | -                   |
-| Acesso de colaborados a documentos sensíveis, por privilégios mal definidos | -                | -          | -                      | -                   |
-| Integridade dos dados comprometida por falta de validação de entrada        | -                | -          | -                      | -                   |
-| Exposição de informações sensíveis devido a falha na autenticação           | -                | -          | -                      | -                   |
-| Roubo de credenciais devido a ataques de força brutan                       | -                | -          | -                      | -                   |
+| Risco = f(Ameaça, Vulnerabilidade)                                          | Controlo a implementar                                                   | Probabilidade(2) | Impacto(2) | Valor do Risco (Novo) |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ---------------- | ---------- | --------------------- |
+| Comprometimento de dados sensíveis causados por *phishing*                  | Uso de autenticação *MFA*                                                | 2                | 3          | 6                     |
+| Acesso de colaborados a documentos sensíveis, por privilégios mal definidos | Definição de políticas de controlo de acesso                             | 1                | 1          | 1                     |
+| Integridade dos dados comprometida por falta de validação de entrada        | Implementação de validação de *inputs*                                   | 3                | 3          | 9                     |
+| Exposição de informações sensíveis devido a falha na autenticação           | Gestão de *tokens* de autenticação                                       | 2                | 3          | 6                     |
+| Roubo de credenciais devido a ataques de força bruta                        | Implementação de bloqueio de contas/*timeout*'s após tentativas falhadas | 2                | 3          | 6                     |
 
 
-### Pontuação de Risco de Registo de Loggins por Utlizadores (Ana Vidal)
-Para um vendedor, os riscos associados ao registro de logins podem ser um pouco diferentes, pois eles podem estar mais relacionados às informações do cliente e ao acesso aos sistemas de vendas. Aqui estão alguns possíveis riscos:
+### Pontuação de Risco de Registo de *Logins* por Utilizadores (Ana Vidal)
 
-1. **Exposição de informações do cliente:** Os registros de login podem conter informações sobre clientes, como histórico de compras, informações de contato e detalhes de pagamento. Se essas informações forem expostas, pode haver violações de privacidade dos clientes.
+Para um vendedor, os riscos associados ao registo de logins podem ser um pouco diferentes, pois eles podem estar mais relacionados às informações do cliente e ao acesso aos sistemas de vendas. Aqui estão alguns possíveis riscos:
 
-2. **Acesso não autorizado às informações de vendas:** Se os registros de login permitirem acesso não autorizado aos sistemas de vendas, pode haver um risco de manipulação de informações de vendas, como preços, estoque e dados do cliente.
+1. **Exposição de informações do cliente:** Os registos de login podem conter informações sobre clientes, como histórico de compras, informações de contacto e detalhes de pagamento. Se essas informações forem expostas, pode haver violações de privacidade dos clientes.
 
-3. **Risco de phishing:** Os registros de login dos vendedores podem ser alvo de ataques de phishing, nos quais os invasores tentam obter credenciais de login dos vendedores para acessar informações confidenciais ou realizar atividades maliciosas em nome do vendedor.
+2. **Acesso não autorizado às informações de vendas:** Se os registos de login permitirem acesso não autorizado aos sistemas de vendas, pode haver um risco de manipulação de informações de vendas, como preços, estoque e dados do cliente.
 
-4. **Fraude de identidade:** Se os registros de login forem comprometidos, pode haver um risco de fraude de identidade, onde os invasores se passam pelo vendedor para realizar transações fraudulentas ou obter acesso indevido a recursos da empresa.
+3. **Risco de phishing:** Os registos de login dos vendedores podem ser alvo de ataques de phishing, nos quais os invasores tentam obter credenciais de login dos vendedores para acessar informações confidenciais ou realizar atividades maliciosas em nome do vendedor.
+
+4. **Fraude de identidade:** Se os registos de login forem comprometidos, pode haver um risco de fraude de identidade, onde os invasores se passam pelo vendedor para realizar transações fraudulentas ou obter acesso indevido a recursos da empresa.
 
 Agora, podemos realizar uma avaliação de risco semelhante à anterior, atribuindo valores de probabilidade e impacto para esses riscos e calculando a pontuação de risco total.
 
-| Risco                                                   | Probabilidade | Impacto | Valor do Risco = (P * I) |
-| ------------------------------------------------------- | ------------- | ------- | ------------------------ |
-| Exposição de informações do cliente                     | 3             | 4       | 12                       |
-| Acesso não autorizado às informações de vendas          | 4             | 3       | 12                       |
-| Risco de phishing                                       | 3             | 3       | 9                        |
-| Fraude de identidade                                    | 2             | 2       | 4                        |
+| Risco                                          | Probabilidade | Impacto | Valor do Risco = (P * I) |
+| ---------------------------------------------- | ------------- | ------- | ------------------------ |
+| Exposição de informações do cliente            | 3             | 4       | 12                       |
+| Acesso não autorizado às informações de vendas | 4             | 3       | 12                       |
+| Risco de phishing                              | 3             | 3       | 9                        |
+| Fraude de identidade                           | 2             | 2       | 4                        |
 
 Pontuação total de risco = 12 (exposição de informações do cliente) + 12 (acesso não autorizado às informações de vendas) + 9 (risco de phishing) + 4 (fraude de identidade)
 
 Pontuação total de risco = 37
 
-Portanto, a pontuação de risco para o registro de logins de um vendedor é 37. Essa pontuação indica o nível de exposição ao risco associado às atividades de registro de logins para os vendedores.
+Portanto, a pontuação de risco para o registo de *logins* de um vendedor é 37. Essa pontuação indica o nível de exposição ao risco associado às atividades de registo de *logins* para os vendedores.
