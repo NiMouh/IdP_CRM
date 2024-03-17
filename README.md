@@ -149,11 +149,11 @@ Obtendo-se a seguinte matriz de risco:
 
 | Risco = f(Ameaça, Vulnerabilidade)                                          | Probabilidade | Impacto | Valor do Risco = (P * I) |
 | --------------------------------------------------------------------------- | ------------- | ------- | ------------------------ |
-| Comprometimento de dados sensíveis causados por *phishing*                  | -             | -       | -                        |
-| Acesso de colaborados a documentos sensíveis, por privilégios mal definidos | -             | -       | -                        |
-| Disponibilidade do sistema comprometida por *DDoS*                          | -             | -       | -                        |
-| Acesso não autorizado a dados sensíveis, causado por *SQL injection*        | -             | -       | -                        |
-| Manipulação de dados sensíveis por *Cross-site scripting*                   | -             | -       | -                        |
+| Comprometimento de dados sensíveis causados por *phishing*                  | 4             | 3       | 12                       |
+| Acesso de colaborados a documentos sensíveis, por privilégios mal definidos | 1             | 2       | 2                        |
+| Integridade dos dados comprometida por falta de validação de entrada        | 4             | 4       | 16                       |
+| Exposição de informações sensíveis devido a falha na autenticação           | 3             | 4       | 12                       |
+| Roubo de credenciais devido a ataques de força bruta                        | 3             | 4       | 12                       |
 
 ### Identificação de controlos a implementar (Simão Andrade)
 
@@ -165,9 +165,9 @@ A presente tabela, mostra os controlos identificados junto do novo valor do risc
 | --------------------------------------------------------------------------- | ---------------- | ---------- | ---------------------- | ------------------- |
 | Comprometimento de dados sensíveis causados por *phishing*                  | -                | -          | -                      | -                   |
 | Acesso de colaborados a documentos sensíveis, por privilégios mal definidos | -                | -          | -                      | -                   |
-| Disponibilidade do sistema comprometida por *DDoS*                          | -                | -          | -                      | -                   |
-| Acesso não autorizado a dados sensíveis, causado por *SQL injection*        | -                | -          | -                      | -                   |
-| Manipulação de dados sensíveis por *Cross-site scripting*                   | -                | -          | -                      | -                   |
+| Integridade dos dados comprometida por falta de validação de entrada        | -                | -          | -                      | -                   |
+| Exposição de informações sensíveis devido a falha na autenticação           | -                | -          | -                      | -                   |
+| Roubo de credenciais devido a ataques de força brutan                       | -                | -          | -                      | -                   |
 
 
 ### Pontuação de risco (Ana Vidal)
