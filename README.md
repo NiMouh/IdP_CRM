@@ -123,7 +123,7 @@ Vulnerabilidades:
 
 
 
-### Análise/Avaliação de riscos (Fiz as tabelas, mas falta a análise (Ana Vidal))
+### Análise/Avaliação de riscos do software (Fiz as tabelas, mas falta a análise (Ana Vidal))
 
 A partir desta enumeração, foi feita uma análise de risco para determinar a probabilidade de ocorrência e o impacto de cada risco identificado. 
 
@@ -162,11 +162,11 @@ Obtendo-se a seguinte matriz de risco:
 
 | Risco = f(Ameaça, Vulnerabilidade)                                          | Probabilidade | Impacto | Valor do Risco = (P * I) |
 | --------------------------------------------------------------------------- | ------------- | ------- | ------------------------ |
-| Comprometimento de dados sensíveis causados por *phishing*                  | -             | -       | -                        |
-| Acesso de colaborados a documentos sensíveis, por privilégios mal definidos | -             | -       | -                        |
-| Disponibilidade do sistema comprometida por *DDoS*                          | -             | -       | -                        |
-| Acesso não autorizado a dados sensíveis, causado por *SQL injection*        | -             | -       | -                        |
-| Manipulação de dados sensíveis por *Cross-site scripting*                   | -             | -       | -                        |
+| Comprometimento de dados sensíveis causados por *phishing*                  | 4             | 3       | 12                       |
+| Acesso de colaborados a documentos sensíveis, por privilégios mal definidos | 1             | 2       | 2                        |
+| Integridade dos dados comprometida por falta de validação de entrada        | 4             | 4       | 16                       |
+| Exposição de informações sensíveis devido a falha na autenticação           | 3             | 4       | 12                       |
+| Roubo de credenciais devido a ataques de força bruta                        | 3             | 4       | 12                       |
 
 ### Identificação de controlos a implementar (Simão Andrade)
 
@@ -178,9 +178,33 @@ A presente tabela, mostra os controlos identificados junto do novo valor do risc
 | --------------------------------------------------------------------------- | ---------------- | ---------- | ---------------------- | ------------------- |
 | Comprometimento de dados sensíveis causados por *phishing*                  | -                | -          | -                      | -                   |
 | Acesso de colaborados a documentos sensíveis, por privilégios mal definidos | -                | -          | -                      | -                   |
-| Disponibilidade do sistema comprometida por *DDoS*                          | -                | -          | -                      | -                   |
-| Acesso não autorizado a dados sensíveis, causado por *SQL injection*        | -                | -          | -                      | -                   |
-| Manipulação de dados sensíveis por *Cross-site scripting*                   | -                | -          | -                      | -                   |
+| Integridade dos dados comprometida por falta de validação de entrada        | -                | -          | -                      | -                   |
+| Exposição de informações sensíveis devido a falha na autenticação           | -                | -          | -                      | -                   |
+| Roubo de credenciais devido a ataques de força brutan                       | -                | -          | -                      | -                   |
 
 
-### Pontuação de risco (Ana Vidal)
+### Pontuação de Risco de Registo de Loggins por Utlizadores (Ana Vidal)
+Para um vendedor, os riscos associados ao registro de logins podem ser um pouco diferentes, pois eles podem estar mais relacionados às informações do cliente e ao acesso aos sistemas de vendas. Aqui estão alguns possíveis riscos:
+
+1. **Exposição de informações do cliente:** Os registros de login podem conter informações sobre clientes, como histórico de compras, informações de contato e detalhes de pagamento. Se essas informações forem expostas, pode haver violações de privacidade dos clientes.
+
+2. **Acesso não autorizado às informações de vendas:** Se os registros de login permitirem acesso não autorizado aos sistemas de vendas, pode haver um risco de manipulação de informações de vendas, como preços, estoque e dados do cliente.
+
+3. **Risco de phishing:** Os registros de login dos vendedores podem ser alvo de ataques de phishing, nos quais os invasores tentam obter credenciais de login dos vendedores para acessar informações confidenciais ou realizar atividades maliciosas em nome do vendedor.
+
+4. **Fraude de identidade:** Se os registros de login forem comprometidos, pode haver um risco de fraude de identidade, onde os invasores se passam pelo vendedor para realizar transações fraudulentas ou obter acesso indevido a recursos da empresa.
+
+Agora, podemos realizar uma avaliação de risco semelhante à anterior, atribuindo valores de probabilidade e impacto para esses riscos e calculando a pontuação de risco total.
+
+| Risco                                                   | Probabilidade | Impacto | Valor do Risco = (P * I) |
+| ------------------------------------------------------- | ------------- | ------- | ------------------------ |
+| Exposição de informações do cliente                     | 3             | 4       | 12                       |
+| Acesso não autorizado às informações de vendas          | 4             | 3       | 12                       |
+| Risco de phishing                                       | 3             | 3       | 9                        |
+| Fraude de identidade                                    | 2             | 2       | 4                        |
+
+Pontuação total de risco = 12 (exposição de informações do cliente) + 12 (acesso não autorizado às informações de vendas) + 9 (risco de phishing) + 4 (fraude de identidade)
+
+Pontuação total de risco = 37
+
+Portanto, a pontuação de risco para o registro de logins de um vendedor é 37. Essa pontuação indica o nível de exposição ao risco associado às atividades de registro de logins para os vendedores.
