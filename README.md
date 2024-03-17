@@ -125,9 +125,9 @@ Vulnerabilidades:
 
 ### Análise/Avaliação de riscos do software (Fiz as tabelas, mas falta a análise (Ana Vidal))
 
-A partir desta enumeração, foi feita uma análise de risco para determinar a probabilidade de ocorrência e o impacto de cada risco identificado. 
+A partir desta enumeração, foi feita uma **análise quantitativa** de risco para determinar a probabilidade de ocorrência e o impacto de cada risco identificado. 
 
-A análise de risco foi feita com base numa análise quantitativa, onde:
+Onde a **matriz de risco** é a seguinte:
 
 | Probabilidade/Impacto | Muito Baixo | Baixo | Médio | Alto | Muito Alto |
 | --------------------- | ----------- | ----- | ----- | ---- | ---------- |
@@ -137,7 +137,7 @@ A análise de risco foi feita com base numa análise quantitativa, onde:
 | Bastante provável     | 4           | 8     | 12    | 16   | 20         |
 | Muito provável        | 5           | 10    | 15    | 20   | 25         |
 
-Onde a probabilidade representa:
+Cuja **probabilidade** representa:
 
 | Nível de probabilidade | Descrição         | Número médio de Ocorrências |
 | ---------------------- | ----------------- | --------------------------- |
@@ -147,7 +147,7 @@ Onde a probabilidade representa:
 | Nível 4                | Bastante provável | 3-4                         |
 | Nível 5                | Muito provável    | 4+                          |
 
-E o impacto representa:
+Cujo **impacto** representa:
 
 | Nível de impacto | Impacto     | Descrição do impacto            |
 | ---------------- | ----------- | ------------------------------- |
@@ -158,7 +158,7 @@ E o impacto representa:
 | Nível 5          | Muito Alto  | A empresa parada                |
 
 
-Obtendo-se a seguinte matriz de risco:
+Obtendo-se a seguinte **tabela de risco**:
 
 | Risco = f(Ameaça, Vulnerabilidade)                                          | Probabilidade | Impacto | Valor do Risco = (P * I) |
 | --------------------------------------------------------------------------- | ------------- | ------- | ------------------------ |
