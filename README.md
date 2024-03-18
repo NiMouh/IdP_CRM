@@ -16,10 +16,10 @@ Além disso, o sistema possui outros componentes de grande relevância como o pl
 
 1. Linguagens de programação:
    - [JavaScript](https://developer.mozilla.org/pt-BR/docs/Web/JavaScript)
-   - [React](https://reactjs.org/)
 2. Base de dados:
    - [PL/SQL](https://www.oracle.com/database/)
 3. Frameworks:
+   - [React](https://react.dev/)
    - [OAuth2](https://oauth.net/2/)
 
 ### Entidades e relações
@@ -34,7 +34,7 @@ Atores:
 ### Diagrama de Sequencial (Feito p/ Ana)
 
 <p align="center">
-  <img src="Diagrama_CRM_IAA.png" alt="Diagrama Sequencial CRM" width="500"/>
+  <img src="Diagrama_CRM_IAA.png" alt="Diagrama Sequencial CRM" width="800"/>
 </p>
 
 ### Diagrama de Casos de Uso (2 casos de uso p/ Ana Vidal, 2 casos de uso p/ Simão Andrade)
@@ -95,6 +95,12 @@ Não, a aplicação cliente apenas precisa de comunicar com o *Resource Server* 
 Dados os requisitos do sistema e feita a análise das questões acima, o *flow* de autenticação escolhido foi o *Authorization Code*.
 
 ### Diagrama de *Authorization Code* (Simão Andrade)
+
+O seguinte diagrama mostra o processo autenticação do sistema, usando o *Authorization Code flow*:
+
+<p align="center">
+  <img src="Diagrama_Auth_Code_Flow.png" alt="Authorization Code Flow" width="600"/>
+</p>
 
 ## Modelo de gestão de risco
 
