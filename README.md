@@ -38,8 +38,13 @@ Atores:
 </p>
 
 ### Diagrama de Casos de Uso (2 casos de uso p/ Ana Vidal, 2 casos de uso p/ Simão Andrade)
+
 <p align="center">
-  <img src="PedirOrcamento.drawio.png" alt="Diagrama Caso de Uso CRM" width="500"/>
+  <img src="PedirOrcamento.drawio.png" alt="Pedir Orçamento" width="500"/>
+</p>
+
+<p align="center">
+  <img src="Caso_Uso_Administrar_Relatorios.png" alt="Administrar Relatórios" width="500"/>
 </p>
 
 ### Modelo Hierárquico dos Utilizadores (Simão Andrade)
