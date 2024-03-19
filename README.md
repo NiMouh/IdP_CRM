@@ -266,7 +266,7 @@ Com isto, será pedido uma segunda via com base nas seguintes regras:
   - Nível de confiança do dispositivo: pelo menos 5 autenticações bem-sucedidas num intervalo de 30 dias. 
 - **Nível 1**:
   - Segunda via não é obrigatória, a menos que se confirme uma das regras acima. 
-- **Nível 2**:
+- **Nível 2**: (A ser modificado por Ana Vidal)
   - Segunda via é não obrigatória, a menos que a localização do dispositivo seja fora das instalações da empresa.
 - **Nível 3**:
   - Segunda via é sempre obrigatória.
