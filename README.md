@@ -132,8 +132,8 @@ Vulnerabilidades:
 3. *Password Spraying* (ataque de força bruta);
 4. *Cross-site scripting* (XSS);
 5. Ataques de *SQL injection*;
-6. Ataques de *DDoS* (negação de serviço distribuída);
-7. Ataques de *Broken Authentication*;
+6. Ataques de *Broken Authentication*;
+7. Falta de validação de *inputs*;
 
 
 
@@ -223,3 +223,34 @@ Pontuação total de risco = 12 (exposição de informações do cliente) + 12 (
 Pontuação total de risco = 37
 
 Portanto, a pontuação de risco para o registo de *logins* de um vendedor é 37. Essa pontuação indica o nível de exposição ao risco associado às atividades de registo de *logins* para os vendedores.
+
+### Gestão dos pedidos de autenticação (Simão Andrade)
+
+Além do risco variar consoante o nível de acesso do agente, o mesmo também irá variar dependendo do:
+- IP de origem do pedido;
+- Hora do pedido;
+- Tipo de dispositivo;
+- Localização do dispositivo;
+- Número de tentativas de autenticação falhadas;
+- Nível de confiança do dispositivo (número de vezes que o dispositivo foi usado para autenticação bem-sucedida).
+
+Estas variáveis serão avaliadas usando os *logs* de autenticação e, com base nisso, será pedido ou não uma segunda via de autenticação.
+
+Com isto, será pedido uma segunda via com base nas seguintes regras:
+- **Para todos os níveis de acesso**:
+  - Hora do pedido: Fora do horário de trabalho (19h - 7h); 
+  - Endereço IP/Localização: Fora do país;
+  - Número de tentativas de autenticação falhadas: 3 ou mais, num intervalo de 5 minutos;
+  - Nível de confiança do dispositivo: pelo menos 5 autenticações bem-sucedidas num intervalo de 30 dias. 
+- **Nível 1**:
+  - Segunda via não é obrigatória, a menos que se confirme uma das regras acima. 
+- **Nível 2**:
+  - Segunda via é não obrigatória, a menos que a localização do dispositivo seja fora das instalações da empresa.
+- **Nível 3**:
+  - Segunda via é sempre obrigatória.
+
+Para melhor representar estas regras, foi feito o seguinte diagrama:
+
+<p align="center">
+  <img src="Diagrama_Authentication_Management.png" alt="Authentication Management Nível 1" width="400"/>
+</p>
