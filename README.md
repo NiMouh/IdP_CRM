@@ -12,26 +12,26 @@ Além disso, o sistema possui outros componentes de grande relevância como o pl
 
 ## Arquitetura
 
-### Linguagens e Ferramentas
+### Ferramentas e Tecnologias
 
-1. Linguagens de programação:
+1. **Linguagens de programação**:
    - [JavaScript](https://developer.mozilla.org/pt-BR/docs/Web/JavaScript)
-2. Base de dados:
+2. **Base de dados**:
    - [PL/SQL](https://www.oracle.com/database/)
-3. Frameworks:
+3. **Frameworks**:
    - [React](https://react.dev/)
    - [OAuth2](https://oauth.net/2/)
 
 ### Entidades e relações
 
-Atores:
-- Diretor da Obra
-- Vendedor
-- Técnico de Telecomunicações
-- Fornecedor
-- Trabalhador de Fábrica
+No sistema descrito, temos as seguintes entidades:
+- Diretor da Obra;
+- Fornecedor;
+- Técnico de Telecomunicações;
+- Trabalhador de Fábrica;
+- Vendedor.
 
-### Fluxo de interação (Ana Vidal)
+### Fluxo de interação
 
 No seguinte diagrama, é possível observar o fluxo de interação entre os atores e o sistema, para a realização de uma tarefa específica.
 
@@ -79,7 +79,7 @@ Com base nas funções desempenhadas pelos utilizadores do sistema e sensibilida
 
 Sendo, o **Nível 3** o acesso **mais restrito** e o **Nível 1** o acesso **mais permissivo**.
 
-#### Mapeamento de recursos
+#### Mapeamento de recursos (Por analisar p/ Ana Vidal)
 
 Para a implementação do controlo de acesso, foi feito um mapeamento das funções dos utilizadores para os recursos que estes podem aceder. 
 
@@ -136,7 +136,7 @@ O seguinte diagrama mostra o processo autenticação do sistema, usando o *Autho
 
 Durante o processo de autenticação, o *IdP* avalia o risco percebido pelo utilizador e o serviço que está a ser acedido.
 
-### Identificação de riscos (por analisar (Ana Vidal))
+### Identificação de riscos (por analisar p/ Ana Vidal)
 
 Para a identificação dos riscos associados ao sistema, foi feita uma enumeração das possíveis ameaças e vulnerabilidades que podem afetar a segurança do sistema.
 
@@ -159,7 +159,7 @@ Vulnerabilidades:
 
 
 
-### Análise/Avaliação de riscos do software (Fiz as tabelas, mas falta a análise (Ana Vidal))
+### Análise/Avaliação de riscos do software (Ana Vidal)
 
 A partir desta enumeração, foi feita uma **análise quantitativa** de risco para determinar a probabilidade de ocorrência e o impacto de cada risco identificado. 
 
@@ -204,7 +204,7 @@ Obtendo-se a seguinte **tabela de risco**:
 | Exposição de informações sensíveis devido a falha na autenticação           |       3       |    4    |            12            |
 | Roubo de credenciais devido a ataques de força bruta                        |       3       |    4    |            12            |
 
-### Identificação de controlos a implementar (Simão Andrade)
+### Identificação de controlos a implementar (Por analisar p/ Ana Vidal)
 
 Com base nos riscos anteriormente enumerados, foram identificados os controlos a implementar para mitigar os mesmos. 
 
