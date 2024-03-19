@@ -31,39 +31,57 @@ Atores:
 - Fornecedor
 - Trabalhador de Fábrica
 
-### Diagrama de Sequencial (Feito p/ Ana)
+### Fluxo de interação (Ana Vidal)
+
+No seguinte diagrama, é possível observar o fluxo de interação entre os atores e o sistema, para a realização de uma tarefa específica.
 
 <p align="center">
   <img src="Diagrama_CRM_IAA.png" alt="Diagrama Sequencial CRM" width="800"/>
 </p>
 
-### Diagrama de Casos de Uso (2 casos de uso p/ Ana Vidal, 2 casos de uso p/ Simão Andrade)
+<p align="center" style="font-size: 12px;">
+  Figura 1: Diagrama de sequencial para a realização de um pedido de orçamento.
+</p>
+
+Para a realização de uma tarefa específica, o utilizador deve autenticar-se no sistema. Após a autenticação, o utilizador pode realizar a tarefa pretendida, que pode ser a gestão de um projeto, a realização de um pedido de orçamento ou a gestão de relatórios.
 
 <p align="center">
   <img src="PedirOrcamento.drawio.png" alt="Pedir Orçamento" width="500"/>
+</p>
+
+<p align="center" style="font-size: 12px;">
+  Figura 2: Diagrama de caso de uso para a realização de um pedido de orçamento.
 </p>
 
 <p align="center">
   <img src="Caso_Uso_Administrar_Relatorios.png" alt="Administrar Relatórios" width="500"/>
 </p>
 
-### Modelo Hierárquico dos Utilizadores (Simão Andrade)
+<p align="center" style="font-size: 12px;">
+  Figura 3: Diagrama de caso de uso para a gestão de relatórios.
+</p>
 
 ### Controlo de Acesso
 
+O sistema foi desenvolvido com base no controlo de acesso, de forma a garantir que os utilizadores apenas têm acesso aos recursos que são necessários para a realização das suas tarefas.
+
 #### Níveis de Acesso
 
-Com base nas funções desempenhadas pelos utilizadores do sistema e sensibilidade dos recursos acedidos, foi desenvolvida a seguinte hierarquia de acesso:
+Com base nas funções desempenhadas pelos utilizadores do sistema e sensibilidade dos recursos acedidos, foi desenvolvida a seguinte **hierarquia de acesso**:
 
 <p align="center">
   <img src="Hierarquia_CRM.png" alt="Hierarquia dos Utilizadores" width="700"/>
+</p>
+
+<p align="center" style="font-size: 12px;">
+  Figura 4: Hierarquia de acesso dos utilizadores.
 </p>
 
 Sendo, o **Nível 3** o acesso **mais restrito** e o **Nível 1** o acesso **mais permissivo**.
 
 #### Mapeamento de recursos
 
-Para a implementação do controlo de acesso, foi feito um mapeamento das funções dos utilizadores para os recursos do sistema. 
+Para a implementação do controlo de acesso, foi feito um mapeamento das funções dos utilizadores para os recursos que estes podem aceder. 
 
 Com isto, foi definida a seguinte estrutura baseada:
 
@@ -108,6 +126,10 @@ O seguinte diagrama mostra o processo autenticação do sistema, usando o *Autho
 
 <p align="center">
   <img src="Diagrama_Auth_Code_Flow.png" alt="Authorization Code Flow" width="600"/>
+</p>
+
+<p align="center" style="font-size: 12px;">
+  Figura 5: Diagrama de sequencial para o *Authorization Code flow*.
 </p>
 
 ## Modelo de gestão de risco
@@ -249,8 +271,12 @@ Com isto, será pedido uma segunda via com base nas seguintes regras:
 - **Nível 3**:
   - Segunda via é sempre obrigatória.
 
-Para melhor representar estas regras, foi feito o seguinte diagrama:
+As regras descritas encontram-se representadas no seguinte diagrama:
 
 <p align="center">
   <img src="Diagrama_Authentication_Management.png" alt="Authentication Management Nível 1" width="400"/>
+</p>
+
+<p align="center" style="font-size: 12px;">
+  Figura 6: Diagrama de estados para a gestão de autenticação.
 </p>
