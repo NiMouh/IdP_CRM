@@ -58,7 +58,7 @@ Para a realização de uma tarefa específica, o utilizador deve autenticar-se n
 </p>
 
 <p align="center" style="font-size: 12px;">
-  Figura 2: Diagrama de caso de uso para a realização de um pedido de orçamento.
+  Figura 3: Diagrama de caso de uso para a realização de um pedido de orçamento.
 </p>
 
 <p align="center">
@@ -66,7 +66,7 @@ Para a realização de uma tarefa específica, o utilizador deve autenticar-se n
 </p>
 
 <p align="center" style="font-size: 12px;">
-  Figura 3: Diagrama de caso de uso para a gestão de relatórios.
+  Figura 4: Diagrama de caso de uso para a gestão de relatórios.
 </p>
 
 ### Controlo de Acesso
@@ -82,7 +82,7 @@ Com base nas funções desempenhadas pelos utilizadores do sistema e sensibilida
 </p>
 
 <p align="center" style="font-size: 12px;">
-  Figura 4: Hierarquia de acesso dos utilizadores.
+  Figura 5: Hierarquia de acesso dos utilizadores.
 </p>
 
 Sendo, o **Nível 3** o acesso **mais restrito** e o **Nível 1** o acesso **mais permissivo**.
@@ -137,7 +137,7 @@ O seguinte diagrama mostra o processo autenticação do sistema, usando o *Autho
 </p>
 
 <p align="center" style="font-size: 12px;">
-  Figura 5: Diagrama de sequencial para o *Authorization Code flow*.
+  Figura 6: Diagrama de sequencial para o *Authorization Code flow*.
 </p>
 
 ## Modelo de gestão de risco
@@ -286,5 +286,5 @@ As regras descritas encontram-se representadas no seguinte diagrama:
 </p>
 
 <p align="center" style="font-size: 12px;">
-  Figura 6: Diagrama de estados para a gestão de autenticação.
+  Figura 7: Diagrama de estados para a gestão de autenticação.
 </p>
