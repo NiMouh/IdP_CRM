@@ -46,7 +46,15 @@ No seguinte diagrama, é possível observar o fluxo de interação entre os ator
 Para a realização de uma tarefa específica, o utilizador deve autenticar-se no sistema. Após a autenticação, o utilizador pode realizar a tarefa pretendida, que pode ser a gestão de um projeto, a realização de um pedido de orçamento ou a gestão de relatórios.
 
 <p align="center">
-  <img src="PedirOrcamento.drawio.png" alt="Pedir Orçamento" width="500"/>
+  <img src="RealizarObra.png" alt="Pedir Orçamento" width="500"/>
+</p>
+
+<p align="center" style="font-size: 12px;">
+  Figura 2: Diagrama de caso de uso para a realização de um pedido de Obra.
+</p>
+
+<p align="center">
+  <img src="RealizarOrcamento.png" alt="Pedir Orçamento" width="500"/>
 </p>
 
 <p align="center" style="font-size: 12px;">
