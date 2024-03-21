@@ -1,6 +1,13 @@
-# Projeto IAA
+# Trabalho Prático de Integridade, Autenticação e Autorização
 
 O trabalho consiste em desenvolver um *IdP* (*Identity Provider*) que suporte serviços com diferentes graus de criticidade e aplique *MFA* (*Multi-Factor Authentication*), de forma dinâmica, de acordo com os requisitos do serviço e o risco percebido pelo utilizador.
+
+## Membros do Grupo
+
+Este projeto foi desenvolvido por:
+
+- Ana Vidal (118408)
+- Simão Andrade (118345)
 
 ## Descrição de Serviços
 
@@ -10,10 +17,13 @@ Uma característica fundamental é a capacidade de gestão um repositório de pr
 
 Além disso, o sistema possui outros componentes de grande relevância como o planeamento, execução e relatório de atividades destinadas a capturar negócios relacionados com os projetos. Isso permite uma abordagem estruturada para angariar e gestão negócios, garantindo que todas as etapas do processo sejam registadas e acompanhadas de forma eficiente.
 
-## Arquitetura
+## Arquitetura do Sistema
+
+A arquitetura do sistema é composta por três componentes principais: o *IdP* (*Identity Provider*), o *Resource Server* e o *Client*. 
 
 ### Ferramentas e Tecnologias
 
+Para o desenvolvimento do sistema, serão utilizadas as seguintes ferramentas:
 1. **Linguagens de programação**:
    - [JavaScript](https://developer.mozilla.org/pt-BR/docs/Web/JavaScript)
 2. **Base de dados**:
@@ -33,7 +43,9 @@ No sistema descrito, temos as seguintes entidades:
 
 ### Fluxo de interação
 
-No seguinte diagrama, é possível observar o fluxo de interação entre os atores e o sistema, para a realização de uma tarefa específica.
+(Escrever aqui introdução ao fluxo de interação)
+
+De modo a melhor compreender o funcionamento do sistema, foi desenvolvido um diagrama que mostra o fluxo de interação entre os diferentes utilizadores e o sistema.
 
 <p align="center">
   <img src="Diagrama_CRM_IAA.png" alt="Diagrama Sequencial CRM" width="800"/>
@@ -43,37 +55,34 @@ No seguinte diagrama, é possível observar o fluxo de interação entre os ator
   Figura 1: Diagrama de sequencial para a realização de um pedido de orçamento.
 </p>
 
-Para a realização de uma tarefa específica, o utilizador deve autenticar-se no sistema. Após a autenticação, o utilizador pode realizar a tarefa pretendida, que pode ser a gestão de um projeto, a realização de um pedido de orçamento ou a gestão de relatórios.
+Para uma melhor compreensão das medidas de segurança a se tomar, foi descrito o funcionamento das características principais do sistema, de modo a criar uma solução adequada para o mesmo. Esta descrição foi feita com base em diagramas de caso de uso, obtendo-se os seguintes resultados:
 
-<p align="center">
-  <img src="RealizarObra.png" alt="Pedir Orçamento" width="500"/>
-</p>
+<div style="display: flex; justify-content: center;margin-bottom: 50px;">
+    <div>
+        <img src="RealizarObra.png" alt="Pedir Orçamento" width="500"/>
+        <p align="center" style="font-size: 12px;">Figura 2: Diagrama de caso de uso para a realização de um pedido de Obra.</p>
+    </div>
+    <div>
+        <img src="RealizarOrcamento.png" alt="Pedir Orçamento" width="500"/>
+        <p align="center" style="font-size: 12px;">Figura 3: Diagrama de caso de uso para a realização de um pedido de orçamento.</p>
+    </div>
+</div>
 
-<p align="center" style="font-size: 12px;">
-  Figura 2: Diagrama de caso de uso para a realização de um pedido de Obra.
-</p>
+<div style="display: flex; justify-content: center;">
+    <div>
+        <img src="Caso_Uso_Administrar_Relatorios.png" alt="Administrar Relatórios" width="500"/>
+        <p align="center" style="font-size: 12px;">Figura 4: Diagrama de caso de uso para a gestão de relatórios.</p>
+    </div>
+</div>
 
-<p align="center">
-  <img src="RealizarOrcamento.png" alt="Pedir Orçamento" width="500"/>
-</p>
-
-<p align="center" style="font-size: 12px;">
-  Figura 3: Diagrama de caso de uso para a realização de um pedido de orçamento.
-</p>
-
-<p align="center">
-  <img src="Caso_Uso_Administrar_Relatorios.png" alt="Administrar Relatórios" width="500"/>
-</p>
-
-<p align="center" style="font-size: 12px;">
-  Figura 4: Diagrama de caso de uso para a gestão de relatórios.
-</p>
 
 ### Controlo de Acesso
 
 O sistema foi desenvolvido com base no controlo de acesso, de forma a garantir que os utilizadores apenas têm acesso aos recursos que são necessários para a realização das suas tarefas.
 
 #### Níveis de Acesso
+
+Como o sistema é composto por diversos tipos de utilizados, onde os mesmos acedem a diferentes recursos para desempenhar as suas funções, terá que ser implementado um controlo de acesso que permita a cada utilizador aceder apenas aos recursos necessários para a realização das suas tarefas. Para este efeito, foi utilizado o modelo Bell-LaPadula para a definição dos níveis de acesso.
 
 Com base nas funções desempenhadas pelos utilizadores do sistema e sensibilidade dos recursos acedidos, foi desenvolvida a seguinte **hierarquia de acesso**:
 
@@ -89,7 +98,7 @@ Sendo, o **Nível 3** o acesso **mais restrito** e o **Nível 1** o acesso **mai
 
 #### Mapeamento de recursos (Por analisar p/ Ana Vidal)
 
-Para a implementação do controlo de acesso, foi feito um mapeamento das funções dos utilizadores para os recursos que estes podem aceder. 
+Para a implementação do controlo de acesso, foi feito um enumeração dos recursos que cada tipo de utilizador pode aceder.
 
 Com isto, foi definida a seguinte estrutura baseada:
 
@@ -142,21 +151,19 @@ O seguinte diagrama mostra o processo autenticação do sistema, usando o *Autho
 
 ## Modelo de gestão de risco
 
-Durante o processo de autenticação, o *IdP* avalia o risco percebido pelo utilizador e o serviço que está a ser acedido.
+De modo a garantir a segurança do sistema, foi desenvolvido um modelo de gestão de risco que permite identificar, avaliar e mitigar os riscos associados ao sistema, variando consoante o nível de acesso do utilizador.
 
 ### Identificação de riscos (por analisar p/ Ana Vidal)
 
 Para a identificação dos riscos associados ao sistema, foi feita uma enumeração das possíveis ameaças e vulnerabilidades que podem afetar a segurança do sistema.
-
-Ameaças:
+- **Ameaças**:
 1. Corrupção/Perda de dados associados a projetos e clientes;
 2. Controlo de acesso quebrado;
 3. Disponibilidade do sistema ser comprometida;
 4. Acesso não autorizado a dados sensíveis;
 5. Ataques de *phishing* (roubo de credenciais);
 6. Ataques de *spoofing* (falsificação de identidade);
-
-Vulnerabilidades:
+- **Vulnerabilidades**:
 1. Registo de atividades não monitorizado (logs);
 2. Regras de controlo de acesso mal definidas;
 3. *Password Spraying* (ataque de força bruta);
@@ -164,8 +171,6 @@ Vulnerabilidades:
 5. Ataques de *SQL injection*;
 6. Ataques de *Broken Authentication*;
 7. Falta de validação de *inputs*;
-
-
 
 ### Análise/Avaliação de riscos do software (Ana Vidal)
 
