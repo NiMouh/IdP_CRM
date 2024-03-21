@@ -157,20 +157,20 @@ De modo a garantir a segurança do sistema, foi desenvolvido um modelo de gestã
 
 Para a identificação dos riscos associados ao sistema, foi feita uma enumeração das possíveis ameaças e vulnerabilidades que podem afetar a segurança do sistema.
 - **Ameaças**:
-1. Corrupção/Perda de dados associados a projetos e clientes;
-2. Controlo de acesso quebrado;
-3. Disponibilidade do sistema ser comprometida;
-4. Acesso não autorizado a dados sensíveis;
-5. Ataques de *phishing* (roubo de credenciais);
-6. Ataques de *spoofing* (falsificação de identidade);
+  1. Corrupção/Perda de dados associados a projetos e clientes;
+  2. Controlo de acesso quebrado;
+  3. Disponibilidade do sistema ser comprometida;
+  4. Acesso não autorizado a dados sensíveis;
+  5. Ataques de *phishing* (roubo de credenciais);
+  6. Ataques de *spoofing* (falsificação de identidade);
 - **Vulnerabilidades**:
-1. Registo de atividades não monitorizado (logs);
-2. Regras de controlo de acesso mal definidas;
-3. *Password Spraying* (ataque de força bruta);
-4. *Cross-site scripting* (XSS);
-5. Ataques de *SQL injection*;
-6. Ataques de *Broken Authentication*;
-7. Falta de validação de *inputs*;
+  1. Registo de atividades não monitorizado (logs);
+  2. Regras de controlo de acesso mal definidas;
+  3. *Password Spraying* (ataque de força bruta);
+  4. *Cross-site scripting* (XSS);
+  5. Ataques de *SQL injection*;
+  6. Ataques de *Broken Authentication*;
+  7. Falta de validação de *inputs*;
 
 ### Análise/Avaliação de riscos do software (Ana Vidal)
 
