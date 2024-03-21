@@ -278,11 +278,11 @@ Com isto, será pedido uma segunda via com base nas seguintes regras:
   - Número de tentativas de autenticação falhadas: 3 ou mais, num intervalo de 5 minutos;
   - Nível de confiança do dispositivo: pelo menos 5 autenticações bem-sucedidas num intervalo de 30 dias. 
 - **Nível 1**:
-  - Segunda via não é obrigatória, a menos que se confirme uma das regras acima. 
+  - Um pedido de autenticação MFA, se as pelo menos uma das regras acima for confirmada;
 - **Nível 2**: (A ser modificado por Ana Vidal)
-  - Segunda via é não obrigatória, a menos que a localização do dispositivo seja fora das instalações da empresa.
+  - Dois pedidos de autenticação MFA, se as pelo menos duas das regras acima for confirmada;
 - **Nível 3**:
-  - Segunda via é sempre obrigatória.
+  - É sempre exigido um pedido de autenticação MFA, mas caso todas as regras acima sejam confirmadas, é exigido uma autenticação física.
 
 As regras descritas encontram-se representadas no seguinte diagrama:
 
@@ -293,3 +293,9 @@ As regras descritas encontram-se representadas no seguinte diagrama:
 <p align="center" style="font-size: 12px;">
   Figura 7: Diagrama de estados para a gestão de autenticação.
 </p>
+
+O sistema de autenticação irá ter os seguintes modos de autenticação:
+- **Autenticação via palavra-passe**: Será pedido ao utilizador que insira as credencias;
+- **Autenticação via *One-Time Password***: Será enviado um código de autenticação para o email/aplicação móvel do utilizador;
+- **Perguntas de segurança**: Serão feitas perguntas de segurança ao utilizador;
+- **Autenticação via *Smartcard***: Será pedido ao utilizador que insira o seu cartão de autenticação.
