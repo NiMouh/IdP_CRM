@@ -96,25 +96,33 @@ Com base nas funções desempenhadas pelos utilizadores do sistema e sensibilida
 
 Sendo, o **Nível 3** o acesso **mais restrito** e o **Nível 1** o acesso **mais permissivo**.
 
-(TODO: falar sobre o Biba e o Bell-LaPadula e fundamentar o pq do seu uso e a onde)
+(**TODO:** falar sobre o Biba e o Bell-LaPadula e fundamentar o pq do seu uso e a onde)
 
 #### Regras de Confidencialidade (Bell-LaPadula)
 
-TODO: Regra de Não-Leitura (No Read Up): Um sujeito em um nível de segurança mais baixo (inferior) não pode ler informações em um objeto em um nível de segurança mais alto (superior).
+**Esta parte só está aqui de contexto**
 
-TODO: Regra de Não-Escrita (No Write Down): Um sujeito em um nível de segurança mais alto (superior) não pode escrever informações em um objeto em um nível de segurança mais baixo (inferior).
+**FIXME:** Regra de Não-Leitura (No Read Up): Um sujeito em um nível de segurança mais baixo (inferior) não pode ler informações em um objeto em um nível de segurança mais alto (superior).
+
+**FIXME:**:Regra de Não-Escrita (No Write Down): Um sujeito em um nível de segurança mais alto (superior) não pode escrever informações em um objeto em um nível de segurança mais baixo (inferior).
+
+**TODO:** Listar as regras de confidencialidade (quem pode aceder ao quê e até onde pode aceder)
 
 #### Regras de Integridade (Biba)
 
-TODO: Regra de Não-Escrita (No Write Up): Um sujeito em um nível de integridade mais baixo (inferior) não pode escrever informações em um objeto em um nível de integridade mais alto (superior).
+**FIXME:** Regra de Não-Escrita (No Write Up): Um sujeito em um nível de integridade mais baixo (inferior) não pode escrever informações em um objeto em um nível de integridade mais alto (superior).
 
-TODO: Regra de Não-Leitura (No Read Down): Um sujeito em um nível de integridade mais alto (superior) não pode ler informações em um objeto em um nível de integridade mais baixo (inferior).
+**FIXME:** Regra de Não-Leitura (No Read Down): Um sujeito em um nível de integridade mais alto (superior) não pode ler informações em um objeto em um nível de integridade mais baixo (inferior).
+
+**TODO:** Listar as regras de integridade (quem pode modificar o quê e até onde pode modificar)
 
 #### Mapeamento de recursos
 
+TODO: Explicar que após ter sido definidas as regras foi feita a tabela (dar contexto maybe?)
+
 Para a implementação do controlo de acesso, foi feito um enumeração dos recursos que cada tipo de utilizador pode aceder.
 
-Com isto, foi definida a seguinte estrutura baseada (TODO: Modificar os Sim's e Não's para permissão de Ler/Escrever):
+Com isto, foi definida a seguinte estrutura baseada (**TODO:** Modificar os Sim's e Não's para permissão de Ler/Escrever):
 
 | Acessos                         | Vendedor | Dir. da Obra | Fornecedor | Tec. Telecom | Trab. de Fábrica |
 | ------------------------------- | -------- | ------------ | ---------- | ------------ | ---------------- |
@@ -163,7 +171,7 @@ O seguinte diagrama mostra o processo autenticação do sistema, usando o *Autho
   Figura 6: Diagrama de sequencial para o *Authorization Code flow*.
 </p>
 
-## Modelo de gestão de risco
+## Modelo de gestão de risco TODO: Verificar se isto está bem
 
 De modo a garantir a segurança do sistema, foi desenvolvido um modelo de gestão de risco que permite identificar, avaliar e mitigar os riscos associados ao sistema, variando consoante o nível de acesso do utilizador.
 
@@ -246,7 +254,7 @@ A presente tabela, mostra os controlos identificados junto do novo valor do risc
 | Roubo de credenciais devido a ataques de força bruta                        | Implementação de bloqueio de contas/*timeout*'s após tentativas falhadas |        2         |     3      |           6           |
 
 
-### Pontuação de Risco de Registo de *Logins* por Utilizadores
+### Pontuação de Risco de Registo de *Logins* por Utilizadores TODO: Verificar se esta parte é para manter, se sim fazer o mesmo para os outros utilizadores (talvez melhor fazer análise por nível de acesso)
 
 Para um vendedor, os riscos associados ao registo de logins podem ser um pouco diferentes, pois eles podem estar mais relacionados às informações do cliente e ao acesso aos sistemas de vendas. Aqui estão alguns possíveis riscos:
 
@@ -273,7 +281,6 @@ Pontuação total de risco = 37
 
 Portanto, a pontuação de risco para o registo de *logins* de um vendedor é 37. Essa pontuação indica o nível de exposição ao risco associado às atividades de registo de *logins* para os vendedores.
 
-TODO: Fazer a pontuação de risco para os outros utilizadores???
 
 ### Autenticação de dois fatores (MFA)
 
@@ -286,7 +293,7 @@ O sistema de autenticação irá ter os seguintes modos de autenticação:
 
 #### Motivação para a escolha dos métodos
 
-TODO: Falar sobre a escolha dos métodos de autenticação
+**TODO:** Falar sobre a escolha dos métodos de autenticação
 
 #### Gestão dos pedidos de autenticação
 
@@ -308,7 +315,7 @@ Com isto, será pedido uma segunda via com base nas seguintes regras:
   - Nível de confiança do dispositivo: pelo menos 5 autenticações bem-sucedidas num intervalo de 30 dias. 
 - **Nível 1**:
   - Um pedido de autenticação MFA, se as pelo menos uma das regras acima for confirmada;
-- **Nível 2**: (TODO: A ser modificado por Ana Vidal)
+- **Nível 2**: (**TODO:** A ser modificado por Ana Vidal)
   - Dois pedidos de autenticação MFA, se as pelo menos duas das regras acima for confirmada;
 - **Nível 3**:
   - É sempre exigido um pedido de autenticação MFA, mas caso todas as regras acima sejam confirmadas, é exigido uma autenticação física.
