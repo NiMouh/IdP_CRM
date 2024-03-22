@@ -43,7 +43,7 @@ No sistema descrito, temos as seguintes entidades:
 
 ### Fluxo de interação
 
-(Escrever aqui introdução ao fluxo de interação)
+(TODO: Escrever aqui introdução ao fluxo de interação)
 
 De modo a melhor compreender o funcionamento do sistema, foi desenvolvido um diagrama que mostra o fluxo de interação entre os diferentes utilizadores e o sistema.
 
@@ -82,7 +82,9 @@ O sistema foi desenvolvido com base no controlo de acesso, de forma a garantir q
 
 #### Níveis de Acesso
 
-Como o sistema é composto por diversos tipos de utilizados, onde os mesmos acedem a diferentes recursos para desempenhar as suas funções, terá que ser implementado um controlo de acesso que permita a cada utilizador aceder apenas aos recursos necessários para a realização das suas tarefas. Para este efeito, foi utilizado o modelo Bell-LaPadula para a definição dos níveis de acesso.
+Como o sistema é composto por diversos tipos de utilizados, onde os mesmos acedem a diferentes recursos para desempenhar as suas funções, terá que ser implementado um controlo de acesso que permita a cada utilizador aceder apenas aos recursos necessários para a realização das suas tarefas. Para este efeito, foi utilizado o modelo Bell-LaPadula para a definição dos níveis de acesso. 
+
+(TODO: falar sobre o Biba e o Bell-LaPadula e fundamentar o pq do seu uso e a onde)
 
 Com base nas funções desempenhadas pelos utilizadores do sistema e sensibilidade dos recursos acedidos, foi desenvolvida a seguinte **hierarquia de acesso**:
 
@@ -96,11 +98,11 @@ Com base nas funções desempenhadas pelos utilizadores do sistema e sensibilida
 
 Sendo, o **Nível 3** o acesso **mais restrito** e o **Nível 1** o acesso **mais permissivo**.
 
-#### Mapeamento de recursos (Por analisar p/ Ana Vidal)
+#### Mapeamento de recursos
 
 Para a implementação do controlo de acesso, foi feito um enumeração dos recursos que cada tipo de utilizador pode aceder.
 
-Com isto, foi definida a seguinte estrutura baseada:
+Com isto, foi definida a seguinte estrutura baseada (TODO: Modificar os Sim's e Não's para permissão de Ler/Escrever):
 
 | Acessos                         | Vendedor | Dir. da Obra | Fornecedor | Tec. Telecom | Trab. de Fábrica |
 | ------------------------------- | -------- | ------------ | ---------- | ------------ | ---------------- |
@@ -113,7 +115,7 @@ Com isto, foi definida a seguinte estrutura baseada:
 | Escalão de desconto             | Sim      | Não          | Sim        | Não          | Não              |
 | Status da obra                  | Sim      | Sim          | Não        | Não          | Não              |
 
-## *Authentication* e *Authorization flow* (Por analisar p/ Simão Andrade)
+## *Authentication* e *Authorization flow*
 
 A *framework* OAuth 2.0 diversos modos de obter tokens de acesso e como estes são geridos no processo de autenticação. A escolha do fluxo de autenticação depende do tipo de aplicação, nível de confiança com a aplicação cliente e a fadiga do utilizador.
 
@@ -137,7 +139,7 @@ Não, a aplicação cliente apenas precisa de comunicar com o *Resource Server* 
 
 Dados os requisitos do sistema e feita a análise das questões acima, o *flow* de autenticação escolhido foi o *Authorization Code*.
 
-### Diagrama de *Authorization Code* (Simão Andrade)
+### Diagrama de *Authorization Code*
 
 O seguinte diagrama mostra o processo autenticação do sistema, usando o *Authorization Code flow*:
 
@@ -153,7 +155,7 @@ O seguinte diagrama mostra o processo autenticação do sistema, usando o *Autho
 
 De modo a garantir a segurança do sistema, foi desenvolvido um modelo de gestão de risco que permite identificar, avaliar e mitigar os riscos associados ao sistema, variando consoante o nível de acesso do utilizador.
 
-### Identificação de riscos (por analisar p/ Ana Vidal)
+### Identificação de riscos
 
 Para a identificação dos riscos associados ao sistema, foi feita uma enumeração das possíveis ameaças e vulnerabilidades que podem afetar a segurança do sistema.
 - **Ameaças**:
@@ -172,7 +174,7 @@ Para a identificação dos riscos associados ao sistema, foi feita uma enumeraç
   6. Ataques de *Broken Authentication*;
   7. Falta de validação de *inputs*;
 
-### Análise/Avaliação de riscos do software (Ana Vidal)
+### Análise/Avaliação de riscos do software
 
 A partir desta enumeração, foi feita uma **análise quantitativa** de risco para determinar a probabilidade de ocorrência e o impacto de cada risco identificado. 
 
@@ -217,7 +219,7 @@ Obtendo-se a seguinte **tabela de risco**:
 | Exposição de informações sensíveis devido a falha na autenticação           |       3       |    4    |            12            |
 | Roubo de credenciais devido a ataques de força bruta                        |       3       |    4    |            12            |
 
-### Identificação de controlos a implementar (Por analisar p/ Ana Vidal)
+### Identificação de controlos a implementar
 
 Com base nos riscos anteriormente enumerados, foram identificados os controlos a implementar para mitigar os mesmos. 
 
@@ -232,7 +234,7 @@ A presente tabela, mostra os controlos identificados junto do novo valor do risc
 | Roubo de credenciais devido a ataques de força bruta                        | Implementação de bloqueio de contas/*timeout*'s após tentativas falhadas |        2         |     3      |           6           |
 
 
-### Pontuação de Risco de Registo de *Logins* por Utilizadores (Ana Vidal)
+### Pontuação de Risco de Registo de *Logins* por Utilizadores
 
 Para um vendedor, os riscos associados ao registo de logins podem ser um pouco diferentes, pois eles podem estar mais relacionados às informações do cliente e ao acesso aos sistemas de vendas. Aqui estão alguns possíveis riscos:
 
@@ -259,7 +261,22 @@ Pontuação total de risco = 37
 
 Portanto, a pontuação de risco para o registo de *logins* de um vendedor é 37. Essa pontuação indica o nível de exposição ao risco associado às atividades de registo de *logins* para os vendedores.
 
-### Gestão dos pedidos de autenticação (Simão Andrade)
+TODO: Fazer a pontuação de risco para os outros utilizadores???
+
+### Autenticação de dois fatores (MFA)
+
+#### Métodos escolhidos
+O sistema de autenticação irá ter os seguintes modos de autenticação:
+- **Autenticação via palavra-passe**: Será pedido ao utilizador que insira as credencias;
+- **Autenticação via *One-Time Password***: Será enviado um código de autenticação para o email/aplicação móvel do utilizador;
+- **Perguntas de segurança**: Serão feitas perguntas de segurança ao utilizador que foram solicitadas no registo;
+- **Autenticação via *Smartcard***: Será pedido ao utilizador que insira o seu cartão de autenticação.
+
+#### Motivação para a escolha dos métodos
+
+TODO: Falar sobre a escolha dos métodos de autenticação
+
+#### Gestão dos pedidos de autenticação
 
 Além do risco variar consoante o nível de acesso do agente, o mesmo também irá variar dependendo do:
 - IP de origem do pedido;
@@ -279,7 +296,7 @@ Com isto, será pedido uma segunda via com base nas seguintes regras:
   - Nível de confiança do dispositivo: pelo menos 5 autenticações bem-sucedidas num intervalo de 30 dias. 
 - **Nível 1**:
   - Um pedido de autenticação MFA, se as pelo menos uma das regras acima for confirmada;
-- **Nível 2**: (A ser modificado por Ana Vidal)
+- **Nível 2**: (TODO: A ser modificado por Ana Vidal)
   - Dois pedidos de autenticação MFA, se as pelo menos duas das regras acima for confirmada;
 - **Nível 3**:
   - É sempre exigido um pedido de autenticação MFA, mas caso todas as regras acima sejam confirmadas, é exigido uma autenticação física.
@@ -293,9 +310,3 @@ As regras descritas encontram-se representadas no seguinte diagrama:
 <p align="center" style="font-size: 12px;">
   Figura 7: Diagrama de estados para a gestão de autenticação.
 </p>
-
-O sistema de autenticação irá ter os seguintes modos de autenticação:
-- **Autenticação via palavra-passe**: Será pedido ao utilizador que insira as credencias;
-- **Autenticação via *One-Time Password***: Será enviado um código de autenticação para o email/aplicação móvel do utilizador;
-- **Perguntas de segurança**: Serão feitas perguntas de segurança ao utilizador;
-- **Autenticação via *Smartcard***: Será pedido ao utilizador que insira o seu cartão de autenticação.
