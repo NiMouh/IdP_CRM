@@ -23,7 +23,7 @@ A arquitetura do sistema é composta por três componentes principais: o *IdP* (
 
 ### Ferramentas e Tecnologias
 
-Para o desenvolvimento do sistema, serão utilizadas as seguintes ferramentas:
+Para o desenvolvimento do IdP, serão utilizadas as seguintes ferramentas:
 1. **Linguagens de programação**:
    - [JavaScript](https://developer.mozilla.org/pt-BR/docs/Web/JavaScript)
 2. **Base de dados**:
