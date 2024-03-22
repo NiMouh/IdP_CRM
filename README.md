@@ -174,7 +174,7 @@ O seguinte diagrama mostra o processo autenticação do sistema, usando o *Autho
   Figura 6: Diagrama de sequencial para o *Authorization Code flow*.
 </p>
 
-## Modelo de gestão de risco TODO: Verificar se isto está bem
+## Modelo de gestão de risco
 
 De modo a garantir a segurança do sistema, foi desenvolvido um modelo de gestão de risco que permite identificar, avaliar e mitigar os riscos associados ao sistema, variando consoante o nível de acesso do utilizador.
 
