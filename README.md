@@ -82,9 +82,7 @@ O sistema foi desenvolvido com base no controlo de acesso, de forma a garantir q
 
 #### Níveis de Acesso
 
-Como o sistema é composto por diversos tipos de utilizados, onde os mesmos acedem a diferentes recursos para desempenhar as suas funções, terá que ser implementado um controlo de acesso que permita a cada utilizador aceder apenas aos recursos necessários para a realização das suas tarefas. Para este efeito, foi utilizado o modelo Bell-LaPadula para a definição dos níveis de acesso. 
-
-(TODO: falar sobre o Biba e o Bell-LaPadula e fundamentar o pq do seu uso e a onde)
+Como o sistema é composto por diversos tipos de utilizados, onde os mesmos acedem a diferentes recursos para desempenhar as suas funções, terá que ser implementado um controlo de acesso que permita a cada utilizador aceder apenas aos recursos necessários para a realização das suas tarefas.
 
 Com base nas funções desempenhadas pelos utilizadores do sistema e sensibilidade dos recursos acedidos, foi desenvolvida a seguinte **hierarquia de acesso**:
 
@@ -97,6 +95,20 @@ Com base nas funções desempenhadas pelos utilizadores do sistema e sensibilida
 </p>
 
 Sendo, o **Nível 3** o acesso **mais restrito** e o **Nível 1** o acesso **mais permissivo**.
+
+(TODO: falar sobre o Biba e o Bell-LaPadula e fundamentar o pq do seu uso e a onde)
+
+#### Regras de Confidencialidade (Bell-LaPadula)
+
+TODO: Regra de Não-Leitura (No Read Up): Um sujeito em um nível de segurança mais baixo (inferior) não pode ler informações em um objeto em um nível de segurança mais alto (superior).
+
+TODO: Regra de Não-Escrita (No Write Down): Um sujeito em um nível de segurança mais alto (superior) não pode escrever informações em um objeto em um nível de segurança mais baixo (inferior).
+
+#### Regras de Integridade (Biba)
+
+TODO: Regra de Não-Escrita (No Write Up): Um sujeito em um nível de integridade mais baixo (inferior) não pode escrever informações em um objeto em um nível de integridade mais alto (superior).
+
+TODO: Regra de Não-Leitura (No Read Down): Um sujeito em um nível de integridade mais alto (superior) não pode ler informações em um objeto em um nível de integridade mais baixo (inferior).
 
 #### Mapeamento de recursos
 
