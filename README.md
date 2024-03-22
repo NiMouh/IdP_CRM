@@ -43,9 +43,7 @@ No sistema descrito, temos as seguintes entidades:
 
 ### Fluxo de interação
 
-(TODO: Escrever aqui introdução ao fluxo de interação)
-
-De modo a melhor compreender o funcionamento do sistema, foi desenvolvido um diagrama que mostra o fluxo de interação entre os diferentes utilizadores e o sistema.
+De modo a melhor compreender o funcionamento do sistema, foi desenvolvido um diagrama que mostra o fluxo de interação entre os diferentes utilizadores e o sistema, juntamente com alguns casos de uso dos utilizadores.
 
 <p align="center">
   <img src="Diagrama_CRM_IAA.png" alt="Diagrama Sequencial CRM" width="800"/>
@@ -96,31 +94,38 @@ Com base nas funções desempenhadas pelos utilizadores do sistema e sensibilida
 
 Sendo, o **Nível 3** o acesso **mais restrito** e o **Nível 1** o acesso **mais permissivo**.
 
-(**TODO:** falar sobre o Biba e o Bell-LaPadula e fundamentar o pq do seu uso e a onde)
-
 #### Regras de Confidencialidade (Bell-LaPadula)
 
-**Esta parte só está aqui de contexto**
+1. **Regra de Não-Leitura (No Read Up):**
+   Esta regra impede que indivíduos em níveis de segurança mais baixos acessem informações em níveis de segurança mais altos, evitando assim a divulgação não autorizada de informações sensíveis. Por exemplo:
+   - Um vendedor, um diretor de obra, um fornecedor, um técnico de telecomunicações e um trabalhador de fábrica, todos eles possuem permissão para aceder informações sobre clientes, diretores de obra, moradas e contatos de clientes, moradas da obra, materiais da obra, tabelas de preços e status da obra. No entanto, nenhum deles pode aceder a informações sobre materiais em stock ou escalões de desconto, pois essas informações são consideradas mais sensíveis e podem afetar a segurança e a integridade do sistema se divulgadas a pessoas não autorizadas.
 
-**FIXME:** Regra de Não-Leitura (No Read Up): Um sujeito em um nível de segurança mais baixo (inferior) não pode ler informações em um objeto em um nível de segurança mais alto (superior).
+2. **Regra de Não-Escrita (No Write Down):**
+   Esta regra impede que informações em níveis de segurança mais altos sejam gravadas em níveis de segurança mais baixos, garantindo assim a proteção das informações confidenciais. Por exemplo:
+   - Um vendedor, um diretor de obra, um fornecedor, um técnico de telecomunicações e um trabalhador de fábrica podem fornecer informações sobre clientes, diretores de obra, moradas e contatos de clientes, moradas da obra, materiais da obra, tabelas de preços e status da obra, mas nenhum deles pode registrar informações sobre materiais em stock ou escalões de desconto em um sistema de segurança mais baixo. Isso evita que informações sensíveis sejam divulgadas a partes não autorizadas e mantém a integridade e a confidencialidade do sistema.
 
-**FIXME:**:Regra de Não-Escrita (No Write Down): Um sujeito em um nível de segurança mais alto (superior) não pode escrever informações em um objeto em um nível de segurança mais baixo (inferior).
-
-**TODO:** Listar as regras de confidencialidade (quem pode aceder ao quê e até onde pode aceder)
+Essas regras garantem que apenas as pessoas autorizadas tenham acesso e permissão para visualizar e modificar informações relevantes, protegendo assim a confidencialidade e a segurança dos dados no sistema.
 
 #### Regras de Integridade (Biba)
 
-**FIXME:** Regra de Não-Escrita (No Write Up): Um sujeito em um nível de integridade mais baixo (inferior) não pode escrever informações em um objeto em um nível de integridade mais alto (superior).
+1. **Regra de Não-Escrita (Não Acrescentar):**
+Esta regra é crucial para evitar que informações sensíveis ou críticas sejam alteradas por indivíduos que não têm autorização para fazê-lo. Por exemplo:
+- Um vendedor pode precisar aceder a informações sobre clientes, diretores de obra e materiais, mas não deve ter permissão para modificar detalhes sobre a obra, fornecedores, tecnologia de telecomunicações ou trabalho de fábrica, pois isso pode interferir nas operações internas.
+- Um diretor de obra pode precisar atualizar informações sobre a obra, mas não deve ter permissão para modificar detalhes sobre fornecedores, tecnologia de telecomunicações ou trabalho de fábrica, pois isso pode afetar os processos de aquisição e comunicação.
+- Um fornecedor pode fornecer informações sobre materiais, mas não deve ter permissão para alterar detalhes sobre tecnologia de telecomunicações ou trabalho de fábrica, pois isso pode comprometer a integridade dos dados de produção.
 
-**FIXME:** Regra de Não-Leitura (No Read Down): Um sujeito em um nível de integridade mais alto (superior) não pode ler informações em um objeto em um nível de integridade mais baixo (inferior).
+2. **Regra de Não-Leitura (Não Visualizar para Baixo):**
+Esta regra impede que informações confidenciais sejam acessadas por indivíduos que não têm autorização para fazê-lo. Por exemplo:
+- Os trabalhadores da fábrica podem precisar aceder a informações sobre materiais em stock e escalões de desconto para realizar suas funções, mas não devem ter permissão para visualizar dados sobre clientes, diretores de obra ou fornecedores, pois isso pode expor informações confidenciais a pessoal não autorizado.
+- Da mesma forma, os técnicos de telecomunicações podem precisar de acesso a informações sobre materiais em stock e escalões de desconto para fins de manutenção, mas não devem ter permissão para visualizar dados sobre clientes, diretores de obra ou fornecedores, pois isso pode comprometer a segurança das informações.
 
-**TODO:** Listar as regras de integridade (quem pode modificar o quê e até onde pode modificar)
+Estas regras garantem que apenas as pessoas autorizadas tenham acesso e permissão para modificar informações relevantes, mantendo assim a integridade e a segurança dos dados no sistema.
 
 #### Mapeamento de recursos
 
 Para a implementação do controlo de acesso, foi feito um enumeração dos recursos que cada tipo de utilizador pode aceder.
 
-Com isto, foi definida a seguinte estrutura baseada (**TODO:** Modificar os Sim's e Não's para permissão de Ler/Escrever):
+Com isto, foi definida a seguinte estrutura baseada:
 
 | Acessos                         | Vendedor | Dir. da Obra | Fornecedor | Tec. Telecom | Trab. de Fábrica |
 | ------------------------------- | -------- | ------------ | ---------- | ------------ | ---------------- |
@@ -291,7 +296,16 @@ O sistema de autenticação irá ter os seguintes modos de autenticação:
 
 #### Motivação para a escolha dos métodos
 
-**TODO:** Falar sobre a escolha dos métodos de autenticação
+1. **Exposição de informações do cliente e acesso não autorizado às informações de vendas:**
+   - A autenticação através de One-Time Password (OTP) é uma escolha adequada, pois oferece um segundo fator de autenticação que é dinâmico e não pode ser facilmente replicado por atacantes, pois têm de ter acesso a um dispositivo fisico do utilizador ou credencias de acesso de uma outra aplicação de vinculo de autenticação do mesmo.
+
+2. **Risco de phishing e fraude de identidade:**
+   - As perguntas de segurança são úteis para mitigar o risco de phishing e fraude de identidade, pois adicionam uma camada extra de verificação da identidade do utilizador. As respostas a perguntas específicas, que só o utilizador legítimo conhece, dificultam a realização de ataques de phishing bem-sucedidos ou tentativas de fraude de identidade.
+
+3. **Nível de segurança geral e diversificação de métodos:**
+   - A autenticação através de Smartcard é uma opção de decrescimo ao nível da usabilidade, mas para utilizadores que precisam de um nível mais elevado de segurança, especialmente para acesso a informações sensíveis ou operações críticas. O uso de cartões de autenticação físicos adicionam uma camada adicional de proteção, pois requer que os utilizadores tenham posse física do seu cartão para autenticar-se.
+   
+Portanto, ao considerar os riscos identificados e as opções disponíveis, a escolha de múltiplos métodos de autenticação, incluindo palavra-passe, OTP, perguntas de segurança e Smartcard, proporcionando um equilíbrio entre segurança e usabilidade, abordando diversas ameaças potenciais e garantindo uma autenticação robusta e adequada às necessidades do sistema.
 
 #### Gestão dos pedidos de autenticação
 
