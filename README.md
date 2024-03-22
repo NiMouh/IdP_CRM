@@ -118,8 +118,6 @@ Sendo, o **Nível 3** o acesso **mais restrito** e o **Nível 1** o acesso **mai
 
 #### Mapeamento de recursos
 
-TODO: Explicar que após ter sido definidas as regras foi feita a tabela (dar contexto maybe?)
-
 Para a implementação do controlo de acesso, foi feito um enumeração dos recursos que cada tipo de utilizador pode aceder.
 
 Com isto, foi definida a seguinte estrutura baseada (**TODO:** Modificar os Sim's e Não's para permissão de Ler/Escrever):
@@ -315,8 +313,8 @@ Com isto, será pedido uma segunda via com base nas seguintes regras:
   - Nível de confiança do dispositivo: pelo menos 5 autenticações bem-sucedidas num intervalo de 30 dias. 
 - **Nível 1**:
   - Um pedido de autenticação MFA, se as pelo menos uma das regras acima for confirmada;
-- **Nível 2**: (**TODO:** A ser modificado por Ana Vidal)
-  - Dois pedidos de autenticação MFA, se as pelo menos duas das regras acima for confirmada;
+- **Nível 2**:
+  - Dois pedidos de autenticação MFA, se pelo menos duas das regras acima for confirmada;
 - **Nível 3**:
   - É sempre exigido um pedido de autenticação MFA, mas caso todas as regras acima sejam confirmadas, é exigido uma autenticação física.
 
