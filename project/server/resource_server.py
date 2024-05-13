@@ -68,7 +68,6 @@ def authenticate() -> jsonify:
 
     return jsonify({'access_token': access_token}), STATUS_CODE['SUCCESS']
 
-
 # API #
 
 @app.route('/api/create_user', methods=['POST'])
