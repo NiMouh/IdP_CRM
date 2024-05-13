@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
-from datetime import datetime, timedelta
+from datetime import timedelta
 from sqlite3 import connect, Error
 from secrets import token_urlsafe
 from hashlib import sha256
@@ -19,7 +19,7 @@ STATUS_CODE = {
     'INTERNAL_SERVER_ERROR': 500
 }
 
-DATABASE_PATH = r'C:\Users\simao\Desktop\UA\PRIMEIRO_ANO\IAA\Trabalho Pratico\project\server\database\db.sql'
+DATABASE_PATH = r'.\database\db.sql'
 
 # DATABASE #
 
@@ -96,7 +96,6 @@ def create_user() -> jsonify:
 
     return jsonify({'success_message': 'User created successfully'}), STATUS_CODE['SUCCESS']
 
-
 @app.route('/api/delete_user/<username>', methods=['DELETE'])
 def delete_user(username : str) -> jsonify:
     if not username:
@@ -129,6 +128,8 @@ def list_users() -> jsonify:
     connection.close()
 
     return jsonify({'users': users}), STATUS_CODE['SUCCESS']
+
+# PROTECTED ROUTES #
 
 @app.route('/api/protected', methods=['GET'])
 @jwt_required()

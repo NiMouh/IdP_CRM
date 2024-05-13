@@ -11,8 +11,29 @@ Este projeto foi desenvolvido por:
 
 ## Dependências
 
+Para criar o *environment*, correr o seguinte comando:
+
+```bash
+$ python -m venv venv
+```
+
+Para ativar o *environment*, correr o seguinte comando:
+
+```bash
+$ venv\Scripts\activate
+```
+
 Para instalar as dependências necessárias para correr o projeto, basta correr o seguinte comando:
 
 ```bash
-pip install -r requirements.txt
+$ pip install -r requirements.txt
 ```
+
+Para adicionar as tabelas à base de dados, correr o seguinte *script* `db_script.sql`:
+
+```bash
+$ python db_script.py
+```
+
+> [!IMPORTANT]
+> De modo aos caminhos da base de dados estarem corretos, é necessário que o *script* seja corrido na pasta onde se encontra a aplicação (pois o código é interpretado relativamente ao local onde se encontra).

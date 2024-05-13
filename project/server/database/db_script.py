@@ -1,7 +1,7 @@
 import sqlite3
 from hashlib import sha256
 
-DATABASE_PATH = r'C:\Users\simao\Desktop\UA\PRIMEIRO_ANO\IAA\Trabalho Pratico\project\server\database\db.sql'
+DATABASE_PATH = 'db.sql'
 
 # Connect to the database
 conn = sqlite3.connect(DATABASE_PATH)
