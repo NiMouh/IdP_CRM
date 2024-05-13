@@ -27,3 +27,5 @@
   - [ ] Documentação do projeto;
   - [ ] Descrição do desenvolvimento do projeto;
   - [ ] Análise dos resultados obtidos;
+
+A final report, with no more than 30 pages, describing the system implemented. Such description must include the data structures stored, the structure of the messages exchanged and the message flows, the interfaces used and their parameters, some relevant implementation details (not complete copies of the code!), the MFA and risk tracking approach, and the results achieved.

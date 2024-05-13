@@ -8,3 +8,11 @@ Este projeto foi desenvolvido por:
 
 - Ana Vidal (118408)
 - Simão Andrade (118345)
+
+## Dependências
+
+Para instalar as dependências necessárias para correr o projeto, basta correr o seguinte comando:
+
+```bash
+pip install -r requirements.txt
+```
