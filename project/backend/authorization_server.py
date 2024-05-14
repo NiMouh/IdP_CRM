@@ -48,26 +48,26 @@ def authorize(): # STEP 2 - Authorization Code Request
         
         authorization_code = make_nonce()
         
-        redirect_uri = request.headers.get('redirect_uri')
+        redirect_uri = request.args.get('redirect_uri')
 
         return redirect(f'{redirect_uri}?code={authorization_code}')
 
 @app.route('/token', methods=['POST'])
 def token():
-    grant_type = request.form.get('grant_type')
+    grant_type = request.args.get('grant_type')
     if grant_type != 'authorization_code':
         return jsonify({'error_message': 'Invalid grant type'}), STATUS_CODE['BAD_REQUEST']
     
-    authorization_code = request.form.get('code')
+    authorization_code = request.args.get('code')
     if not authorization_code:
         return jsonify({'error_message': 'Missing authorization code'}), STATUS_CODE['BAD_REQUEST']
     
-    redirect_uri = request.form.get('redirect_uri')
+    redirect_uri = request.args.get('redirect_uri')
     if not redirect_uri:
         return jsonify({'error_message': 'Missing redirect uri'}), STATUS_CODE['BAD_REQUEST']
     
     # Generate the token
-    username = request.form.get('username')
+    username = request.args.get('username')
     token = generate_token(username)
 
     return jsonify({'access_token': token, 'token_type': 'Bearer'}), STATUS_CODE['SUCCESS']
