@@ -66,7 +66,7 @@ def authenticate() -> jsonify:
     expiration_time = timedelta(minutes=15)
     access_token = create_access_token(identity=username, expires_delta=expiration_time)
 
-    return jsonify({'access_token': access_token}), STATUS_CODE['SUCCESS']
+    return jsonify({'token': access_token}), STATUS_CODE['SUCCESS']
 
 # API #
 
