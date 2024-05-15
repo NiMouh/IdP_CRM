@@ -18,11 +18,8 @@ STATUS_CODE = {
     'NOT_FOUND': 404,
     'INTERNAL_SERVER_ERROR': 500
 }
-
+ #
 DATABASE_PATH = r'.\database\db.sql'
-
-# DATABASE #
-
 def database_connection() -> connect:
     try:
         connection = connect(DATABASE_PATH)

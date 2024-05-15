@@ -1,7 +1,9 @@
+from hashlib import sha256
+import sqlite3
 from flask import Flask, request, jsonify, redirect, render_template
 from secrets import token_urlsafe
 from datetime import timedelta,datetime
-import logging
+from sqlite3 import connect, Error
 import jwt
 
 
@@ -16,20 +18,40 @@ STATUS_CODE = {
     'INTERNAL_SERVER_ERROR': 500
 }
 
-users = {
-    'utilizador1': {
-        'password': 'password1',
-        'role': 'admin'
-    },
-    'utilizador2': {
-        'password': 'password2',
-        'role': 'user'
-    }
-}
+DATABASE_PATH = r'.\database\db.sql'
+def create_connection():
+    try:
+        conn = sqlite3.connect(DATABASE_PATH, check_same_thread=False)
+        return conn
+    except Error as e:
+        print(e)
+        return None
 
-CLIENTS = {
-    'client_id': '123456'
-}
+def fetch_users() -> dict:
+    conn = create_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT utilizador_nome,utilizador_password FROM utilizador")
+    users = {}
+    for row in cursor.fetchall():
+        username = row[0]
+        password = row[1]
+        users[username] = password
+    cursor.close()
+    print(users)
+    return users
+
+def fetch_clients() -> dict:
+    conn = create_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT client_application_client_id,client_application_secret FROM client_application")
+    clients = {}
+    for row in cursor.fetchall():
+        client_id = row[0]
+        client_secret = row[1]
+        clients[client_id] = client_secret
+    cursor.close()
+    print(clients)
+    return clients
 
 authorization_codes = {}
 
@@ -38,8 +60,9 @@ def make_nonce() -> str:
 
 @app.route('/authorize', methods=['GET', 'POST'])
 def authorize(): # STEP 2 - Authorization Code Request
+    print(users)
     if request.method == 'GET':
-
+        CLIENTS = fetch_clients()
         client_id_received = request.args.get('client_id')
         client_secret_received = request.args.get('client_secret')
         if CLIENTS.get(client_id_received) != client_secret_received:
@@ -48,16 +71,16 @@ def authorize(): # STEP 2 - Authorization Code Request
 
         return render_template('login.html', state=request.args.get('state'))
     
-    elif request.method == 'POST': 
-
+    elif request.method == 'POST':
+        users = fetch_users() 
         username = request.form.get('username')
         password = request.form.get('password')
-
+        hash_password = sha256(password.encode()).hexdigest()
         if not username or not password:
             # logging.error('Missing credentials received during authorization request')
             return render_template('login.html', state=request.args.get('state'), error_message='Missing credentials')
         
-        if username not in users or users[username]['password'] != password:
+        if username not in users or users[username] != hash_password:
             # logging.error('Invalid credentials received during authorization request')
             return render_template('login.html', state=request.args.get('state'), error_message='Invalid credentials')
         
@@ -72,7 +95,7 @@ def authorize(): # STEP 2 - Authorization Code Request
     
 @app.route('/access_token', methods=['POST'])
 def access_token() -> jsonify: # STEP 4 - Access Token Grant
-
+    CLIENTS = fetch_clients()
     # Validate client id and secret
     client_id_received = request.form.get('client_id')
     client_secret_received = request.form.get('client_secret')
