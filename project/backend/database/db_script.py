@@ -25,6 +25,8 @@ cursor.execute("DROP TABLE IF EXISTS escalaoDesconto;")
 cursor.execute("DROP TABLE IF EXISTS tabelaPrecos;")
 cursor.execute("DROP TABLE IF EXISTS contactosCliente;")
 cursor.execute("DROP TABLE IF EXISTS stock;")
+cursor.execute("DROP TABLE IF EXISTS client_application;")
+cursor.execute("DROP TABLE IF EXISTS authorization_code;")
 
 # Create the table
 
@@ -209,6 +211,26 @@ cursor.execute('''
     );
 ''')
 
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS client_application (
+        client_application_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        client_application_client_id VARCHAR(50) NOT NULL, 
+        client_application_secret VARCHAR(50) NOT NULL,
+        client_application_redirect_uri VARCHAR(50) NOT NULL
+    );          
+''')
+
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS authorization_code (
+        authorization_code_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        authorization_code_code VARCHAR(50) NOT NULL,
+        fk_client_application_id INTEGER,
+        fk_utilizador_id INTEGER,
+        FOREIGN KEY (fk_client_application_id) REFERENCES client_application(client_application_id),
+        FOREIGN KEY (fk_utilizador_id) REFERENCES utilizador(utilizador_id)
+    );
+''')
+
 # Insert data into the table
 cursor.execute('''
     INSERT INTO tabelaPrecos (tabelaPrecos_ProdutoNome, tabelaPrecos_Unit)
@@ -358,6 +380,10 @@ cursor.execute('''
       (50, 5);
 ''')
 
+cursor.execute('''
+    Insert into client_application (client_application_client_id, client_application_secret, client_application_redirect_uri)
+    VALUES ('client_id', '123456', 'http://127.0.0.1:5000/authorize');
+''')
 # Show tables
 cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
 
