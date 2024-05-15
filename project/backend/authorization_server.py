@@ -41,7 +41,7 @@ def authorize(): # STEP 2 - Authorization Code Request
 
         client_id_received = request.args.get('client_id')
         client_secret_received = request.args.get('client_secret')
-        if CLIENTS[client_id_received] != client_secret_received:
+        if CLIENTS.get(client_id_received) != client_secret_received:
             return render_template('error.html', error_message='Invalid client credentials'), STATUS_CODE['UNAUTHORIZED']
 
         return render_template('login.html', state=request.args.get('state'))
@@ -72,20 +72,15 @@ def access_token() -> jsonify: # STEP 4 - Access Token Grant
     # Check the client credentials
     client_id_received = request.form.get('client_id')
     client_secret_received = request.form.get('client_secret')
-    if CLIENTS[client_id_received] != client_secret_received:
+    if CLIENTS.get(client_id_received) != client_secret_received:
         return jsonify({'error_message': 'Invalid client credentials'}), STATUS_CODE['UNAUTHORIZED']
 
     authorization_code = request.form.get('code')
-    if not authorization_code:
+    global authorization_codes
+    if not authorization_code or not authorization_codes:
         return jsonify({'error_message': 'Invalid authorization'}), STATUS_CODE['BAD_REQUEST']
     
-    global authorization_codes
-    if authorization_code not in authorization_codes:
-        return jsonify({'error_message': 'Invalid authorization'}), STATUS_CODE['UNAUTHORIZED']
-    
     username = authorization_codes[authorization_code]
-    if not username:
-        return jsonify({'error_message': 'Invalid authorization'}), STATUS_CODE['UNAUTHORIZED']
     
     authorization_codes.pop(authorization_code)
 
