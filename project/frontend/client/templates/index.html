@@ -22,10 +22,17 @@
                 <li class="nav-item active">
                     <a class="nav-link" href="#">Home</a>
                 </li>
-                <!-- Redirect to flask login route-->
+                {% if not access_token %}
                 <li class="nav-item">
                     <a class="nav-link" href="http://127.0.0.1:5000/login">Login</a>
                 </li>
+                {% endif %}
+                <!-- If there's a token in the cookies -->
+                {% if access_token %}
+                <li class="nav-item">
+                    <a class="nav-link" href="http://127.0.0.1:5000/logout">Logout</a>
+                </li>
+                {% endif %}
             </ul>
         </div>
     </nav>
@@ -33,8 +40,10 @@
     <div class="container">
         <h1>Welcome to the CRM Homepage</h1>
         <p>This is a simple homepage for a CRM system.</p>
+        <!-- If there's not a token in the cookies -->
+        {% if not access_token %}
         <a href="http://127.0.0.1:5000/login" class="btn btn-primary">Login</a>
-        <div id="user-info"></div>
+        {% endif %}
     </div>
     <!-- Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>

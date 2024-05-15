@@ -1,6 +1,7 @@
-from flask import Flask, redirect, url_for, render_template, make_response
+from flask import Flask, redirect, url_for, render_template, make_response, request
 from secrets import token_urlsafe
 from authlib.integrations.flask_client import OAuth
+
 
 app = Flask(__name__, template_folder="templates")
 app.secret_key = token_urlsafe(32) # 32 bytes = 256 bits
@@ -17,6 +18,9 @@ IDP_URL_REQUEST_TOKEN = 'http://127.0.0.1:5010/oauth/request_token'
 IDP_URL_ACCESS_TOKEN = 'http://127.0.0.1:5010/access_token'
 IDP_AUTHORIZE_URL = 'http://127.0.0.1:5010/authorize'
 
+CLIENT_ID = 'client_id'
+CLIENT_SECRET = '123456'
+
 # OAUTH - AUTHORIZATION CODE FLOW  #
 
 oauth = OAuth()
@@ -24,8 +28,8 @@ oauth.init_app(app)
 
 oauth.register(
     name='idp',
-    client_id='client_id',
-    client_secret='123456',
+    client_id= CLIENT_ID,
+    client_secret= CLIENT_SECRET,
     authorize_url= IDP_AUTHORIZE_URL,
     authorize_params=None,
     access_token_url= IDP_URL_ACCESS_TOKEN,
@@ -37,12 +41,16 @@ oauth.register(
 
 @app.route('/login', methods=['GET'])
 def login(): # STEP 1 - Authorization Request
+
+    if 'access_token' in request.cookies:
+        return redirect('/')
+
     redirect_uri = url_for('authorize', _external=True)
-    return oauth.idp.authorize_redirect(redirect_uri, client_secret='123456')
+    return oauth.idp.authorize_redirect(redirect_uri, client_secret=CLIENT_SECRET)
 
 @app.route('/authorize')
 def authorize(): # STEP 3 - Access Token Request
-    token = oauth.idp.authorize_access_token(client_id='client_id', client_secret='123456')
+    token = oauth.idp.authorize_access_token(client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
 
     if 'error_message' in token:
         return redirect('/')
@@ -54,11 +62,18 @@ def authorize(): # STEP 3 - Access Token Request
 
     return response
 
+@app.route('/logout', methods=['GET'])
+def logout():
+    response = make_response(redirect('/'))
+    response.set_cookie('access_token', '', expires=0)
+
+    return response
+
 # ROUTES #
 @app.route('/', methods=['GET'])
 def index():
-    return render_template('index.html')
-
+    access_token = request.cookies.get('access_token')
+    return render_template('index.html', access_token=access_token)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

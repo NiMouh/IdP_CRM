@@ -137,4 +137,4 @@ def protected() -> jsonify:
     return jsonify({'logged_in_as': current_user}), STATUS_CODE['SUCCESS']
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001) # Different port than the client
+    app.run(debug=True, port=5020) # Different port than the client

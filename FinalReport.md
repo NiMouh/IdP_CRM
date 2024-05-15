@@ -334,7 +334,16 @@ Com base na descrição do sistema das entidades e relações feita na primeira 
   <i>Figura 8 - Diagrama Entidade-Relação da Base de Dados</i>
 </p>
 
-A mesma encontra-se armazenada neste repositório, no ficheiro `database.sql` na diretoria `server/databases/`.
+Além disso, foi também desenvolvida uma base de dados para o IdP, onde são armazenadas as credenciais dos utilizadores e os *tokens* de autenticação, de modo a garantir uma melhor gestão de aplicações cliente e utilizadores.
+
+<p align="center">
+  <img src="img/IdP_Database.png" width="500" title="Base de Dados IdP">
+</p>
+<p align="center" style="font-size: 10px;">
+  <i>Figura 9 - Diagrama Entidade-Relação da Base de Dados do IdP</i>
+</p>
+
+> Os mesmos encontram-se armazenados neste repositório, na diretoria `server/databases/`.
 
 ## Arquitetura do Sistema
 
@@ -361,13 +370,18 @@ A estrutura do projeto encontra-se organizada da seguinte forma:
 
 ### Fluxo de mensagens
 
-Deste modo, sempre que o utilizador tenta aceder a um recurso:
-1. *Client* **redireciona** o utilizador para o *IdP* para autenticação;
-2. *IdP* **valida** as credenciais do utilizador e, caso sejam válidas, gera um *token* de acesso JWT e **redireciona** o utilizador para o *Client* novamente;
-3. *Client* **envia** o *token* para o *Resource Server* sempre que tenta aceder a um recurso. 
-4. *Resource Server* **valida o acesso** do *token* e, caso seja válido, permite o acesso ao recurso.
+Deste modo, sempre que o utilizador tenta **autenticar-se**, o fluxo de mensagens é o seguinte:
+1. *Client* **redireciona** o utilizador para o *IdP* para autenticação, enviando o `client_id`, `response_type`, `redirect_uri` e `scope` (*authorization endpoint*);
+2. *IdP* **autentica** o utilizador e **redireciona** (usando o `redirect_uri`) o utilizador para o *Client* com o `authorization_code`;
+3. Já com o `authorization_code`, o *Client* **envia** um pedido para o *IdP* para obter o *token* de acesso (*token endpoint*), em conjunto com o `client_id`, `client_secret`, `grant_type` e `redirect_uri`;
+4. *IdP* **verifica** o `authorization_code` e **envia** o *token* de acesso para o *Client*;
 
-> Este fluxo de mensagens é representado no diagrama presente na Figura 6.
+Sempre que um cliente tenta **aceder a um recurso**, o fluxo de mensagens é o seguinte:
+1. *Client* **envia** o *token* para o *Resource Server* sempre que tenta aceder a um recurso. 
+2. *Resource Server* **valida o acesso e a integridade** do *token* e, caso seja válido, envia o recurso pedido.
+3. *Client* **recebe** o recurso pedido.
+
+> Este fluxo de mensagens encontra-se representado no diagrama presente na Figura 6.
 
 ## Implementação
 
