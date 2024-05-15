@@ -11,16 +11,23 @@
         <div class="row justify-content-center">
             <div class="col-md-6">
                 <h2 class="text-center">Login</h2>
-                <form>
+                <form method="POST">
+                    <input type="hidden" name="state" value="{{ state }}"> <!-- CSRF Token -->
                     <div class="form-group">
                         <label for="username">Username</label>
-                        <input type="text" class="form-control" id="username" placeholder="Enter your username">
+                        <input type="text" class="form-control" id="username" name="username" placeholder="Enter your username">
                     </div>
                     <div class="form-group">
                         <label for="password">Password</label>
-                        <input type="password" class="form-control" id="password" placeholder="Enter your password">
+                        <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password">
                     </div>
                     <button type="submit" class="btn btn-primary">Login</button>
+                    <!-- Error message -->
+                    {% if error_message %}
+                        <div class="alert alert-danger mt-3" role="alert">
+                            {{ error_message }}
+                        </div>
+                    {% endif %}
                 </form>
             </div>
         </div>
@@ -28,20 +35,5 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script>
-        // In javascript When submitting the form call the /authorize endpoint
-        document.querySelector('form').addEventListener('submit', async (event) => {
-            event.preventDefault();
-            const username = document.querySelector('#username').value;
-            const password = document.querySelector('#password').value;
-            const response = await fetch('/authorize', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ username, password })
-            });
-        });
-    </script>
 </body>
 </html>

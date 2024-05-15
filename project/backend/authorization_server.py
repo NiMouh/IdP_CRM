@@ -1,11 +1,11 @@
 from flask import Flask, request, jsonify, redirect, render_template
 from secrets import token_urlsafe
-from datetime import timedelta
+from datetime import timedelta,datetime
 import jwt
 
 
-app = Flask(__name__)
-app.config['SECRET_KEY'] = token_urlsafe(32) # 32 bytes = 256 bits
+app = Flask(__name__, template_folder="templates")
+app.secret_key = token_urlsafe(32) # 32 bytes = 256 bits
 
 STATUS_CODE = {
     'SUCCESS': 200,
@@ -26,55 +26,77 @@ users = {
     }
 }
 
+CLIENTS = {
+    'client_id': '123456'
+}
+
+authorization_codes = {}
+
 def make_nonce() -> str:
     return token_urlsafe(22)
 
 @app.route('/authorize', methods=['GET', 'POST'])
 def authorize(): # STEP 2 - Authorization Code Request
-    if request.method == 'GET': # Render the login page
-        return render_template('login.html')
+    if request.method == 'GET':
+
+        client_id_received = request.args.get('client_id')
+        client_secret_received = request.args.get('client_secret')
+        if CLIENTS[client_id_received] != client_secret_received:
+            return render_template('error.html', error_message='Invalid client credentials'), STATUS_CODE['UNAUTHORIZED']
+
+        return render_template('login.html', state=request.args.get('state'))
+    
     elif request.method == 'POST': 
+
         username = request.form.get('username')
         password = request.form.get('password')
 
         if not username or not password:
-            return jsonify({'error_message': 'Missing credentials'}), STATUS_CODE['BAD_REQUEST']
+            return render_template('login.html', state=request.args.get('state'), error_message='Missing credentials')
         
-        if username not in users:
-            return jsonify({'error_message': 'Invalid credentials'}), STATUS_CODE['UNAUTHORIZED']
-        
-        if users[username]['password'] != password:
-            return jsonify({'error_message': 'Invalid credentials'}), STATUS_CODE['UNAUTHORIZED']
+        if username not in users or users[username]['password'] != password:
+            return render_template('login.html', state=request.args.get('state'), error_message='Invalid credentials')
         
         authorization_code = make_nonce()
+
+        global authorization_codes
+        authorization_codes[authorization_code] = username
         
         redirect_uri = request.args.get('redirect_uri')
 
-        return redirect(f'{redirect_uri}?code={authorization_code}')
+        return redirect(f'{redirect_uri}?code={authorization_code}&state={request.args.get("state")}')
+    
+@app.route('/access_token', methods=['POST'])
+def access_token() -> jsonify: # STEP 4 - Access Token Grant
 
-@app.route('/token', methods=['POST'])
-def token():
-    grant_type = request.args.get('grant_type')
-    if grant_type != 'authorization_code':
-        return jsonify({'error_message': 'Invalid grant type'}), STATUS_CODE['BAD_REQUEST']
-    
-    authorization_code = request.args.get('code')
+    # Check the client credentials
+    client_id_received = request.form.get('client_id')
+    client_secret_received = request.form.get('client_secret')
+    if CLIENTS[client_id_received] != client_secret_received:
+        return jsonify({'error_message': 'Invalid client credentials'}), STATUS_CODE['UNAUTHORIZED']
+
+    authorization_code = request.form.get('code')
     if not authorization_code:
-        return jsonify({'error_message': 'Missing authorization code'}), STATUS_CODE['BAD_REQUEST']
+        return jsonify({'error_message': 'Invalid authorization'}), STATUS_CODE['BAD_REQUEST']
     
-    redirect_uri = request.args.get('redirect_uri')
-    if not redirect_uri:
-        return jsonify({'error_message': 'Missing redirect uri'}), STATUS_CODE['BAD_REQUEST']
+    global authorization_codes
+    if authorization_code not in authorization_codes:
+        return jsonify({'error_message': 'Invalid authorization'}), STATUS_CODE['UNAUTHORIZED']
     
-    # Generate the token
-    username = request.args.get('username')
+    username = authorization_codes[authorization_code]
+    if not username:
+        return jsonify({'error_message': 'Invalid authorization'}), STATUS_CODE['UNAUTHORIZED']
+    
+    authorization_codes.pop(authorization_code)
+
     token = generate_token(username)
 
     return jsonify({'access_token': token, 'token_type': 'Bearer'}), STATUS_CODE['SUCCESS']
 
+
 def generate_token(username : str) -> str:
 
-    time = (int) (timedelta(minutes=15).total_seconds())
+    time = (int) (datetime.now().timestamp() + timedelta(minutes=5).total_seconds())
 
     payload = {
         'username': username,
@@ -84,38 +106,7 @@ def generate_token(username : str) -> str:
     }
 
     return jwt.encode(payload, app.secret_key, algorithm='HS256')
-
-def token_required(f):
-    def decorated(*args, **kwargs):
-        token = request.headers.get('Authorization')
-        if not token:
-            return jsonify({'error_message': 'Token is missing'}), STATUS_CODE['UNAUTHORIZED']
-        
-        try:
-            jwt.decode(token, app.secret_key, algorithms=['HS256'])
-        except jwt.ExpiredSignatureError:
-            return jsonify({'error_message': 'Token is expired'}), STATUS_CODE['UNAUTHORIZED']
-        except jwt.InvalidTokenError:
-            return jsonify({'error_message': 'Token is invalid'}), STATUS_CODE['UNAUTHORIZED']
-        
-        return f(*args, **kwargs)
     
-    return decorated
-    
-@app.route('/admin', methods=['GET'])
-@token_required
-def admin():
-
-    # Verify if the user is an admin
-    token = request.headers.get('Authorization')
-    username = jwt.decode(token, app.secret_key, algorithms=['HS256'])['username'] # Get the username from the token
-
-    role = users[username]['role']
-    if role != 'admin':
-        return jsonify({'error_message': 'Unauthorized'}), STATUS_CODE['UNAUTHORIZED']
-
-    return jsonify({'message': 'Hello Admin!'})
-
 
 if __name__ == '__main__':
     app.run(debug=True, port=5010) # Different port than the client
