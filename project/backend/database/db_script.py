@@ -125,9 +125,9 @@ cursor.execute('''
         cliente_data_de_criacao DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
         cliente_zona INTEGER NOT NULL,
         fk_escalaoDesconto INTEGER,
-        fk_utilizador INTEGER,
+        fk_colaborador INTEGER,
         FOREIGN KEY (fk_escalaoDesconto) REFERENCES escalaoDesconto(escalaoDesconto_id),
-        FOREIGN KEY (fk_utilizador) REFERENCES utilizador(utilizador_id)
+        FOREIGN KEY (fk_colaborador) REFERENCES colaborador(colaborador_id)
     );
 ''')
 
@@ -186,7 +186,6 @@ cursor.execute('''
     CREATE TABLE IF NOT EXISTS produto (
         produto_id INTEGER PRIMARY KEY AUTOINCREMENT,
         produtoCodigo INTEGER NOT NULL,
-        produtoQuantidade INTEGER NOT NULL,
         produtoNome VARCHAR(50) NOT NULL,
         fk_obra_id INTEGER,
         FOREIGN KEY (fk_obra_id) REFERENCES obra(obra_id)
@@ -207,7 +206,9 @@ cursor.execute('''
         stock_id INTEGER PRIMARY KEY AUTOINCREMENT,
         stock_quantidade INTEGER,
         fk_produto_id INTEGER,
-        FOREIGN KEY (fk_produto_id) REFERENCES tabelaPrecos(tabelaPrecos_id)
+        fk_tabelaPrecos_id INTEGER,
+        FOREIGN KEY (fk_produto_id) REFERENCES produto(produto_id)
+        FOREIGN KEY (fk_tabelaPrecos_id) REFERENCES tabelaPrecos(tabelaPrecos_id)
     );
 ''')
 
@@ -304,6 +305,12 @@ cursor.execute('''
 ''')
 
 cursor.execute('''
+    INSERT INTO cliente (cliente_nome, cliente_zona, fk_escalaoDesconto, fk_colaborador)
+    VALUES ('Client1', 1, 1, 1),
+        ('Client2', 2, 2, 1);
+''')
+
+cursor.execute('''
     INSERT INTO concelho (concelho_nome, fk_distrito)
     VALUES ('Aveiro','Aveiro'),
       ('Águeda','Aveiro'),
@@ -348,7 +355,7 @@ cursor.execute('''
 
 cursor.execute('''
     INSERT INTO morada (morada_codigo_postal, morada_rua, morada_localidade, fk_pais, fk_distrito, fk_concelho, fk_freguesia, fk_cliente)
-    VALUES ('3750-123', 'Rua do Campo', 'Aguada de Cima', '1', '1', '1', '1', 1), ('3750-124', 'Rua do Campo', 'Borralha', '3', '3', '4', '2', 1);
+    VALUES ('3750-123', 'Rua do Campo', 'Aguada de Cima', '1', '1', '1', '1', 1), ('3750-124', 'Rua do Campo', 'Borralha', '3', '3', '4', '2', 2);
 ''')
 
 cursor.execute('''
@@ -363,21 +370,26 @@ cursor.execute('''
 ''' , (password_ana, password_simao))
 
 cursor.execute('''
-    INSERT INTO produto (produtoCodigo, produtoQuantidade, produtoNome, fk_obra_id)
-    VALUES (1, 10, 'Produto1', 1),
-      (2, 20, 'Produto2', 2),
-      (3, 30, 'Produto3', 3),
-      (4, 40, 'Produto4', 4),
-      (5, 50, 'Produto5', 5);
+    INSERT INTO produto (produtoCodigo, produtoNome, fk_obra_id)
+    VALUES (1, 'Produto1', 1),
+      (2, 'Produto2', 2),
+      (3, 'Produto3', 3),
+      (4, 'Produto4', 4),
+      (5, 'Produto5', 5);
 ''')
 
 cursor.execute('''
-    INSERT INTO stock (stock_quantidade, fk_produto_id)
-    VALUES (10, 1),
-      (20, 2),
-      (30, 3),
-      (40, 4),
-      (50, 5);
+    INSERT INTO stock (stock_quantidade, fk_produto_id, fk_tabelaPrecos_id)
+    VALUES (10, 1, 1),
+      (20, 2, 2),
+      (30, 3, 3),
+      (40, 4, 4),
+      (50, 5, 5);
+''')
+
+cursor.execute('''
+    INSERT INTO colaborador (colaborador_nome, fk_contactoColaborador, fk_cliente)
+    VALUES ('Colaborador1', 1, 1), ('Colaborador2', 2, 2);
 ''')
 
 cursor.execute('''
