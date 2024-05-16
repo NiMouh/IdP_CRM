@@ -334,16 +334,7 @@ Com base na descrição do sistema das entidades e relações feita na primeira 
   <i>Figura 8 - Diagrama Entidade-Relação da Base de Dados</i>
 </p>
 
-Além disso, foi também desenvolvida uma base de dados para o IdP, onde são armazenadas as credenciais dos utilizadores e os *tokens* de autenticação, de modo a garantir uma melhor gestão de aplicações cliente e utilizadores.
-
-<p align="center">
-  <img src="img/IdP_Database.png" width="500" title="Base de Dados IdP">
-</p>
-<p align="center" style="font-size: 10px;">
-  <i>Figura 9 - Diagrama Entidade-Relação da Base de Dados do IdP</i>
-</p>
-
-> Os mesmos encontram-se armazenados neste repositório, na diretoria `server/databases/`.
+> O mesmo encontra-se armazenados neste repositório, na diretoria `server/database/`.
 
 ## Arquitetura do Sistema
 

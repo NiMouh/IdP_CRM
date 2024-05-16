@@ -20,7 +20,7 @@ cursor.execute("DROP TABLE IF EXISTS distrito;")
 cursor.execute("DROP TABLE IF EXISTS freguesia;")
 cursor.execute("DROP TABLE IF EXISTS morada;")
 cursor.execute("DROP TABLE IF EXISTS obra;")
-cursor.execute("DROP TABLE IF EXISTS lista_produtos;")
+cursor.execute("DROP TABLE IF EXISTS produto;")
 cursor.execute("DROP TABLE IF EXISTS escalaoDesconto;")
 cursor.execute("DROP TABLE IF EXISTS tabelaPrecos;")
 cursor.execute("DROP TABLE IF EXISTS contactosCliente;")
@@ -29,14 +29,6 @@ cursor.execute("DROP TABLE IF EXISTS client_application;")
 cursor.execute("DROP TABLE IF EXISTS authorization_code;")
 
 # Create the table
-
-cursor.execute('''
-    CREATE TABLE IF NOT EXISTS tabelaPrecos (    
-            tabelaPrecos_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            tabelaPrecos_ProdutoNome VARCHAR(50) NOT NULL,
-            tabelaPrecos_Unit FLOAT
-    );
-''')
 
 cursor.execute('''        
     CREATE TABLE IF NOT EXISTS nivel_acesso (
@@ -191,14 +183,22 @@ cursor.execute('''
 ''')             
 
 cursor.execute('''
-    CREATE TABLE IF NOT EXISTS lista_produtos (
+    CREATE TABLE IF NOT EXISTS produto (
         produto_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        produtoCodigo INTEGER,
-        produtoQuantidade INTEGER,
+        produtoCodigo INTEGER NOT NULL,
+        produtoQuantidade INTEGER NOT NULL,
+        produtoNome VARCHAR(50) NOT NULL,
         fk_obra_id INTEGER,
-        produtopreco FLOAT,
-        produtoPrecoTotal FLOAT,
         FOREIGN KEY (fk_obra_id) REFERENCES obra(obra_id)
+    );
+''')
+
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS tabelaPrecos (    
+            tabelaPrecos_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            fk_produto_id INTEGER,
+            tabelaPrecos_Unit FLOAT,
+            FOREIGN KEY (fk_produto_id) REFERENCES produto(produto_id)
     );
 ''')
 
@@ -233,12 +233,12 @@ cursor.execute('''
 
 # Insert data into the table
 cursor.execute('''
-    INSERT INTO tabelaPrecos (tabelaPrecos_ProdutoNome, tabelaPrecos_Unit)
-    VALUES ('Produto1', 10.0),
-     ('Produto2', 20.0),
-     ('Produto3', 30.0),
-     ('Produto4', 40.0),
-     ('Produto5', 50.0);
+    INSERT INTO tabelaPrecos (tabelaPrecos_Unit, fk_produto_id)
+    VALUES (10, 1),
+        (20, 2),
+        (30, 3),
+        (40, 4),
+        (50, 5);
 ''')
 
 cursor.execute('''
@@ -358,17 +358,17 @@ cursor.execute('''
 password_ana = sha256('ana'.encode()).hexdigest()
 password_simao = sha256('simao'.encode()).hexdigest() 
 cursor.execute('''
-    INSERT INTO utilizador (utilizador_nome, utilizador_password)
-    VALUES ('ana', ?), ('simao', ?);
+    INSERT INTO utilizador (utilizador_nome, utilizador_password, fk_nivel_acesso)
+    VALUES ('ana', ?, 1), ('simao', ?, 2);
 ''' , (password_ana, password_simao))
 
 cursor.execute('''
-    INSERT INTO lista_produtos (produtoCodigo, produtoQuantidade, fk_obra_id, produtopreco, produtoPrecoTotal)
-    VALUES (1, 10, 1, 10.0, 100.0), 
-      (2, 20, 1, 20.0, 400.0),
-      (3, 30, 1, 30.0, 900.0),
-      (4, 40, 1, 40.0, 1600.0),
-      (5, 50, 1, 50.0, 2500.0);
+    INSERT INTO produto (produtoCodigo, produtoQuantidade, produtoNome, fk_obra_id)
+    VALUES (1, 10, 'Produto1', 1),
+      (2, 20, 'Produto2', 2),
+      (3, 30, 'Produto3', 3),
+      (4, 40, 'Produto4', 4),
+      (5, 50, 'Produto5', 5);
 ''')
 
 cursor.execute('''

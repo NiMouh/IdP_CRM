@@ -1,5 +1,4 @@
 from hashlib import sha256
-import sqlite3
 from flask import Flask, request, jsonify, redirect, render_template
 from secrets import token_urlsafe
 from datetime import timedelta,datetime
@@ -19,9 +18,11 @@ STATUS_CODE = {
 }
 
 DATABASE_PATH = r'.\database\db.sql'
-def create_connection():
+
+
+def create_connection() -> connect:
     try:
-        conn = sqlite3.connect(DATABASE_PATH, check_same_thread=False)
+        conn = connect(DATABASE_PATH, check_same_thread=False)
         return conn
     except Error as e:
         print(e)
@@ -31,40 +32,133 @@ def fetch_users() -> dict:
     conn = create_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT utilizador_nome,utilizador_password FROM utilizador")
-    users = {}
-    for row in cursor.fetchall():
-        username = row[0]
-        password = row[1]
-        users[username] = password
+    users = { username: password for username, password in cursor.fetchall() }
     cursor.close()
-    print(users)
     return users
 
 def fetch_clients() -> dict:
     conn = create_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT client_application_client_id,client_application_secret FROM client_application")
-    clients = {}
-    for row in cursor.fetchall():
-        client_id = row[0]
-        client_secret = row[1]
-        clients[client_id] = client_secret
+    clients = { client_id: client_secret for client_id, client_secret in cursor.fetchall() }
     cursor.close()
-    print(clients)
     return clients
 
-authorization_codes = {}
+def fetch_authorization_codes() -> dict:
+    conn = create_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT 
+            authorization_code.authorization_code_code,
+            client_application.client_application_client_id,
+            utilizador.utilizador_nome
+        FROM 
+            authorization_code
+        JOIN 
+            client_application ON authorization_code.fk_client_application_id = client_application.client_application_id
+        JOIN 
+            utilizador ON authorization_code.fk_utilizador_id = utilizador.utilizador_id;
+    ''')
+
+    authorization_codes = { code: (client_id, username) for code, client_id, username in cursor.fetchall() }
+
+    cursor.close()
+
+    return authorization_codes
+
+def add_authorization_code(authorization_code: str, client_id: str, username: str) -> None:
+    conn = create_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute('''
+            SELECT 
+                utilizador_id
+            FROM 
+                utilizador
+            WHERE 
+                utilizador_nome = ?;
+        ''', (username,))
+        
+        user_result = cursor.fetchone()
+        if user_result is None:
+            raise ValueError(f"No user found with username: {username}")
+        user_id = user_result[0]
+        
+        cursor.execute('''
+            SELECT 
+                client_application_id
+            FROM 
+                client_application
+            WHERE 
+                client_application_client_id = ?;
+        ''', (client_id,))
+        
+        client_result = cursor.fetchone()
+        if client_result is None:
+            raise ValueError(f"No client application found with client ID: {client_id}")
+        client_id = client_result[0]
+        
+        cursor.execute('''
+            INSERT INTO 
+                authorization_code (authorization_code_code, fk_client_application_id, fk_utilizador_id)
+            VALUES 
+                (?, ?, ?);
+        ''', (authorization_code, client_id, user_id))
+        
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"Error: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+
+def remove_authorization_code(authorization_code: str) -> None:
+    conn = create_connection()
+    cursor = conn.cursor()
+    
+    try:
+        cursor.execute('''
+            SELECT 
+                authorization_code_id
+            FROM 
+                authorization_code
+            WHERE 
+                authorization_code_code = ?;
+        ''', (authorization_code,))
+        
+        result = cursor.fetchone()
+        if result is None:
+            raise ValueError(f"No authorization code found with code: {authorization_code}")
+        
+        cursor.execute('''
+            DELETE FROM 
+                authorization_code
+            WHERE 
+                authorization_code_code = ?;
+        ''', (authorization_code,))
+        
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"Error: {e}")
+    finally:
+        cursor.close()
+        conn.close()
 
 def make_nonce() -> str:
     return token_urlsafe(22)
 
 @app.route('/authorize', methods=['GET', 'POST'])
 def authorize(): # STEP 2 - Authorization Code Request
-    print(users)
     if request.method == 'GET':
         CLIENTS = fetch_clients()
+
         client_id_received = request.args.get('client_id')
         client_secret_received = request.args.get('client_secret')
+
         if CLIENTS.get(client_id_received) != client_secret_received:
             # logging.error('Invalid client credentials received during authorization request')
             return render_template('error.html', error_message='Invalid client credentials'), STATUS_CODE['UNAUTHORIZED']
@@ -72,22 +166,24 @@ def authorize(): # STEP 2 - Authorization Code Request
         return render_template('login.html', state=request.args.get('state'))
     
     elif request.method == 'POST':
-        users = fetch_users() 
-        username = request.form.get('username')
-        password = request.form.get('password')
-        hash_password = sha256(password.encode()).hexdigest()
+        USERS = fetch_users()
+
+        username = request.form['username']
+        password = request.form['password']
+
         if not username or not password:
             # logging.error('Missing credentials received during authorization request')
             return render_template('login.html', state=request.args.get('state'), error_message='Missing credentials')
         
-        if username not in users or users[username] != hash_password:
+        hashed_password = sha256(password.encode()).hexdigest()
+        
+        if username not in USERS or USERS[username] != hashed_password:
             # logging.error('Invalid credentials received during authorization request')
             return render_template('login.html', state=request.args.get('state'), error_message='Invalid credentials')
         
         authorization_code = make_nonce()
 
-        global authorization_codes
-        authorization_codes[authorization_code] = username
+        add_authorization_code(authorization_code, request.args.get('client_id'), username)
         
         redirect_uri = request.args.get('redirect_uri')
         # logging.info(f'Authorization code generated for user: {username}')
@@ -96,25 +192,23 @@ def authorize(): # STEP 2 - Authorization Code Request
 @app.route('/access_token', methods=['POST'])
 def access_token() -> jsonify: # STEP 4 - Access Token Grant
     CLIENTS = fetch_clients()
-    # Validate client id and secret
+
     client_id_received = request.form.get('client_id')
     client_secret_received = request.form.get('client_secret')
+
     if CLIENTS.get(client_id_received) != client_secret_received:
         # logging.error('Invalid client credentials received during access token request')
         return jsonify({'error_message': 'Invalid client credentials'}), STATUS_CODE['UNAUTHORIZED']
 
-    # Validate auth. code
-    authorization_code = request.form.get('code')
-    global authorization_codes
-    if not authorization_code or not authorization_codes:
+    authorization_code = request.form['code']
+    authorization_codes = fetch_authorization_codes()
+    if not authorization_code or authorization_code not in authorization_codes:
         # logging.error('Invalid authorization code received during access token request')
-        return jsonify({'error_message': 'Invalid authorization'}), STATUS_CODE['BAD_REQUEST']
-    
-    # TODO: Verify redirect uri matches the one from the authorization request
+        return jsonify({'error_message': 'Invalid authorization code'}), STATUS_CODE['BAD_REQUEST']
 
-    username = authorization_codes[authorization_code]
+    username = authorization_codes[authorization_code][1]
     
-    authorization_codes.pop(authorization_code)
+    remove_authorization_code(authorization_code)
 
     token = generate_token(username)
 

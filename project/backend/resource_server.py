@@ -1,13 +1,14 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
-from datetime import timedelta
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlite3 import connect, Error
 from secrets import token_urlsafe
 from hashlib import sha256
 
 app = Flask(__name__)
 CORS(app) # This will enable all CORS requests
+
+app.secret_key = token_urlsafe(32) # 32 bytes = 256 bits
 
 # GLOBAL VARIABLES #
 
@@ -18,52 +19,18 @@ STATUS_CODE = {
     'NOT_FOUND': 404,
     'INTERNAL_SERVER_ERROR': 500
 }
- #
+
+
 DATABASE_PATH = r'.\database\db.sql'
-def database_connection() -> connect:
+
+
+def create_connection() -> connect:
     try:
-        connection = connect(DATABASE_PATH)
-        return connection
-    except Error as error:
-        print(error)
+        conn = connect(DATABASE_PATH, check_same_thread=False)
+        return conn
+    except Error as e:
+        print(e)
         return None
-
-# AUTHENTICATION #
-
-app.config['SECRET_KEY'] = token_urlsafe(32) # 32 bytes = 256 bits
-jwt = JWTManager(app)
-
-@app.route('/authenticate', methods=['POST'])
-def authenticate() -> jsonify:
-    login_data = request.get_json()
-    username = login_data.get('username')
-    password = login_data.get('password')
-
-    if not username or not password:
-        return jsonify({'error_message': 'Missing username or password'}), STATUS_CODE['BAD_REQUEST']
-    
-    connection = database_connection()
-    if connection is None:
-        return jsonify({'error_message': 'Connection Failed'}), STATUS_CODE['INTERNAL_SERVER_ERROR']
-
-    cursor = connection.cursor()
-
-    hashed_password = sha256(password.encode()).hexdigest()
-
-    cursor.execute("SELECT utilizador_username,utilizador_password FROM utilizador WHERE utilizador_username = ? AND utilizador_password = ?", (username, hashed_password))
-    user = cursor.fetchone()
-
-    cursor.close()
-
-    if user is None:
-        return jsonify({'error_message': 'Invalid credentials'}), STATUS_CODE['UNAUTHORIZED']
-    
-    
-    # Create the access token with expiration time of 15 minutes
-    expiration_time = timedelta(minutes=15)
-    access_token = create_access_token(identity=username, expires_delta=expiration_time)
-
-    return jsonify({'token': access_token}), STATUS_CODE['SUCCESS']
 
 # API #
 
@@ -77,7 +44,7 @@ def create_user() -> jsonify:
     if not username or not password:
         return jsonify({'error_message': 'Missing username or password'}), STATUS_CODE['BAD_REQUEST']
     
-    connection = database_connection()
+    connection = create_connection()
     if connection is None:
         return jsonify({'error_message': 'Database connection failed'}), STATUS_CODE['INTERNAL_SERVER_ERROR']
     
@@ -110,8 +77,8 @@ def delete_user(username : str) -> jsonify:
 
     return jsonify({'success_message': 'User deleted successfully'}), STATUS_CODE['SUCCESS']
 
-@app.route('/api/list_users', methods=['GET'])
-def list_users() -> jsonify:
+@app.route('/api/fetch_users', methods=['GET'])
+def fetch_users() -> jsonify:
     connection = database_connection()
     if connection is None:
         return jsonify({'error_message': 'Database connection failed'}), STATUS_CODE['INTERNAL_SERVER_ERROR']
@@ -124,6 +91,18 @@ def list_users() -> jsonify:
     connection.close()
 
     return jsonify({'users': users}), STATUS_CODE['SUCCESS']
+
+# TODO: Obtain the address of the all 'clientes' from the database
+
+# TODO: Given the name of the 'colaboradores', obtain the contacts of the 'colaboradores' from the database
+
+# TODO: Given the name of the 'obra', obtain the address of the 'obra' from the database
+
+# TODO: Given the name of the 'obra', obtain the 'material' used in the 'obra' from the database
+
+# TODO: Obtain all the 'material' in stock from the database
+
+# TODO: Given the name 
 
 # PROTECTED ROUTES #
 

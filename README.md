@@ -65,13 +65,13 @@ $ python db_script.py
 
 - Desenvolvimento do Resource Server (Simão Andrade):
   - [x] Criação da estrutura da base de dados;
-  - [ ] Criação de funções que gerem aleatoriamente os dados da base de dados (Não quero fazer esta porra);
+  - [x] Criação de funções que gerem aleatoriamente os dados da base de dados;
   - [ ] Implementação de um sistema de logs;
   - [ ] Validação e sanitização dos dados inseridos pelo utilizador;
   - [ ] Chamadas à base dados para o *backend*;
 - Desenvolvimento do IdP (Simão Andrade e Ana Vidal):
-  - [ ] Desenvolvimento do *backend*;
-  - [ ] Desenvolvimento do *frontend* (design e interação com o utilizador);
+  - [x] Desenvolvimento do *backend*;
+  - [x] Desenvolvimento do *frontend* (design e interação com o utilizador);
   - [ ] Implementação de MFAs;
   - [ ] Implementação de um sistema de logs;
   - [ ] Gestão de *tokens* e *sessões*;
@@ -85,8 +85,8 @@ $ python db_script.py
   - [ ] Testes de stress;
   - [ ] Testes com risco alto;
 - Relatório Final (Ana Vidal e Simão Andrade):
-  - [ ] Descrição das estruturas de dados armazenadas;
-  - [ ] Estrutura das mensagens trocadas e fluxos de mensagens;
+  - [x] Descrição das estruturas de dados armazenadas;
+  - [x] Estrutura das mensagens trocadas e fluxos de mensagens;
   - [ ] Interfaces utilizadas e os seus parâmetros;
   - [ ] Alguns detalhes de implementação relevantes;
   - [ ] Abordagem MFA e gestão de riscos;
