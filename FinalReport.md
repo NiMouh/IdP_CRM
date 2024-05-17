@@ -120,7 +120,7 @@ Com isto, foi definida a seguinte estrutura baseada:
 | Material da obra                | Sim      | Sim          | Sim        | Sim          | Sim              |
 | Material em stock               | Não      | Não          | Sim        | Não          | Sim              |
 | Tabela de preços                | Sim      | Sim          | Sim        | Não          | Não              |
-| Escalão de desconto             | Sim      | Não          | Sim        | Não          | Não              |
+| Escalão de desconto             | Sim      | Não          | Não        | Sim          | Não              |
 | Status da obra                  | Sim      | Sim          | Não        | Não          | Não              |
 
 ## *Authentication* e *Authorization flow*
