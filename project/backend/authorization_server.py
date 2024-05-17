@@ -1,10 +1,11 @@
 from hashlib import sha256
-from flask import Flask, request, jsonify, redirect, render_template
+from flask import Flask, json, request, jsonify, redirect, render_template
 from secrets import token_urlsafe
 from datetime import timedelta,datetime
 from sqlite3 import connect, Error
 import logging
 import jwt
+import os
 
 
 app = Flask(__name__, template_folder="templates")
@@ -18,7 +19,8 @@ STATUS_CODE = {
     'INTERNAL_SERVER_ERROR': 500
 }
 
-DATABASE_PATH = r'.\database\db.sql'
+DATABASE_RELATIVE_PATH = r'./database/db.sql'
+DATABASE_PATH = os.path.abspath(DATABASE_RELATIVE_PATH)
 
 
 def create_connection() -> connect:
@@ -163,11 +165,8 @@ def authorize(): # STEP 2 - Authorization Code Request
         client_id_received = request.args.get('client_id')
         client_secret_received = request.args.get('client_secret')
 
-        if CLIENTS.get(client_id_received) == client_secret_received:
+        if CLIENTS.get(client_id_received) != client_secret_received:
             logging.error('Invalid client credentials received during authorization request')
-            cursor = create_connection().cursor()
-            cursor.execute("INSERT INTO log (log_data) values (?)", (logging,))
-            cursor.close()
             return render_template('error.html', error_message='Invalid client credentials'), STATUS_CODE['UNAUTHORIZED']
 
         return render_template('login.html', state=request.args.get('state'))
