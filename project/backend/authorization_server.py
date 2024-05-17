@@ -3,6 +3,7 @@ from flask import Flask, request, jsonify, redirect, render_template
 from secrets import token_urlsafe
 from datetime import timedelta,datetime
 from sqlite3 import connect, Error
+import logging
 import jwt
 
 
@@ -162,8 +163,11 @@ def authorize(): # STEP 2 - Authorization Code Request
         client_id_received = request.args.get('client_id')
         client_secret_received = request.args.get('client_secret')
 
-        if CLIENTS.get(client_id_received) != client_secret_received:
-            # logging.error('Invalid client credentials received during authorization request')
+        if CLIENTS.get(client_id_received) == client_secret_received:
+            logging.error('Invalid client credentials received during authorization request')
+            cursor = create_connection().cursor()
+            cursor.execute("INSERT INTO log (log_data) values (?)", (logging,))
+            cursor.close()
             return render_template('error.html', error_message='Invalid client credentials'), STATUS_CODE['UNAUTHORIZED']
 
         return render_template('login.html', state=request.args.get('state'))
@@ -234,5 +238,5 @@ def generate_token(username : str) -> str:
     
 
 if __name__ == '__main__':
-    # logging.basicConfig(filename='authorization_server_file.log', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
+    logging.basicConfig(filename='authorization_server_file.log', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
     app.run(debug=True, port=5010) # Different port than the client

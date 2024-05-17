@@ -11,6 +11,7 @@ cursor = conn.cursor()
 cursor.execute("DROP TABLE IF EXISTS nivel_acesso;")
 cursor.execute("DROP TABLE IF EXISTS contactoColaborador;")
 cursor.execute("DROP TABLE IF EXISTS estado;")
+cursor.execute("DROP TABLE IF EXISTS log;")
 cursor.execute("DROP TABLE IF EXISTS pais;")
 cursor.execute("DROP TABLE IF EXISTS utilizador;")
 cursor.execute("DROP TABLE IF EXISTS cliente;")
@@ -140,6 +141,13 @@ cursor.execute('''
         fk_cliente INTEGER,
         FOREIGN KEY (fk_contactoColaborador) REFERENCES contactoColaborador(contactoColaborador_id),
         FOREIGN KEY (fk_cliente) REFERENCES cliente(cliente_id)
+    );
+''')
+
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS log (
+        log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        log_data varchar(250) NOT NULL
     );
 ''')
 
