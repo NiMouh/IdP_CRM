@@ -57,7 +57,7 @@ def authorize(): # STEP 3 - Access Token Request
 
     access_token = token['access_token']
 
-    response = make_response(redirect('/'))
+    response = make_response(redirect('/dashboard'))
     response.set_cookie('access_token', access_token, httponly=True, secure=True)
 
     return response
@@ -72,8 +72,15 @@ def logout():
 # ROUTES #
 @app.route('/', methods=['GET'])
 def index():
-    access_token = request.cookies.get('access_token')
-    return render_template('index.html', access_token=access_token)
+    if 'access_token' in request.cookies:
+        return redirect('/dashboard')
+    return render_template('index.html')
 
+@app.route('/dashboard', methods=['GET'])
+def dashboard():
+    if 'access_token' not in request.cookies:
+        return redirect('/')
+    access_token = request.cookies.get('access_token')
+    return render_template('dashboard.html', access_token=access_token)
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
