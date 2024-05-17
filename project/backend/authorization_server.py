@@ -7,9 +7,21 @@ import logging
 import jwt
 import os
 
-
 app = Flask(__name__, template_folder="templates")
 app.secret_key = token_urlsafe(32) # 32 bytes = 256 bits
+
+# Configuração básica do logging
+logging.basicConfig(
+    filename='authorization_server_file.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+# Adicionando um handler de console (opcional)
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.DEBUG)
+console_handler.setFormatter(logging.Formatter('%(asctime)s - %(username)s - %(levelname)s - %(message)s'))
+app.logger.addHandler(console_handler)
 
 STATUS_CODE = {
     'SUCCESS': 200,
@@ -21,6 +33,9 @@ STATUS_CODE = {
 
 DATABASE_RELATIVE_PATH = r'./database/db.sql'
 DATABASE_PATH = os.path.abspath(DATABASE_RELATIVE_PATH)
+
+# Configuração do registo de logs
+logging.basicConfig(filename='authorization_server_file.log', level=logging.INFO, format='%(asctime)s - %(message)s - %(ip)s - %(username)s - %(access_level)s')
 
 
 def create_connection() -> connect:
@@ -34,8 +49,25 @@ def create_connection() -> connect:
 def fetch_users() -> dict:
     conn = create_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT utilizador_nome,utilizador_password FROM utilizador")
-    users = { username: password for username, password in cursor.fetchall() }
+    cursor.execute('''SELECT 
+                        u.utilizador_nome, u.utilizador_password, n.nivel_acesso_nome
+                   FROM 
+                        utilizador u
+                   JOIN 
+                        nivel_acesso n
+                   ON
+                        u.fk_nivel_acesso = n.nivel_acesso_id
+
+    ''')
+    userdb = cursor.fetchall()
+    users = {}
+    for user in userdb:
+        username = user[0]
+        password = user[1]
+        access_level = user[2]
+        users[username] = {'password': password, 'access_level': access_level}
+        print(users)
+ 
     cursor.close()
     return users
 
@@ -166,25 +198,26 @@ def authorize(): # STEP 2 - Authorization Code Request
         client_secret_received = request.args.get('client_secret')
 
         if CLIENTS.get(client_id_received) != client_secret_received:
-            logging.error('Invalid client credentials received during authorization request')
+            #logging.error('Invalid client credentials received during authorization request')
             return render_template('error.html', error_message='Invalid client credentials'), STATUS_CODE['UNAUTHORIZED']
 
         return render_template('login.html', state=request.args.get('state'))
     
     elif request.method == 'POST':
         USERS = fetch_users()
+        print(USERS)
 
         username = request.form['username']
         password = request.form['password']
 
         if not username or not password:
-            # logging.error('Missing credentials received during authorization request')
+            app.logger.info(f"Missing credentials received during authorization request for user: {username} from IP: {request.remote_addr}, access level: {USERS[username]['access_level']}")
             return render_template('login.html', state=request.args.get('state'), error_message='Missing credentials')
         
         hashed_password = sha256(password.encode()).hexdigest()
         
-        if username not in USERS or USERS[username] != hashed_password:
-            # logging.error('Invalid credentials received during authorization request')
+        if username not in USERS or USERS[username]['password'] != hashed_password:
+            app.logger.info(f"Missing credentials received during authorization request for user: {username} from IP: {request.remote_addr}, access level: {USERS[username]['access_level']}")            
             return render_template('login.html', state=request.args.get('state'), error_message='Invalid credentials')
         
         authorization_code = make_nonce()
@@ -192,7 +225,7 @@ def authorize(): # STEP 2 - Authorization Code Request
         add_authorization_code(authorization_code, request.args.get('client_id'), username)
         
         redirect_uri = request.args.get('redirect_uri')
-        # logging.info(f'Authorization code generated for user: {username}')
+        app.logger.info(f"Login successful for user: {username} from IP: {request.remote_addr}, access level: {USERS[username]['access_level']}")
         return redirect(f'{redirect_uri}?code={authorization_code}&state={request.args.get("state")}')
     
 @app.route('/access_token', methods=['POST'])
@@ -221,7 +254,6 @@ def access_token() -> jsonify: # STEP 4 - Access Token Grant
     # logging.info(f'Access token generated for user: {username}')
     return jsonify({'access_token': token, 'token_type': 'Bearer'}), STATUS_CODE['SUCCESS']
 
-
 def generate_token(username : str) -> str:
 
     time = (int) (datetime.now().timestamp() + timedelta(minutes=5).total_seconds())
@@ -235,7 +267,5 @@ def generate_token(username : str) -> str:
 
     return jwt.encode(payload, app.secret_key, algorithm='HS256')
     
-
 if __name__ == '__main__':
-    logging.basicConfig(filename='authorization_server_file.log', level=logging.DEBUG, format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
     app.run(debug=True, port=5010) # Different port than the client

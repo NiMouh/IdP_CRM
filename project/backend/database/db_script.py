@@ -406,6 +406,15 @@ cursor.execute('''
 ''')
 # Show tables
 cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+cursor.execute('''SELECT 
+                        u.utilizador_nome, u.utilizador_password, n.nivel_acesso_nome
+                   FROM 
+                        utilizador u
+                   JOIN 
+                        nivel_acesso n
+                   ON
+                        u.fk_nivel_acesso = n.nivel_acesso_id
+''')
 
 tables = cursor.fetchall()
 for table in tables:
