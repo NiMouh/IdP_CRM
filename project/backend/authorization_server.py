@@ -1,27 +1,31 @@
 from hashlib import sha256
-from flask import Flask, json, request, jsonify, redirect, render_template
+from flask import Flask, request, jsonify, redirect, render_template
 from secrets import token_urlsafe
 from datetime import timedelta,datetime
 from sqlite3 import connect, Error
 import logging
 import jwt
 import os
+import base64
 
 app = Flask(__name__, template_folder="templates")
 app.secret_key = token_urlsafe(32) # 32 bytes = 256 bits
 
-# Configuração básica do logging
+# Logging configuration
 logging.basicConfig(
     filename='authorization_server_file.log',
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
-# Adicionando um handler de console (opcional)
 console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.DEBUG)
-console_handler.setFormatter(logging.Formatter('%(asctime)s - %(username)s - %(levelname)s - %(message)s'))
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 app.logger.addHandler(console_handler)
+
+# Disable logs from flask
+werkzeug_logger = logging.getLogger('werkzeug')
+werkzeug_logger.disabled = True
 
 STATUS_CODE = {
     'SUCCESS': 200,
@@ -34,9 +38,10 @@ STATUS_CODE = {
 DATABASE_RELATIVE_PATH = r'./database/db.sql'
 DATABASE_PATH = os.path.abspath(DATABASE_RELATIVE_PATH)
 
-# Configuração do registo de logs
-logging.basicConfig(filename='authorization_server_file.log', level=logging.INFO, format='%(asctime)s - %(message)s - %(ip)s - %(username)s - %(access_level)s')
+PRIVATE_KEY_PATH = os.path.abspath('./keys/private_key.pem')
+PUBLIC_KEY_PATH = os.path.abspath('./keys/public_key.pem')
 
+# DATABASE STUFF #
 
 def create_connection() -> connect:
     try:
@@ -59,14 +64,10 @@ def fetch_users() -> dict:
                         u.fk_nivel_acesso = n.nivel_acesso_id
 
     ''')
-    userdb = cursor.fetchall()
+    user_db = cursor.fetchall()
     users = {}
-    for user in userdb:
-        username = user[0]
-        password = user[1]
-        access_level = user[2]
-        users[username] = {'password': password, 'access_level': access_level}
-        print(users)
+    for user in user_db:
+        users[user[0]] = {'password': user[1], 'access_level': user[2]}
  
     cursor.close()
     return users
@@ -99,7 +100,10 @@ def fetch_authorization_codes() -> dict:
             utilizador ON authorization_code.fk_utilizador_id = utilizador.utilizador_id;
     ''')
 
-    authorization_codes = { code: (client_id, username) for code, client_id, username in cursor.fetchall() }
+    authorization_codes_db = cursor.fetchall()
+    authorization_codes = {}
+    for authorization_code in authorization_codes_db:
+        authorization_codes[authorization_code[0]] = { 'client_id': authorization_code[1], 'username': authorization_code[2] }
 
     cursor.close()
 
@@ -186,8 +190,62 @@ def remove_authorization_code(authorization_code: str) -> None:
         cursor.close()
         conn.close()
 
+def fetch_level_access(username : str) -> str:
+    conn = create_connection()
+    cursor = conn.cursor()
+    cursor.execute('''SELECT 
+                        nivel_acesso_nivel
+                    FROM
+                        nivel_acesso
+                    JOIN
+                        utilizador
+                    ON
+                        nivel_acesso.nivel_acesso_id = utilizador.fk_nivel_acesso
+                    WHERE
+                        utilizador_nome = ?;
+    ''', (username,))
+    access_level = cursor.fetchone()
+
+    cursor.close()
+
+    return access_level
+
+# AUTHENTICATION STUFF #
+
 def make_nonce() -> str:
     return token_urlsafe(22)
+
+def generate_token(username : str) -> str:
+
+    time = (int) (datetime.now().timestamp() + timedelta(minutes=5).total_seconds())
+
+    payload = {
+        'username': username,
+        'exp': time,
+        'iss': 'http://127.0.0.1:5010', # Authorization Server
+        'aud': 'http://127.0.0.1:5020' # Resource Server
+    }
+
+    with open(PRIVATE_KEY_PATH, 'r') as file:
+        private_key = file.read()
+        return jwt.encode(payload, private_key, algorithm='RS256') 
+
+def risk_based_authentication() -> int:
+
+    counter : int = 0
+
+    if datetime.now().hour >= 18 or datetime.now().hour <= 7: # Outside working hours
+        counter += 1
+
+    # Read the logs
+    with open('authorization_server_file.log', 'r') as file:
+        logs = file.readlines()
+        # TODO: If the IP is new, increase the counter
+        # TODO: If there's less than 5 successful logins in the last 30 days, increase the counter
+        # TODO: If there's more than 3 failed login attempts in the last 5 minutes, increase the counter
+    
+    return counter
+        
 
 @app.route('/authorize', methods=['GET', 'POST'])
 def authorize(): # STEP 2 - Authorization Code Request
@@ -205,19 +263,22 @@ def authorize(): # STEP 2 - Authorization Code Request
     
     elif request.method == 'POST':
         USERS = fetch_users()
-        print(USERS)
 
         username = request.form['username']
         password = request.form['password']
 
         if not username or not password:
-            app.logger.info(f"Missing credentials received during authorization request for user: {username} from IP: {request.remote_addr}, access level: {USERS[username]['access_level']}")
+            app.logger.error(f"Missing credentials received during authorization request for user: {username} from IP: {request.remote_addr}, access level: {USERS[username]['access_level']}")
             return render_template('login.html', state=request.args.get('state'), error_message='Missing credentials')
         
-        hashed_password = sha256(password.encode()).hexdigest()
+        if username not in USERS:
+            app.logger.error(f"Invalid credentials received during authorization request for user: {username} from IP: {request.remote_addr}, access level: None")            
+            return render_template('login.html', state=request.args.get('state'), error_message='Invalid credentials')
         
-        if username not in USERS or USERS[username]['password'] != hashed_password:
-            app.logger.info(f"Missing credentials received during authorization request for user: {username} from IP: {request.remote_addr}, access level: {USERS[username]['access_level']}")            
+        hashed_password = sha256(password.encode()).hexdigest()
+
+        if USERS[username]['password'] != hashed_password:
+            app.logger.info(f"Invalid credentials received during authorization request for user: {username} from IP: {request.remote_addr}, access level: {USERS[username]['access_level']}")
             return render_template('login.html', state=request.args.get('state'), error_message='Invalid credentials')
         
         authorization_code = make_nonce()
@@ -236,36 +297,61 @@ def access_token() -> jsonify: # STEP 4 - Access Token Grant
     client_secret_received = request.form.get('client_secret')
 
     if CLIENTS.get(client_id_received) != client_secret_received:
-        # logging.error('Invalid client credentials received during access token request')
         return jsonify({'error_message': 'Invalid client credentials'}), STATUS_CODE['UNAUTHORIZED']
 
     authorization_code = request.form['code']
     authorization_codes = fetch_authorization_codes()
     if not authorization_code or authorization_code not in authorization_codes:
-        # logging.error('Invalid authorization code received during access token request')
         return jsonify({'error_message': 'Invalid authorization code'}), STATUS_CODE['BAD_REQUEST']
+    
+    if authorization_codes[authorization_code]['client_id'] != client_id_received:
+        return jsonify({'error_message': 'Invalid source client'}), STATUS_CODE['UNAUTHORIZED']
 
-    username = authorization_codes[authorization_code][1]
+    username = authorization_codes[authorization_code]['username']
     
     remove_authorization_code(authorization_code)
 
     token = generate_token(username)
 
-    # logging.info(f'Access token generated for user: {username}')
-    return jsonify({'access_token': token, 'token_type': 'Bearer'}), STATUS_CODE['SUCCESS']
+    return jsonify({'access_token': f'Bearer {token}'}), STATUS_CODE['SUCCESS']
 
-def generate_token(username : str) -> str:
+# JWKS endpoint #
+@app.route('/.well-known/jwks.json', methods=['GET'])
+def jwks():
 
-    time = (int) (datetime.now().timestamp() + timedelta(minutes=5).total_seconds())
+    if not os.path.exists(PUBLIC_KEY_PATH):
+        return jsonify({'error_message': 'Public key not found'}), STATUS_CODE['NOT_FOUND']
 
-    payload = {
-        'username': username,
-        'exp': time,
-        'iss': 'http://127.0.0.1:5010', # Authorization Server
-        'aud': 'http://127.0.0.1:5020' # Resource Server
+    # Read the public key in binary mode
+    public_key_pem = None
+    with open(PUBLIC_KEY_PATH, 'rb') as file:
+        public_key_pem = file.read()
+    
+        if public_key_pem is None:
+            return jsonify({'error_message': 'Public key not found'}), STATUS_CODE['NOT_FOUND']
+    
+    # Decode the public key from PEM format
+    public_key_der = base64.b64decode(public_key_pem.split(b'\n')[1])
+
+    # Extract modulus (n) and exponent (e) from the RSA public key
+    modulus = base64.urlsafe_b64encode(public_key_der[:256]).decode('utf-8')
+    exponent = base64.urlsafe_b64encode(public_key_der[256:]).decode('utf-8')
+
+    # Construct the JWKS JSON object with modulus and exponent
+    jwks = {
+        "keys": [
+            {
+                "kty": "RSA",
+                "kid": "authorization-server-key",
+                "use": "sig",
+                "alg": "RS256",
+                "n": modulus,
+                "e": exponent
+            }
+        ]
     }
 
-    return jwt.encode(payload, app.secret_key, algorithm='HS256')
-    
+    return jsonify(jwks), STATUS_CODE['SUCCESS']
+
 if __name__ == '__main__':
-    app.run(debug=True, port=5010) # Different port than the client
+    app.run(port=5010) # Different port than the client

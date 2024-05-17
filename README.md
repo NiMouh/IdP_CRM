@@ -61,6 +61,16 @@ $ python db_script.py
 > [!IMPORTANT]
 > De modo aos caminhos da base de dados estarem corretos, é necessário que o *script* seja corrido na pasta onde se encontra a aplicação (pois o código é interpretado relativamente ao local onde se encontra).
 
+## Segurança
+
+Para a geração de assinaturas de *tokens* JWT, é usado um par de chaves RSA. Para gerar as chaves, correr o *script* `generate_rsa.bash` na diretoria `backend/keys` do seguinte modo:
+
+```bash
+$ bash generate_rsa.bash
+```
+
+
+
 ## Divisão de Tarefas
 
 - Desenvolvimento do Resource Server (Simão Andrade):
