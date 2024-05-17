@@ -39,7 +39,10 @@ def fetch_users() -> dict:
 def fetch_clients() -> dict:
     conn = create_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT client_application_client_id,client_application_secret FROM client_application")
+    cursor.execute('''SELECT 
+                        client_application_client_id,client_application_secret 
+                    FROM 
+                        client_application''')
     clients = { client_id: client_secret for client_id, client_secret in cursor.fetchall() }
     cursor.close()
     return clients

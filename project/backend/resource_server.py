@@ -298,7 +298,6 @@ def fetch_stock() -> jsonify:
 
     cursor.close()
 
-    # Add the stock to a dictionary
     stock = {}
 
     for produto in stock_db:
@@ -309,6 +308,35 @@ def fetch_stock() -> jsonify:
         stock.update({produto[0]: produto_stock})
 
     return jsonify({'stock': stock}), STATUS_CODE['SUCCESS']
+
+@app.route('/api/fetch_price', methods=['GET'])
+def fetch_price() -> jsonify:
+    connection = create_connection()
+    if connection is None:
+        return jsonify({'error_message': 'Database connection failed'}), STATUS_CODE['INTERNAL_SERVER_ERROR']
+    
+    cursor = connection.cursor()
+    cursor.execute("""
+        SELECT
+            produto.produto_nome,
+            tabelaPrecos.tabelaPrecos_Unit
+        FROM
+            produto
+        JOIN
+            tabelaPrecos ON produto.produto_id = tabelaPrecos.fk_produto;
+    """)
+    price_db = cursor.fetchall()
+    cursor.close()
+
+    price = {}
+
+    for produto in price_db:
+        produto_price = {
+            'preco': produto[1],
+        }
+        price.update({produto[0]: produto_price})
+
+    return jsonify({'price': price}), STATUS_CODE['SUCCESS']
 
 # PROTECTED ROUTES #
 
