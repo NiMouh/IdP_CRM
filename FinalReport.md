@@ -376,6 +376,23 @@ Sempre que um cliente tenta **aceder a um recurso**, o fluxo de mensagens é o s
 
 ## Implementação
 
+### *Client Applications*
+
+### *Identity Provider*
+
+#### Registo e Auditoria de *Logs*
+
+#### OTP (*One-Time Password*)
+
+#### *Challenge-Response*
+
+### *Resource Server*
+
+#### Validação de *Tokens*
+
+Para validar os *tokens* de acesso, o *Resource Server* verifica a assinatura do *token* através de JWKS (*JSON Web Key Set*), que contém as chaves públicas do *IdP*. Envolve a criação de um *endpoint* que retorna as chaves públicas do *IdP* usadas para assinar os *tokens* usando o algoritmo `RS256`.
+
+> Mais informação sobre este *standard* aqui: [Auth0 - JSON Web Key Set (JWKS)](https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-key-sets)
 
 
 ## Testes de Validação
@@ -389,7 +406,6 @@ Ainda não chegamos cá...
 ### Pedidos de Autenticação MFA
 
 ### Pedidos ao *Resource Server*
-
 
 ## Conclusão
 

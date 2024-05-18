@@ -4,6 +4,9 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlite3 import connect, Error
 from secrets import token_urlsafe
 from hashlib import sha256
+import requests
+import base64
+from Crypto.PublicKey import RSA
 
 app = Flask(__name__)
 CORS(app) # This will enable all CORS requests
@@ -20,9 +23,10 @@ STATUS_CODE = {
     'INTERNAL_SERVER_ERROR': 500
 }
 
+JWKS_URL = 'http://127.0.0.1:5010/.well-known/jwks.json'
+
 
 DATABASE_PATH = r'.\database\db.sql'
-
 
 def create_connection() -> connect:
     try:
@@ -31,6 +35,25 @@ def create_connection() -> connect:
     except Error as e:
         print(e)
         return None
+
+
+# VERIFY TOKENS #
+
+def get_public_key() -> bytes:
+    response = requests.get(JWKS_URL)
+    if response.status_code != 200:
+        raise Exception(f"Failed to fetch JWKS: {response.status_code}")
+
+    jwks = response.json()
+    if 'keys' not in jwks or len(jwks['keys']) == 0:
+        raise Exception("No keys found in JWKS")
+
+    key = jwks['keys'][0]
+    n = int.from_bytes(base64.urlsafe_b64decode(key['n'] + '=='), 'big')
+    e = int.from_bytes(base64.urlsafe_b64decode(key['e'] + '=='), 'big')
+
+    public_key = RSA.construct((n, e))
+    return public_key.export_key()
 
 # API #
 

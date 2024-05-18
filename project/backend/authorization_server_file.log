@@ -242,3 +242,4 @@ Traceback (most recent call last):
   File "C:\Users\simao\AppData\Local\Programs\Python\Python311\Lib\site-packages\flask\json\provider.py", line 120, in _default
     raise TypeError(f"Object of type {type(o).__name__} is not JSON serializable")
 TypeError: Object of type set is not JSON serializable
+2024-05-18 10:16:55,949 - authorization_server - INFO - Login successful for user: ana from IP: 127.0.0.1, access level: Vendedor

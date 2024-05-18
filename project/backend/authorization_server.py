@@ -3,6 +3,7 @@ from flask import Flask, request, jsonify, redirect, render_template
 from secrets import token_urlsafe
 from datetime import timedelta,datetime
 from sqlite3 import connect, Error
+from Crypto.PublicKey import RSA
 import logging
 import jwt
 import os
@@ -245,7 +246,6 @@ def risk_based_authentication() -> int:
         # TODO: If there's more than 3 failed login attempts in the last 5 minutes, increase the counter
     
     return counter
-        
 
 @app.route('/authorize', methods=['GET', 'POST'])
 def authorize(): # STEP 2 - Authorization Code Request
@@ -313,45 +313,39 @@ def access_token() -> jsonify: # STEP 4 - Access Token Grant
 
     token = generate_token(username)
 
-    return jsonify({'access_token': f'Bearer {token}'}), STATUS_CODE['SUCCESS']
+    return jsonify({'access_token': f'{token}'}), STATUS_CODE['SUCCESS']
 
-# JWKS endpoint #
 @app.route('/.well-known/jwks.json', methods=['GET'])
-def jwks():
-
+def jwks() -> jsonify:
     if not os.path.exists(PUBLIC_KEY_PATH):
         return jsonify({'error_message': 'Public key not found'}), STATUS_CODE['NOT_FOUND']
 
-    # Read the public key in binary mode
-    public_key_pem = None
-    with open(PUBLIC_KEY_PATH, 'rb') as file:
-        public_key_pem = file.read()
-    
-        if public_key_pem is None:
-            return jsonify({'error_message': 'Public key not found'}), STATUS_CODE['NOT_FOUND']
-    
-    # Decode the public key from PEM format
-    public_key_der = base64.b64decode(public_key_pem.split(b'\n')[1])
+    try:
+        with open(PUBLIC_KEY_PATH, 'rb') as file:
+            public_key_pem = file.read()
 
-    # Extract modulus (n) and exponent (e) from the RSA public key
-    modulus = base64.urlsafe_b64encode(public_key_der[:256]).decode('utf-8')
-    exponent = base64.urlsafe_b64encode(public_key_der[256:]).decode('utf-8')
+        public_key = RSA.import_key(public_key_pem)
 
-    # Construct the JWKS JSON object with modulus and exponent
-    jwks = {
-        "keys": [
-            {
-                "kty": "RSA",
-                "kid": "authorization-server-key",
-                "use": "sig",
-                "alg": "RS256",
-                "n": modulus,
-                "e": exponent
-            }
-        ]
-    }
+        n = base64.urlsafe_b64encode(public_key.n.to_bytes((public_key.n.bit_length() + 7) // 8, 'big')).decode('utf-8').rstrip('=')
+        e = base64.urlsafe_b64encode(public_key.e.to_bytes((public_key.e.bit_length() + 7) // 8, 'big')).decode('utf-8').rstrip('=')
 
-    return jsonify(jwks), STATUS_CODE['SUCCESS']
+        jwks = {
+            "keys": [
+                {
+                    "kty": "RSA",
+                    "kid": "authorization-server-key",
+                    "use": "sig",
+                    "alg": "RS256",
+                    "n": n,
+                    "e": e
+                }
+            ]
+        }
+
+        return jsonify(jwks), STATUS_CODE['SUCCESS']
+
+    except Exception as e:
+        return jsonify({'error_message': str(e)}), STATUS_CODE['NOT_FOUND']
 
 if __name__ == '__main__':
     app.run(port=5010) # Different port than the client
