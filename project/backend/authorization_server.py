@@ -4,7 +4,7 @@ from secrets import token_urlsafe
 from datetime import timedelta,datetime
 from sqlite3 import connect, Error
 from Crypto.PublicKey import RSA
-from pytotp import TOTP
+import pytotp
 import qrcode
 import smtplib
 from email.mime.multipart import MIMEMultipart
@@ -251,7 +251,6 @@ def fetch_logs() -> list:
     return logs
 
 # AUTHENTICATION STUFF #
-
 # TOTP #
 
 def generate_otp(seed: str, email_address: str) -> bool:
@@ -268,7 +267,7 @@ def generate_otp(seed: str, email_address: str) -> bool:
 
 def create_totp(seed: str, email_address: str):
     # Generate TOTP code and URI
-    totp = TOTP(seed)
+    totp = pytotp.TOTP(seed)
     totp_code = totp.now()
     uri = totp.provisioning_uri(name=email_address, issuer_name='Secure App')
     return totp_code, uri
@@ -309,20 +308,65 @@ def send_email(msg: MIMEMultipart):
 
 # RISK BASED EVALUATION #
 
-def risk_based_authentication() -> int:
+def risk_based_authentication(ip, username) -> int:
 
     counter : int = 0
 
     if datetime.now().hour >= 18 or datetime.now().hour <= 7: # Outside working hours
         counter += 1
-
-    # Read the logs
-    with open('authorization_server_file.log', 'r') as file:
-        logs = file.readlines()
-        # TODO: If the IP is new, increase the counter
-        # TODO: If there's less than 5 successful logins in the last 30 days, increase the counter
-        # TODO: If there's more than 3 failed login attempts in the last 5 minutes, increase the counter
     
+    conn = create_connection()
+    cursor = conn.cursor()
+    # TODO: If the IP is new, increase the counter
+    cursor.execute('''
+        SELECT DISTINCT
+            log_ip
+        FROM
+            log
+        where
+            log_ip = ? and log_username = ?;
+    ''', (ip, username))
+
+    ip_result = cursor.fetchone()
+    print(ip_result)
+    if ip_result is None:
+        counter += 1
+    else:
+        counter = counter
+
+    # TODO: If there's less than 5 successful logins in the last 30 days, increase the counter
+
+    cursor.execute('''
+        SELECT
+            COUNT(*)
+        FROM
+            log
+        WHERE
+            log_tipo = 'INFO' AND log_username = ? AND log_data >= datetime('now', '-30 days'); 
+    ''', (username,))
+    successful_logins = cursor.fetchone()
+    print(successful_logins)
+    if successful_logins[0] < 5:
+        counter += 1
+    else:
+        counter = counter
+ 
+    # TODO: If there's more than 3 failed login attempts in the last 5 minutes, increase the counter
+    cursor.execute('''
+        SELECT
+            COUNT(*)
+        FROM
+            log
+        WHERE
+            log_tipo = 'ERROR' AND log_username = ? AND log_data >= datetime('now', '-5 minutes');
+    ''', (username,))
+    failed_logins = cursor.fetchone()
+    print(failed_logins)
+    if failed_logins[0] > 3:
+        counter += 1
+    else:
+        counter = counter
+        
     return counter
 
 # SESSION MANAGEMENT #
@@ -371,6 +415,7 @@ def authorize(): # STEP 2 - Authorization Code Request
             add_log('ERROR', datetime.now(), 'Invalid credentials', username, request_ip, 'None', 'Authorization')
             return render_template('login.html', state=request.args.get('state'), error_message='Invalid credentials')
         
+        print(risk_based_authentication(request_ip, username))
         authorization_code = make_nonce()
 
         add_authorization_code(authorization_code, request.args.get('client_id'), username)
