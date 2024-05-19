@@ -4,9 +4,15 @@ from secrets import token_urlsafe
 from datetime import timedelta,datetime
 from sqlite3 import connect, Error
 from Crypto.PublicKey import RSA
-import logging
+from pytotp import TOTP
+import qrcode
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
 import jwt
 import os
+from io import BytesIO
 import base64
 
 app = Flask(__name__, template_folder="templates")
@@ -25,6 +31,9 @@ DATABASE_PATH = os.path.abspath(DATABASE_RELATIVE_PATH)
 
 PRIVATE_KEY_PATH = os.path.abspath('./keys/private_key.pem')
 PUBLIC_KEY_PATH = os.path.abspath('./keys/public_key.pem')
+
+SENDER_EMAIL = ''
+SENDER_PASSWORD = ''
 
 # DATABASE STUFF #
 
@@ -243,23 +252,62 @@ def fetch_logs() -> list:
 
 # AUTHENTICATION STUFF #
 
-def make_nonce() -> str:
-    return token_urlsafe(22)
+# TOTP #
 
-def generate_token(username : str) -> str:
+def generate_otp(seed: str, email_address: str) -> bool:
+    try:
+        totp_code, uri = create_totp(seed, email_address)
+        image_buffer = generate_qr_code(uri)
+        message = create_email(email_address, totp_code, image_buffer)
+        send_email(message)
+        print(f'Email sent to {email_address} with TOTP and QR code.')
+        return True
+    except Exception as e:
+        print(f'Failed to send email: {e}')
+        return False
 
-    time = (int) (datetime.now().timestamp() + timedelta(minutes=5).total_seconds())
+def create_totp(seed: str, email_address: str):
+    # Generate TOTP code and URI
+    totp = TOTP(seed)
+    totp_code = totp.now()
+    uri = totp.provisioning_uri(name=email_address, issuer_name='Secure App')
+    return totp_code, uri
 
-    payload = {
-        'username': username,
-        'exp': time,
-        'iss': 'http://127.0.0.1:5010', # Authorization Server
-        'aud': 'http://127.0.0.1:5020' # Resource Server
-    }
+def generate_qr_code(uri: str) -> BytesIO:
+    # Generate QR code for the URI
+    qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=10, border=4)
+    qr.add_data(uri)
+    qr.make(fit=True)
+    
+    # Store the QR code image in a bytes buffer
+    image_buffer = BytesIO()
+    image = qr.make_image(fill='black', back_color='white')
+    image.save(image_buffer, format='PNG')
+    image_buffer.seek(0)  # Rewind the buffer
+    return image_buffer
 
-    with open(PRIVATE_KEY_PATH, 'r') as file:
-        private_key = file.read()
-        return jwt.encode(payload, private_key, algorithm='RS256') 
+def create_email(recipient: str, totp_code: str, img_buffer: BytesIO) -> MIMEMultipart:
+    message = MIMEMultipart()
+    message['From'] = SENDER_EMAIL
+    message['To'] = recipient
+    message['Subject'] = 'Your TOTP and QR Code'
+    
+    body = f'Your TOTP code is: {totp_code}'
+    message.attach(MIMEText(body, 'plain'))
+    
+    image = MIMEImage(img_buffer.getvalue(), name='qrcode.png')
+    message.attach(image)
+    
+    return message
+
+def send_email(msg: MIMEMultipart): 
+    server = smtplib.SMTP('smtp.gmail.com', 587)  # Example using Gmail SMTP server
+    server.starttls()
+    server.login(SENDER_EMAIL, SENDER_PASSWORD)
+    server.send_message(msg)
+    server.quit()
+
+# RISK BASED EVALUATION #
 
 def risk_based_authentication() -> int:
 
@@ -276,6 +324,11 @@ def risk_based_authentication() -> int:
         # TODO: If there's more than 3 failed login attempts in the last 5 minutes, increase the counter
     
     return counter
+
+# SESSION MANAGEMENT #
+
+def make_nonce() -> str:
+    return token_urlsafe(22)
 
 @app.route('/authorize', methods=['GET', 'POST'])
 def authorize(): # STEP 2 - Authorization Code Request
@@ -350,6 +403,21 @@ def access_token() -> jsonify: # STEP 4 - Access Token Grant
     token = generate_token(username)
 
     return jsonify({'access_token': f'{token}'}), STATUS_CODE['SUCCESS']
+
+def generate_token(username : str) -> str:
+
+    time = (int) (datetime.now().timestamp() + timedelta(minutes=5).total_seconds())
+
+    payload = {
+        'username': username,
+        'exp': time,
+        'iss': 'http://127.0.0.1:5010', # Authorization Server
+        'aud': 'http://127.0.0.1:5020' # Resource Server
+    }
+
+    with open(PRIVATE_KEY_PATH, 'r') as file:
+        private_key = file.read()
+        return jwt.encode(payload, private_key, algorithm='RS256') 
 
 @app.route('/.well-known/jwks.json', methods=['GET'])
 def jwks() -> jsonify:
