@@ -12,22 +12,6 @@ import base64
 app = Flask(__name__, template_folder="templates")
 app.secret_key = token_urlsafe(32) # 32 bytes = 256 bits
 
-# Logging configuration
-logging.basicConfig(
-    filename='authorization_server_file.log',
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-
-console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.INFO)
-console_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
-app.logger.addHandler(console_handler)
-
-# Disable logs from flask
-werkzeug_logger = logging.getLogger('werkzeug')
-werkzeug_logger.disabled = True
-
 STATUS_CODE = {
     'SUCCESS': 200,
     'BAD_REQUEST': 400,
@@ -77,10 +61,13 @@ def fetch_clients() -> dict:
     conn = create_connection()
     cursor = conn.cursor()
     cursor.execute('''SELECT 
-                        client_application_client_id,client_application_secret 
+                        client_application_client_id,client_application_secret, client_application_redirect_uri 
                     FROM 
                         client_application''')
-    clients = { client_id: client_secret for client_id, client_secret in cursor.fetchall() }
+    client_db = cursor.fetchall()
+    clients = {}
+    for client in client_db:
+        clients[client[0]] = {'secret': client[1], 'redirect_uri': client[2]}
     cursor.close()
     return clients
 
@@ -211,6 +198,49 @@ def fetch_level_access(username : str) -> str:
 
     return access_level
 
+def add_log(log_type : str, log_date : datetime, log_message : str, username : str, ip : str, access_level : str, segmentation : str) -> None:
+
+    log_date_str = log_date.strftime('%Y-%m-%d %H:%M:%S')
+
+    conn = create_connection()
+    print("Connection created")
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute('''
+            INSERT INTO 
+                log (log_tipo, log_data, log_mensagem, log_username, log_ip, log_nivel_acesso, log_segmentacao)
+            VALUES 
+                (?, ?, ?, ?, ?, ?, ?);
+        ''', (log_type, log_date_str, log_message, username, ip, access_level, segmentation))
+        print("Log added")
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"Error: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+
+def fetch_logs() -> list:
+
+    conn = create_connection()
+
+    if conn is None:
+        return []
+
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT log_tipo, log_data, log_mensagem, log_username, log_ip, log_nivel_acesso, log_segmentacao
+        FROM log
+        ORDER BY log_data DESC
+    ''')
+    logs = cursor.fetchall()
+
+    cursor.close()
+
+    return logs
+
 # AUTHENTICATION STUFF #
 
 def make_nonce() -> str:
@@ -251,42 +281,48 @@ def risk_based_authentication() -> int:
 def authorize(): # STEP 2 - Authorization Code Request
     if request.method == 'GET':
         CLIENTS = fetch_clients()
+        print(CLIENTS)
 
         client_id_received = request.args.get('client_id')
         client_secret_received = request.args.get('client_secret')
 
-        if CLIENTS.get(client_id_received) != client_secret_received:
-            #logging.error('Invalid client credentials received during authorization request')
+        if client_id_received not in CLIENTS or CLIENTS[client_id_received]['secret'] != client_secret_received:
             return render_template('error.html', error_message='Invalid client credentials'), STATUS_CODE['UNAUTHORIZED']
 
         return render_template('login.html', state=request.args.get('state'))
     
     elif request.method == 'POST':
         USERS = fetch_users()
+        CLIENTS = fetch_clients()
 
-        username = request.form['username']
-        password = request.form['password']
+        request_ip = request.remote_addr
+        client_id_received, client_secret_received, redirect_uri = request.args.get('client_id'), request.args.get('client_secret'), request.args.get('redirect_uri')
+        
+        if client_id_received not in CLIENTS or CLIENTS[client_id_received]['secret'] != client_secret_received or CLIENTS[client_id_received]['redirect_uri'] != redirect_uri:
+            add_log('ERROR', datetime.now(), 'Invalid client credentials', 'None', request_ip, 'None', 'Authorization')
+            return render_template('error.html', error_message='Invalid client credentials'), STATUS_CODE['UNAUTHORIZED']
+
+        username, password = request.form['username'], request.form['password']
 
         if not username or not password:
-            app.logger.error(f"Missing credentials received during authorization request for user: {username} from IP: {request.remote_addr}, access level: {USERS[username]['access_level']}")
+            add_log('ERROR', datetime.now(), 'Missing credentials', 'None', request_ip, 'None', 'Authorization')
+            print(fetch_logs())
             return render_template('login.html', state=request.args.get('state'), error_message='Missing credentials')
         
         if username not in USERS:
-            app.logger.error(f"Invalid credentials received during authorization request for user: {username} from IP: {request.remote_addr}, access level: None")            
+            add_log('ERROR', datetime.now(), 'Invalid credentials', username, request_ip, 'None', 'Authorization')
             return render_template('login.html', state=request.args.get('state'), error_message='Invalid credentials')
         
         hashed_password = sha256(password.encode()).hexdigest()
-
         if USERS[username]['password'] != hashed_password:
-            app.logger.info(f"Invalid credentials received during authorization request for user: {username} from IP: {request.remote_addr}, access level: {USERS[username]['access_level']}")
+            add_log('ERROR', datetime.now(), 'Invalid credentials', username, request_ip, 'None', 'Authorization')
             return render_template('login.html', state=request.args.get('state'), error_message='Invalid credentials')
         
         authorization_code = make_nonce()
 
         add_authorization_code(authorization_code, request.args.get('client_id'), username)
-        
-        redirect_uri = request.args.get('redirect_uri')
-        app.logger.info(f"Login successful for user: {username} from IP: {request.remote_addr}, access level: {USERS[username]['access_level']}")
+
+        add_log('INFO', datetime.now(), 'Access granted', username, request_ip, USERS[username]['access_level'], 'Authorization')
         return redirect(f'{redirect_uri}?code={authorization_code}&state={request.args.get("state")}')
     
 @app.route('/access_token', methods=['POST'])
@@ -296,7 +332,7 @@ def access_token() -> jsonify: # STEP 4 - Access Token Grant
     client_id_received = request.form.get('client_id')
     client_secret_received = request.form.get('client_secret')
 
-    if CLIENTS.get(client_id_received) != client_secret_received:
+    if client_id_received not in CLIENTS or CLIENTS[client_id_received]['secret'] != client_secret_received:
         return jsonify({'error_message': 'Invalid client credentials'}), STATUS_CODE['UNAUTHORIZED']
 
     authorization_code = request.form['code']
@@ -348,4 +384,4 @@ def jwks() -> jsonify:
         return jsonify({'error_message': str(e)}), STATUS_CODE['NOT_FOUND']
 
 if __name__ == '__main__':
-    app.run(port=5010) # Different port than the client
+    app.run(debug=True, port=5010) # Different port than the client

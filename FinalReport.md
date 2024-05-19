@@ -241,12 +241,12 @@ A presente tabela, mostra os controlos identificados junto do novo valor do risc
 
 Agora, podemos realizar uma avaliação de risco semelhante à anterior, atribuindo valores de probabilidade e impacto para esses riscos e calculando a pontuação de risco total.
 
-| Risco                                          | Probabilidade | Impacto | Valor do Risco = (P * I) |
-| ---------------------------------------------- | :-----------: | :-----: | :----------------------: |
-| Exposição de informações do cliente            |       3       |    4    |            12            |
+| Risco                                           | Probabilidade | Impacto | Valor do Risco = (P * I) |
+| ----------------------------------------------- | :-----------: | :-----: | :----------------------: |
+| Exposição de informações do cliente             |       3       |    4    |            12            |
 | Acesso não autorizado às informações das vendas |       4       |    3    |            12            |
-| Risco de phishing                              |       3       |    3    |            9             |
-| Fraude de identidade                           |       2       |    2    |            4             |
+| Risco de phishing                               |       3       |    3    |            9             |
+| Fraude de identidade                            |       2       |    2    |            4             |
 
 ### Autenticação de dois fatores (MFA)
 
@@ -382,6 +382,17 @@ Sempre que um cliente tenta **aceder a um recurso**, o fluxo de mensagens é o s
 
 #### Registo e Auditoria de *Logs*
 
+Os *logs*, tanto de autenticação (*Authorization Server*) como de acesso a recursos (*Resource Server*), são armazenados na base de dados, contendo as seguintes informações:
+
+| Informação                    | Auditoria | Análise de Risco |
+| ----------------------------- | :-------: | :--------------: |
+| Data e hora do pedido         |     x     |        x         |
+| IP de origem do pedido        |     -     |        x         |
+| Sucesso ou falha do pedido    |     x     |        x         |
+| Tipo de pedido                |     x     |        x         |
+| Nível de acesso do utilizador |     x     |        x         |
+| Nome do utilizador            |     -     |        x         |
+
 #### OTP (*One-Time Password*)
 
 #### *Challenge-Response*
@@ -394,6 +405,36 @@ Para validar os *tokens* de acesso, o *Resource Server* verifica a assinatura do
 
 > Mais informação sobre este *standard* aqui: [Auth0 - JSON Web Key Set (JWKS)](https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-key-sets)
 
+Exemplo de um *JWKS*: 
+```json
+{
+    "keys": [
+        {
+            "alg": "RS256",
+            "e": "AQAB",
+            "kid": "authorization-server-key",
+            "kty": "RSA",
+            "n": "txlzMo9bXTK-hCe8hKA0D2HR9imD0Xi_DtZrSGMwIehitrD_9H2EyBt50k5wBoS9s3Fnt42IdU09v8oR6gQ8EFWK7yndbDgk8ADeKWtM1x0w7N20ClmI-hd9yPABIwXfVuMfsX1eBA09_9xGiiXDw7sFRnQD8mYPFWp8AsNqCWfz2Fl7y3PbBFYS2IBAG_mFd9MLgQhUPttASQ0biPQRQ7ORAp0Xm27OfKrO5Ukpuv-36-luKtLI-1IwZ5mRr0OXqbiKINfMoa80TLfk77MMImj49genPeCAJq-obVFk4pboHkXZ0XmY0X4v_BgCM4GZ53Sd8VI3F-i_KpJWcIgunQ",
+            "use": "sig"
+        }
+    ]
+}
+```
+
+Ficheiro .PEM correspondente à chave pública:
+```pem
+-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtxlzMo9bXTK+hCe8hKA0
+D2HR9imD0Xi/DtZrSGMwIehitrD/9H2EyBt50k5wBoS9s3Fnt42IdU09v8oR6gQ8
+EFWK7yndbDgk8ADeKWtM1x0w7N20ClmI+hd9yPABIwXfVuMfsX1eBA09/9xGiiXD
+w7sFRnQD8mYPFWp8AsNqCWfz2Fl7y3PbBFYS2IBAG/mFd9MLgQhUPttASQ0biPQR
+Q7ORAp0Xm27OfKrO5Ukpuv+36+luKtLI+1IwZ5mRr0OXqbiKINfMoa80TLfk77MM
+Imj49genPeCAJq+obVFk4pboHkXZ0XmY0X4v/BgCM4GZ53Sd8VI3F+i/KpJWcIgu
+nQIDAQAB
+-----END PUBLIC KEY-----
+```
+
+> Conversor de JWK para PEM: [JWK to PEM](https://8gwifi.org/jwkconvertfunctions.jsp)
 
 ## Testes de Validação
 

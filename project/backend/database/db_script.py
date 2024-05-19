@@ -1,35 +1,44 @@
 import sqlite3
 from hashlib import sha256
+import os
 
-DATABASE_PATH = 'db.sql'
+DATABASE_RELATIVE_PATH = 'db.sql'
+DATABASE_PATH = os.path.join(os.path.dirname(__file__), DATABASE_RELATIVE_PATH)
+
+if os.path.exists(DATABASE_PATH):
+    os.remove(DATABASE_PATH)
 
 # Connect to the database
 conn = sqlite3.connect(DATABASE_PATH)
 cursor = conn.cursor()
 
 # Drop the table if it exists
-cursor.execute("DROP TABLE IF EXISTS nivel_acesso;")
-cursor.execute("DROP TABLE IF EXISTS contactoColaborador;")
-cursor.execute("DROP TABLE IF EXISTS estado;")
-cursor.execute("DROP TABLE IF EXISTS log;")
-cursor.execute("DROP TABLE IF EXISTS pais;")
-cursor.execute("DROP TABLE IF EXISTS utilizador;")
-cursor.execute("DROP TABLE IF EXISTS cliente;")
-cursor.execute("DROP TABLE IF EXISTS colaborador;")
-cursor.execute("DROP TABLE IF EXISTS concelho;")
-cursor.execute("DROP TABLE IF EXISTS distrito;")
-cursor.execute("DROP TABLE IF EXISTS freguesia;")
-cursor.execute("DROP TABLE IF EXISTS morada;")
-cursor.execute("DROP TABLE IF EXISTS obra;")
-cursor.execute("DROP TABLE IF EXISTS produto;")
-cursor.execute("DROP TABLE IF EXISTS escalaoDesconto;")
-cursor.execute("DROP TABLE IF EXISTS tabelaPrecos;")
-cursor.execute("DROP TABLE IF EXISTS contactosCliente;")
-cursor.execute("DROP TABLE IF EXISTS stock;")
-cursor.execute("DROP TABLE IF EXISTS client_application;")
-cursor.execute("DROP TABLE IF EXISTS authorization_code;")
+tables_to_drop = [
+    "log", "nivel_acesso", "contactoColaborador", "estado", "pais",
+    "utilizador", "cliente", "colaborador", "concelho", "distrito",
+    "freguesia", "morada", "obra", "produto", "escalaoDesconto",
+    "tabelaPrecos", "contactosCliente", "stock", "client_application",
+    "authorization_code"
+]
+
+for table in tables_to_drop:
+    cursor.execute(f"DROP TABLE IF EXISTS {table};")
 
 # Create the table
+
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS log (
+        log_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        log_tipo VARCHAR(50) NOT NULL,
+        log_data DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        log_mensagem TEXT NOT NULL,
+        log_username VARCHAR(50) NOT NULL,
+        log_ip VARCHAR(50) NOT NULL,
+        log_nivel_acesso VARCHAR(50) NOT NULL,
+        log_segmentacao VARCHAR(50) NOT NULL
+    );
+''')
+
 
 cursor.execute('''        
     CREATE TABLE IF NOT EXISTS nivel_acesso (
@@ -141,13 +150,6 @@ cursor.execute('''
         fk_cliente INTEGER,
         FOREIGN KEY (fk_contactoColaborador) REFERENCES contactoColaborador(contactoColaborador_id),
         FOREIGN KEY (fk_cliente) REFERENCES cliente(cliente_id)
-    );
-''')
-
-cursor.execute('''
-    CREATE TABLE IF NOT EXISTS log (
-        log_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        log_data varchar(250) NOT NULL
     );
 ''')
 

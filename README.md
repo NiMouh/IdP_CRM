@@ -83,8 +83,8 @@ $ bash generate_rsa.bash
   - [x] Desenvolvimento do *backend*;
   - [x] Desenvolvimento do *frontend* (design e interação com o utilizador);
   - [ ] Implementação de MFAs;
-  - [ ] Implementação de um sistema de logs;
-  - [ ] Gestão de *tokens* e *sessões*;
+  - [x] Implementação de um sistema de logs;
+  - [x] Gestão de *tokens* e *sessões*;
   - [ ] Definição do cálculo do risco;
   - [ ] Implementação do sistema RBAC;
 - Desenvolvimento dos três Client Applications (Ana Vidal):
