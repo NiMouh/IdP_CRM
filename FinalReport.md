@@ -378,9 +378,9 @@ Sempre que um cliente tenta **aceder a um recurso**, o fluxo de mensagens é o s
 
 ### *Client Applications*
 
-### *Identity Provider*
+TODO: Escrever sobre o *Client* e a sua implementação.
 
-#### Registo e Auditoria de *Logs*
+### Registo e Auditoria de *Logs*
 
 Os *logs*, tanto de autenticação (*Authorization Server*) como de acesso a recursos (*Resource Server*), são armazenados na base de dados, contendo as seguintes informações:
 
@@ -393,7 +393,37 @@ Os *logs*, tanto de autenticação (*Authorization Server*) como de acesso a rec
 | Nível de acesso do utilizador |     x     |        x         |
 | Nome do utilizador            |     -     |        x         |
 
+### *Identity Provider*
+
 #### OTP (*One-Time Password*)
+
+Para a implementação, foi utilizado a biblioteca `pyotp`, que permite a criação de códigos de autenticação com base no algoritmo `TOTP` (*Time-based One-Time Password*). Este algoritmo gera um código de autenticação que é válido apenas por um curto período de tempo, geralmente **30 segundos**, e é gerado com base numa *seed* e no tempo atual.
+
+O seguinte código mostra a geração de um código de autenticação, que recebe como argumentos a *seed* (que será a credencial do utilizador) e o email do utilizador e devolve o código e o URI para a criação de um *QR Code*:
+
+```python
+from pyotp import TOTP
+
+def create_totp(seed: str, email_address: str):
+    totp = TOTP(seed)
+    totp_code = totp.now()
+    uri = totp.provisioning_uri(name=email_address, issuer_name='CRM IAA')
+    return totp_code, uri
+```
+
+> Mais informação sobre a biblioteca: [PyOTP](https://pyauth.github.io/pyotp/)
+
+O *QR code* é gerado com base no URI, usando a biblioteca `qrcode`, e é guardado num *buffer* de imagem para ser enviado ao utilizador por email.
+
+> Mais informação sobre a biblioteca: [QRCode](https://pypi.org/project/qrcode/)
+
+Para mandar o código de autenticação e o *QR code* por email, foi criada uma conta da Google para o envio de emails.
+
+> Informação sobre como criar uma palavra-passe para a aplicação: [Google - Criar uma palavra-passe para a aplicação](https://support.google.com/mail/answer/185833?hl=pt)
+
+E foi utilizada a biblioteca `smtplib` para o envio de emails sobre o domínio do Gmail (`smtp.gmail.com`).
+
+> Exemplo de utilização da biblioteca: [smtplib](https://docs.python.org/3/library/smtplib.html#smtp-example)
 
 #### *Challenge-Response*
 
@@ -402,8 +432,6 @@ Os *logs*, tanto de autenticação (*Authorization Server*) como de acesso a rec
 #### Validação de *Tokens*
 
 Para validar os *tokens* de acesso, o *Resource Server* verifica a assinatura do *token* através de JWKS (*JSON Web Key Set*), que contém as chaves públicas do *IdP*. Envolve a criação de um *endpoint* que retorna as chaves públicas do *IdP* usadas para assinar os *tokens* usando o algoritmo `RS256`.
-
-> Mais informação sobre este *standard* aqui: [Auth0 - JSON Web Key Set (JWKS)](https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-key-sets)
 
 Exemplo de um *JWKS*: 
 ```json
@@ -420,6 +448,8 @@ Exemplo de um *JWKS*:
     ]
 }
 ```
+
+> Mais informação sobre este *standard* (RFC 7517): [Auth0 - JSON Web Key Set (JWKS)](https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-key-sets)
 
 Ficheiro .PEM correspondente à chave pública:
 ```pem
@@ -438,7 +468,7 @@ nQIDAQAB
 
 ## Testes de Validação
 
-Ainda não chegamos cá...
+TODO: Ainda não chegamos cá...
 
 ### *Endpoints*
 
@@ -450,4 +480,4 @@ Ainda não chegamos cá...
 
 ## Conclusão
 
-Em suma, blah blah blah...
+TODO: Em suma, blah blah blah...

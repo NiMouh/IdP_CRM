@@ -17,15 +17,15 @@ As diretorias do projeto estão organizadas da seguinte forma:
 project/ --> Diretoria principal
 │
 ├── frontend/ --> Diretoria das aplicações cliente
-│   ├── client1/
-│   ├── client2/
-│   └── client3/
+│   ├── client1/ -> Diretoria da aplicação cliente 1 (com a aplicação cliente 1 e o seu *frontend*)
+│   ├── client2/ -> Diretoria da aplicação cliente 2 
+│   └── client3/ -> Diretoria da aplicação cliente 3
 │
 ├── backend/ --> Diretoria das aplicações servidor
 │   ├── database/
-│   │    ├── db_script.py
+│   │    ├── db_script.py --> *Script* para criar as tabelas da base de dados
 │   │    └── database.sql
-│   ├── idp.py
+│   ├── authorization_server.py
 │   └── resource_server.py
 │
 └── requirements.txt
@@ -78,14 +78,15 @@ $ bash generate_rsa.bash
   - [x] Criação de funções que gerem aleatoriamente os dados da base de dados;
   - [ ] Implementação de um sistema de logs;
   - [ ] Validação e sanitização dos dados inseridos pelo utilizador;
-  - [ ] Chamadas à base dados para o *backend*;
+  - [x] Chamadas à base dados para o *backend*;
 - Desenvolvimento do IdP (Simão Andrade e Ana Vidal):
   - [x] Desenvolvimento do *backend*;
   - [x] Desenvolvimento do *frontend* (design e interação com o utilizador);
   - [ ] Implementação de MFAs;
   - [x] Implementação de um sistema de logs;
   - [x] Gestão de *tokens* e *sessões*;
-  - [ ] Definição do cálculo do risco;
+  - [x] Definição do cálculo do risco;
+  - [ ] Proteção contra erros de CSRF (*Cross-Site Request Forgery*);
   - [ ] Implementação do sistema RBAC;
 - Desenvolvimento dos três Client Applications (Ana Vidal):
   - [ ] Implementação do *frontend* (design e interação com o utilizador);

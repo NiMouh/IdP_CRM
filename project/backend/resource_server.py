@@ -7,6 +7,7 @@ from hashlib import sha256
 import requests
 import base64
 from Crypto.PublicKey import RSA
+from authorization_server import add_log
 
 app = Flask(__name__)
 CORS(app) # This will enable all CORS requests
@@ -24,7 +25,6 @@ STATUS_CODE = {
 }
 
 JWKS_URL = 'http://127.0.0.1:5010/.well-known/jwks.json'
-
 
 DATABASE_PATH = r'.\database\db.sql'
 
@@ -203,7 +203,6 @@ def fetch_colaborador_contacts(colaborador : str) -> jsonify:
         contacts.update({contact[0]: colaborador_contact})
 
     return jsonify({'contacts': contacts}), STATUS_CODE['SUCCESS']
-
 
 # Given the name of the 'obra', obtain the address of the 'obra' from the database
 @app.route('/api/fetch_obra_address/<obra>', methods=['GET'])

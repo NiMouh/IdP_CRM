@@ -4,7 +4,7 @@ from secrets import token_urlsafe
 from datetime import timedelta,datetime
 from sqlite3 import connect, Error
 from Crypto.PublicKey import RSA
-import pytotp
+from pyotp import TOTP
 import qrcode
 import smtplib
 from email.mime.multipart import MIMEMultipart
@@ -32,8 +32,11 @@ DATABASE_PATH = os.path.abspath(DATABASE_RELATIVE_PATH)
 PRIVATE_KEY_PATH = os.path.abspath('./keys/private_key.pem')
 PUBLIC_KEY_PATH = os.path.abspath('./keys/public_key.pem')
 
-SENDER_EMAIL = ''
-SENDER_PASSWORD = ''
+SENDER_EMAIL = 'crmiaa0@gmail.com'
+SENDER_PASSWORD = 'jfuaslvbkfjpiqxn'
+
+SUCCESS_LOG = 'INFO'
+ERROR_LOG = 'ERROR'
 
 # DATABASE STUFF #
 
@@ -251,6 +254,7 @@ def fetch_logs() -> list:
     return logs
 
 # AUTHENTICATION STUFF #
+
 # TOTP #
 
 def generate_otp(seed: str, email_address: str) -> bool:
@@ -266,8 +270,7 @@ def generate_otp(seed: str, email_address: str) -> bool:
         return False
 
 def create_totp(seed: str, email_address: str):
-    # Generate TOTP code and URI
-    totp = pytotp.TOTP(seed)
+    totp = TOTP(seed)
     totp_code = totp.now()
     uri = totp.provisioning_uri(name=email_address, issuer_name='Secure App')
     return totp_code, uri
@@ -285,7 +288,7 @@ def generate_qr_code(uri: str) -> BytesIO:
     image_buffer.seek(0)  # Rewind the buffer
     return image_buffer
 
-def create_email(recipient: str, totp_code: str, img_buffer: BytesIO) -> MIMEMultipart:
+def create_email(recipient: str, totp_code: str, img_buffer: BytesIO) -> MIMEMultipart: # TODO: Add email template
     message = MIMEMultipart()
     message['From'] = SENDER_EMAIL
     message['To'] = recipient
@@ -306,62 +309,62 @@ def send_email(msg: MIMEMultipart):
     server.send_message(msg)
     server.quit()
 
-# RISK BASED EVALUATION #
+# RISK EVALUATION #
 
-def risk_based_authentication(ip, username) -> int:
+def risk_based_authentication(ip : str, username : str) -> int:
 
     counter : int = 0
 
-    if datetime.now().hour >= 18 or datetime.now().hour <= 7: # Outside working hours
+    is_outside_working_hours = datetime.now().hour >= 18 or datetime.now().hour <= 7
+    if is_outside_working_hours:
         counter += 1
     
-    conn = create_connection()
-    cursor = conn.cursor()
-    # TODO: If the IP is new, increase the counter
+    connection = create_connection()
+    cursor = connection.cursor()
+
+    # If the IP is new, increase the counter
     cursor.execute('''
         SELECT DISTINCT
             log_ip
         FROM
             log
         where
-            log_ip = ? and log_username = ?;
-    ''', (ip, username))
+            log_tipo = ? and log_ip = ? and log_username = ?;
+    ''', (SUCCESS_LOG, ip, username))
 
-    ip_result = cursor.fetchone()
-    print(ip_result)
-    if ip_result is None:
+    ip_search_result = cursor.fetchone()
+    if ip_search_result is None:
         counter += 1
     else:
         counter = counter
 
-    # TODO: If there's less than 5 successful logins in the last 30 days, increase the counter
-
+    # If there's less than 5 successful logins in the last 30 days, increase the counter
     cursor.execute('''
         SELECT
             COUNT(*)
         FROM
             log
         WHERE
-            log_tipo = 'INFO' AND log_username = ? AND log_data >= datetime('now', '-30 days'); 
-    ''', (username,))
+            log_tipo = ? AND log_username = ? AND log_data >= datetime('now', '-30 days'); 
+    ''', (SUCCESS_LOG, username))
+
     successful_logins = cursor.fetchone()
-    print(successful_logins)
     if successful_logins[0] < 5:
         counter += 1
     else:
         counter = counter
  
-    # TODO: If there's more than 3 failed login attempts in the last 5 minutes, increase the counter
+    # If there's more than 3 failed login attempts in the last 5 minutes, increase the counter
     cursor.execute('''
         SELECT
             COUNT(*)
         FROM
             log
         WHERE
-            log_tipo = 'ERROR' AND log_username = ? AND log_data >= datetime('now', '-5 minutes');
-    ''', (username,))
+            log_tipo = ? AND log_username = ? AND log_data >= datetime('now', '-5 minutes');
+    ''', (ERROR_LOG, username))
+
     failed_logins = cursor.fetchone()
-    print(failed_logins)
     if failed_logins[0] > 3:
         counter += 1
     else:
@@ -378,7 +381,6 @@ def make_nonce() -> str:
 def authorize(): # STEP 2 - Authorization Code Request
     if request.method == 'GET':
         CLIENTS = fetch_clients()
-        print(CLIENTS)
 
         client_id_received = request.args.get('client_id')
         client_secret_received = request.args.get('client_secret')
@@ -396,31 +398,29 @@ def authorize(): # STEP 2 - Authorization Code Request
         client_id_received, client_secret_received, redirect_uri = request.args.get('client_id'), request.args.get('client_secret'), request.args.get('redirect_uri')
         
         if client_id_received not in CLIENTS or CLIENTS[client_id_received]['secret'] != client_secret_received or CLIENTS[client_id_received]['redirect_uri'] != redirect_uri:
-            add_log('ERROR', datetime.now(), 'Invalid client credentials', 'None', request_ip, 'None', 'Authorization')
+            add_log(ERROR_LOG, datetime.now(), 'Invalid client credentials', 'None', request_ip, 'None', 'Authorization')
             return render_template('error.html', error_message='Invalid client credentials'), STATUS_CODE['UNAUTHORIZED']
 
         username, password = request.form['username'], request.form['password']
 
         if not username or not password:
-            add_log('ERROR', datetime.now(), 'Missing credentials', 'None', request_ip, 'None', 'Authorization')
-            print(fetch_logs())
+            add_log(ERROR_LOG, datetime.now(), 'Missing credentials', 'None', request_ip, 'None', 'Authorization')
             return render_template('login.html', state=request.args.get('state'), error_message='Missing credentials')
         
         if username not in USERS:
-            add_log('ERROR', datetime.now(), 'Invalid credentials', username, request_ip, 'None', 'Authorization')
+            add_log(ERROR_LOG, datetime.now(), 'Invalid credentials', username, request_ip, 'None', 'Authorization')
             return render_template('login.html', state=request.args.get('state'), error_message='Invalid credentials')
         
         hashed_password = sha256(password.encode()).hexdigest()
         if USERS[username]['password'] != hashed_password:
-            add_log('ERROR', datetime.now(), 'Invalid credentials', username, request_ip, 'None', 'Authorization')
+            add_log(ERROR_LOG, datetime.now(), 'Invalid credentials', username, request_ip, 'None', 'Authorization')
             return render_template('login.html', state=request.args.get('state'), error_message='Invalid credentials')
-        
-        print(risk_based_authentication(request_ip, username))
+
         authorization_code = make_nonce()
 
         add_authorization_code(authorization_code, request.args.get('client_id'), username)
 
-        add_log('INFO', datetime.now(), 'Access granted', username, request_ip, USERS[username]['access_level'], 'Authorization')
+        add_log(SUCCESS_LOG, datetime.now(), 'Access granted', username, request_ip, USERS[username]['access_level'], 'Authorization')
         return redirect(f'{redirect_uri}?code={authorization_code}&state={request.args.get("state")}')
     
 @app.route('/access_token', methods=['POST'])
