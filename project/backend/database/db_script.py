@@ -121,6 +121,7 @@ cursor.execute('''
         utilizador_id INTEGER PRIMARY KEY AUTOINCREMENT,
         utilizador_nome VARCHAR(50) NOT NULL,
         utilizador_password VARCHAR(50) NOT NULL,
+        utilizador_salt VARCHAR(10) NOT NULL,
         utilizador_data_de_criacao DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
         utilizador_ultimo_login DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
         fk_nivel_acesso INTEGER,
@@ -372,12 +373,13 @@ cursor.execute('''
     Insert into obra (obra_nome, obra_rua, obra_localidade, fk_cliente, fk_estado, fk_distrito, fk_concelho, fk_freguesia)
     VALUES ('Obra1', 'Rua do Campo', 'Aguada de Cima', 1, 1, 1, 1, 1), ('Obra2', 'Rua do Campo', 'Borralha', 1, 2, 3, 4, 2);
 ''')
-password_ana = sha256('ana'.encode()).hexdigest()
-password_simao = sha256('simao'.encode()).hexdigest() 
+salt = os.urandom(4).hex()
+password_ana = sha256('ana'.encode() + salt.encode()).hexdigest()
+password_simao = sha256('simao'.encode() + salt.encode()).hexdigest()
 cursor.execute('''
-    INSERT INTO utilizador (utilizador_nome, utilizador_password, fk_nivel_acesso)
-    VALUES ('ana', ?, 1), ('simao', ?, 2);
-''' , (password_ana, password_simao))
+    INSERT INTO utilizador (utilizador_nome, utilizador_password, utilizador_salt, fk_nivel_acesso)
+    VALUES ('ana', ?, ?, 1), ('simao', ?, ?, 2);
+''' , (password_ana, salt, password_simao, salt))
 
 cursor.execute('''
     INSERT INTO produto (produtoCodigo, produtoNome, fk_obra_id)

@@ -52,7 +52,7 @@ def fetch_users() -> dict:
     conn = create_connection()
     cursor = conn.cursor()
     cursor.execute('''SELECT 
-                        u.utilizador_nome, u.utilizador_password, n.nivel_acesso_nome
+                        u.utilizador_nome, u.utilizador_password, u.utilizador_salt, n.nivel_acesso_nivel
                    FROM 
                         utilizador u
                    JOIN 
@@ -64,7 +64,7 @@ def fetch_users() -> dict:
     user_db = cursor.fetchall()
     users = {}
     for user in user_db:
-        users[user[0]] = {'password': user[1], 'access_level': user[2]}
+        users[user[0]] = {'password': user[1], 'salt': user[2], 'access_level': user[3]}
  
     cursor.close()
     return users
@@ -411,7 +411,7 @@ def authorize(): # STEP 2 - Authorization Code Request
             add_log(ERROR_LOG, datetime.now(), 'Invalid credentials', username, request_ip, 'None', 'Authorization')
             return render_template('login.html', state=request.args.get('state'), error_message='Invalid credentials')
         
-        hashed_password = sha256(password.encode()).hexdigest()
+        hashed_password = sha256(password.encode() + USERS[username]['salt'].encode()).hexdigest()
         if USERS[username]['password'] != hashed_password:
             add_log(ERROR_LOG, datetime.now(), 'Invalid credentials', username, request_ip, 'None', 'Authorization')
             return render_template('login.html', state=request.args.get('state'), error_message='Invalid credentials')
