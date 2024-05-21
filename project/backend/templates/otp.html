@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página OTP</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .otp-input {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .otp-input input {
+            font-size: 18px;
+            padding: 10px;
+            width: 40px;
+            height: 40px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .countdown {
+            font-size: 24px;
+            color: #333;
+            margin-top: 20px;
+        }
+        .resend-link {
+            display: none;
+            margin-top: 20px;
+        }
+        .resend-link a {
+            text-decoration: none;
+            color: #007bff;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Digite seu OTP</h1>
+        <div class="otp-input">
+            <input type="text" maxlength="1" oninput="moveToNext(this, event)" autofocus>
+            <input type="text" maxlength="1" oninput="moveToNext(this, event)">
+            <input type="text" maxlength="1" oninput="moveToNext(this, event)">
+            <input type="text" maxlength="1" oninput="moveToNext(this, event)">
+            <input type="text" maxlength="1" oninput="moveToNext(this, event)">
+            <input type="text" maxlength="1" oninput="moveToNext(this, event)">
+        </div>
+        <div class="countdown" id="countdown">30</div>
+        <div class="resend-link" id="resend-link">
+            <a href="#" onclick="resendOTP()">Reenviar OTP</a>
+        </div>
+    </div>
+
+    <script>
+        let countdownElement = document.getElementById('countdown');
+        let resendLinkElement = document.getElementById('resend-link');
+        let timeLeft = 30;
+
+        function updateCountdown() {
+            if (timeLeft <= 0) {
+                countdownElement.innerHTML = 'Tempo Esgotado!';
+                resendLinkElement.style.display = 'block';
+            } else {
+                countdownElement.innerHTML = timeLeft;
+                timeLeft--;
+                setTimeout(updateCountdown, 1000);
+            }
+        }
+
+        function moveToNext(currentInput, event) {
+            if (currentInput.value.length === 1 && event.inputType !== 'deleteContentBackward') {
+                let nextInput = currentInput.nextElementSibling;
+                if (nextInput) {
+                    nextInput.focus();
+                }
+            } else if (event.inputType === 'deleteContentBackward') {
+                let prevInput = currentInput.previousElementSibling;
+                if (prevInput) {
+                    prevInput.focus();
+                }
+            }
+        }
+
+        function resendOTP() {
+            alert('OTP reenviado!');
+            // Reiniciar o contador
+            timeLeft = 30;
+            resendLinkElement.style.display = 'none';
+            updateCountdown();
+        }
+
+        updateCountdown();
+    </script>
+</body>
+</html>
