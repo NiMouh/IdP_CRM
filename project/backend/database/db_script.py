@@ -120,6 +120,7 @@ cursor.execute('''
     CREATE TABLE IF NOT EXISTS utilizador (
         utilizador_id INTEGER PRIMARY KEY AUTOINCREMENT,
         utilizador_nome VARCHAR(50) NOT NULL,
+        utilizador_email VARCHAR(50) NOT NULL,
         utilizador_password VARCHAR(50) NOT NULL,
         utilizador_salt VARCHAR(10) NOT NULL,
         utilizador_data_de_criacao DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -377,8 +378,8 @@ salt = os.urandom(4).hex()
 password_ana = sha256('ana'.encode() + salt.encode()).hexdigest()
 password_simao = sha256('simao'.encode() + salt.encode()).hexdigest()
 cursor.execute('''
-    INSERT INTO utilizador (utilizador_nome, utilizador_password, utilizador_salt, fk_nivel_acesso)
-    VALUES ('ana', ?, ?, 1), ('simao', ?, ?, 2);
+    INSERT INTO utilizador (utilizador_nome, utilizador_password, utilizador_salt, fk_nivel_acesso, utilizador_email)
+    VALUES ('ana', ?, ?, 1, 'raquelvidal99@hotmail.com'), ('simao', ?, ?, 2, 'simaoaugusto11@hotmail.com');
 ''' , (password_ana, salt, password_simao, salt))
 
 cursor.execute('''

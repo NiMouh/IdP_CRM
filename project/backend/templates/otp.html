@@ -55,18 +55,26 @@
 <body>
     <div class="container">
         <h1>Digite seu OTP</h1>
-        <div class="otp-input">
-            <input type="text" maxlength="1" oninput="moveToNext(this, event)" autofocus>
-            <input type="text" maxlength="1" oninput="moveToNext(this, event)">
-            <input type="text" maxlength="1" oninput="moveToNext(this, event)">
-            <input type="text" maxlength="1" oninput="moveToNext(this, event)">
-            <input type="text" maxlength="1" oninput="moveToNext(this, event)">
-            <input type="text" maxlength="1" oninput="moveToNext(this, event)">
-        </div>
-        <div class="countdown" id="countdown">30</div>
-        <div class="resend-link" id="resend-link">
-            <a href="#" onclick="resendOTP()">Reenviar OTP</a>
-        </div>
+        <form method="POST">
+            <div class="otp-input">
+                <input type="text" name="otp" maxlength="1" oninput="moveToNext(this, event)" autofocus>
+                <input type="text" name="otp" maxlength="1" oninput="moveToNext(this, event)">
+                <input type="text" name="otp" maxlength="1" oninput="moveToNext(this, event)">
+                <input type="text" name="otp" maxlength="1" oninput="moveToNext(this, event)">
+                <input type="text" name="otp" maxlength="1" oninput="moveToNext(this, event)">
+                <input type="text" name="otp" maxlength="1" oninput="moveToNext(this, event)">
+            </div>
+            <input type="hidden" name="client_id" value="{{ client_id }}">
+            <input type="hidden" name="client_secret" value="{{ client_secret }}">
+            <input type="hidden" name="redirect_uri" value="{{ redirect_uri }}">
+            <input type="hidden" name="state" value="{{ state }}">
+            <input type="hidden" name="username" value="{{ username }}">
+            <div class="countdown" id="countdown">30</div>
+            <div class="resend-link" id="resend-link">
+                <button onclick="resendOTP('{{ username }}')">Reenviar OTP</button>
+            </div>
+            <button type="submit">Enviar OTP</button>
+        </form>
     </div>
 
     <script>
@@ -99,15 +107,21 @@
             }
         }
 
-        function resendOTP() {
-            alert('OTP reenviado!');
-            // Reiniciar o contador
-            timeLeft = 30;
-            resendLinkElement.style.display = 'none';
-            updateCountdown();
+        function resendOTP(username) {
+            $.ajax({
+                type: 'POST',
+                url: '/resend_otp/' + username,
+                success: function(response) {
+                    alert(response); // Exibe a mensagem de sucesso retornada pelo backend
+                },
+                error: function(xhr, status, error) {
+                    alert('Erro ao reenviar OTP: ' + error); // Exibe um alerta em caso de erro
+                }
+            });
         }
 
         updateCountdown();
     </script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </body>
 </html>

@@ -52,7 +52,7 @@ def fetch_users() -> dict:
     conn = create_connection()
     cursor = conn.cursor()
     cursor.execute('''SELECT 
-                        u.utilizador_nome, u.utilizador_password, u.utilizador_salt, n.nivel_acesso_nivel
+                        u.utilizador_nome, u.utilizador_password, u.utilizador_salt, n.nivel_acesso_nivel, u.utilizador_email
                    FROM 
                         utilizador u
                    JOIN 
@@ -64,7 +64,7 @@ def fetch_users() -> dict:
     user_db = cursor.fetchall()
     users = {}
     for user in user_db:
-        users[user[0]] = {'password': user[1], 'salt': user[2], 'access_level': user[3]}
+        users[user[0]] = {'password': user[1], 'salt': user[2], 'access_level': user[3], 'email': user[4]}
  
     cursor.close()
     return users
@@ -284,7 +284,7 @@ def generate_qr_code(uri: str) -> BytesIO:
     # Store the QR code image in a bytes buffer
     image_buffer = BytesIO()
     image = qr.make_image(fill='black', back_color='white')
-    image.save(image_buffer, format='PNG')
+    image.save(image_buffer)
     image_buffer.seek(0)  # Rewind the buffer
     return image_buffer
 
@@ -377,6 +377,48 @@ def risk_based_authentication(ip : str, username : str) -> int:
 def make_nonce() -> str:
     return token_urlsafe(22)
 
+@app.route('/2fa', methods=['GET', 'POST'])
+def two_factor_authentication():
+    if request.method == 'GET':
+        CLIENTS = fetch_clients()
+        client_id_received = request.args.get('client_id')
+
+        if client_id_received not in CLIENTS:
+            print('Caiu aqui')
+            return render_template('error.html', error_message='Invalid client credentials'), STATUS_CODE['UNAUTHORIZED']
+        
+        return render_template('otp.html', client_id=client_id_received, redirect_uri=request.args.get('redirect_uri'), state=request.args.get('state'), username=request.args.get('username'), error_message=None)
+
+    elif request.method == 'POST':
+        CLIENTS = fetch_clients()
+        client_id_received = request.form.get('client_id')
+        username = request.form.get('username')
+        otp = ''.join(request.form.getlist('otp'))
+
+        if client_id_received not in CLIENTS:
+            return render_template('error.html', error_message='Invalid client credentials'), STATUS_CODE['UNAUTHORIZED']
+        
+        USERS = fetch_users()
+        seed = USERS[username]['salt']
+        seedBase32 = base64.b32encode(seed.encode()).decode('utf-8')
+        totp = TOTP(seedBase32)
+
+        if not totp.verify(otp):
+            return render_template('otp.html', client_id=client_id_received, redirect_uri=request.form.get('redirect_uri'), state=request.form.get('state'), username=username, error_message='Invalid OTP')
+        
+        authorization_code = make_nonce()
+        add_authorization_code(authorization_code, client_id_received, username)
+        return redirect(f'{request.form.get("redirect_uri")}?code={authorization_code}&state={request.form.get("state")}')
+
+@app.route('/resend_otp/<string:username>', methods=['POST'])
+def resend_otp(username: str):
+    USERS = fetch_users()
+    seed = USERS[username]['salt']
+    seedBase32 = base64.b32encode(seed.encode()).decode('utf-8')
+    email_address = USERS[username]['email']
+    generate_otp(seedBase32, email_address)
+    return redirect('/2fa')
+
 @app.route('/authorize', methods=['GET', 'POST'])
 def authorize(): # STEP 2 - Authorization Code Request
     if request.method == 'GET':
@@ -415,7 +457,16 @@ def authorize(): # STEP 2 - Authorization Code Request
         if USERS[username]['password'] != hashed_password:
             add_log(ERROR_LOG, datetime.now(), 'Invalid credentials', username, request_ip, 'None', 'Authorization')
             return render_template('login.html', state=request.args.get('state'), error_message='Invalid credentials')
-
+        
+        risk_score = risk_based_authentication(request_ip, username)
+        if risk_score >= 0:
+            seed = USERS[username]['salt']
+            seedBase32 = base64.b32encode(seed.encode()).decode('utf-8')
+            email_address = USERS[username]['email']
+            print(f'email_address: {email_address}')
+            generate_otp(seedBase32, email_address)
+            return redirect(f'/2fa?client_id={client_id_received}&redirect_uri={redirect_uri}&state={request.args.get("state")}&username={username}')
+        
         authorization_code = make_nonce()
 
         add_authorization_code(authorization_code, request.args.get('client_id'), username)
