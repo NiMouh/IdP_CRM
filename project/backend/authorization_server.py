@@ -259,9 +259,142 @@ def fetch_logs() -> list:
 
 # challenge-response authentication
 def generate_challenge(username: str) -> str:
-    return ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+    challenge = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+    return challenge
 
+def save_challenge(username : str, challenge : str) -> None:
+    conn = create_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO 
+            challenge (challenge_nonce, fk_utilizador_id)
+        VALUES 
+            (?, (SELECT utilizador_id FROM utilizador WHERE utilizador_nome = ?));
+    ''', (challenge, username))
+    conn.commit()
+    cursor.close()
+    conn.close()
 
+def remove_challenge(username : str) -> None:
+    conn = create_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        DELETE FROM 
+            challenge
+        WHERE 
+            fk_utilizador_id = (SELECT utilizador_id FROM utilizador WHERE utilizador_nome = ?);
+    ''', (username,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+def fetch_question() -> str:
+    conn = create_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT 
+            q.question_question
+        FROM
+            question q
+        ORDER BY
+            RANDOM()
+        LIMIT 1;
+    ''')
+    question = cursor.fetchone()
+
+    cursor.close()
+
+    return question[0]
+
+def fetch_response(username : str, question : str) -> str:
+    conn = create_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT 
+            r.response_answer
+        FROM
+            response r
+        JOIN
+            utilizador u
+        ON
+            r.fk_utilizador_id = u.utilizador_id
+        JOIN
+            question q
+        ON
+            r.fk_question_id = q.question_id
+        WHERE
+            u.utilizador_nome = ? AND q.question_question = ?;
+    ''', (username, question))
+    response = cursor.fetchone()
+    cursor.close()
+
+    return response[0]
+
+def fetch_challenge(username : str) -> str:
+    conn = create_connection()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT 
+            c.challenge_nonce
+        FROM
+            challenge c
+        JOIN
+            utilizador u
+        ON
+            c.fk_utilizador_id = u.utilizador_id
+        WHERE
+            u.utilizador_nome = ?
+        ORDER BY c.challenge_id DESC
+    ''', (username,))
+    challenge = cursor.fetchone()
+    cursor.close()
+
+    return challenge[0]
+
+@app.route('/challenge', methods=['GET', 'POST'])
+def challenge():
+    if request.method == 'GET':
+        client_id_received = request.args.get('client_id')
+
+        CLIENTS = fetch_clients()
+        if client_id_received not in CLIENTS:
+            return render_template('error.html', error_message='Invalid client credentials'), STATUS_CODE['UNAUTHORIZED']
+        
+        question = fetch_question()
+
+        return render_template('challenge.html', client_id=client_id_received, redirect_uri=request.args.get('redirect_uri'), state=request.args.get('state'), username=request.args.get('username'), challenge=request.args.get('challenge'), question=question, error_message=None)
+
+    elif request.method == 'POST':
+        client_id_received = request.form.get('client_id')
+        username = request.form.get('username')
+        challenge = request.form.get('challenge')
+        password = request.form.get('response')
+        question = request.form.get('question')
+
+        CLIENTS = fetch_clients()
+        if client_id_received not in CLIENTS:
+            return render_template('error.html', error_message='Invalid client credentials'), STATUS_CODE['UNAUTHORIZED']
+
+        # digest do challenge com a password
+        response = sha256(challenge.encode() + password.encode()).hexdigest()
+
+        # Obter resposta do utilizador
+        get_password = fetch_response(username, question)
+
+        # Obter challenge do utilizador
+        get_challenge = fetch_challenge(username)
+
+        # digest da password e do challenge
+        verification_response = sha256(get_challenge.encode() + get_password.encode()).hexdigest()
+
+        if response != verification_response:
+            return render_template('challenge.html', client_id=client_id_received, redirect_uri=request.form.get('redirect_uri'), state=request.form.get('state'), username=username, challenge=challenge, question=question, error_message='Invalid response')
+        
+        remove_challenge(username)
+
+        authorization_code = make_nonce()
+        add_authorization_code(authorization_code, client_id_received, username)
+        return redirect(f'{request.form.get("redirect_uri")}?code={authorization_code}&state={request.form.get("state")}')
 
 # TOTP #
 
@@ -508,22 +641,23 @@ def authorize(): # STEP 2 - Authorization Code Request
         
         risk_score = risk_based_authentication(request_ip, username)
         if risk_score >= 0:
+            challenge = generate_challenge(username)
+            save_challenge(username, challenge)
+            # add_log(ERROR_LOG, datetime.now(), 'High risk login', username, request_ip, USERS[username]['access_level'], 'Authorization')
+            return redirect(f'/challenge?client_id={client_id_received}&redirect_uri={redirect_uri}&state={request.args.get("state")}&username={username}&challenge={challenge}')
+        if risk_score >= 2:
             seed = USERS[username]['salt']
             seed_base32 = base64.b32encode(seed.encode()).decode('utf-8').rstrip('=')
             email_address = USERS[username]['email']
             generate_otp(seed_base32, email_address)
             return redirect(f'/2fa?client_id={client_id_received}&redirect_uri={redirect_uri}&state={request.args.get("state")}&username={username}')
-        if risk_score >= 2:
-            challenge = generate_challenge(username)
-            #add_log(ERROR_LOG, datetime.now(), 'High risk login', username, request_ip, USERS[username]['access_level'], 'Authorization')
-            return redirect(f'/challenge?client_id={client_id_received}&redirect_uri={redirect_uri}&state={request.args.get("state")}&username={username}&challenge={challenge}')
-        authorization_code = make_nonce()
 
+        authorization_code = make_nonce()
         add_authorization_code(authorization_code, request.args.get('client_id'), username)
 
         add_log(SUCCESS_LOG, datetime.now(), 'Access granted', username, request_ip, USERS[username]['access_level'], 'Authorization')
         return redirect(f'{redirect_uri}?code={authorization_code}&state={request.args.get("state")}')
-    
+
 @app.route('/access_token', methods=['POST'])
 def access_token() -> jsonify: # STEP 4 - Access Token Grant
     CLIENTS = fetch_clients()

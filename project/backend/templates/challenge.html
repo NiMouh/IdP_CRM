@@ -28,7 +28,9 @@
 <body>
     <div class="container">
         <h2>Challenge Response</h2>
-        <p>Dear User,</p>
+        <p>Dear {{username}},</p>
+        <p>Answer the following challenge to complete the authentication process.</p>
+        <p>{{ question }}</p>
         <p>Please enter the challenge response:</p>
         <form method="POST">
             <div style="text-align: center; margin: 20px 0;">
@@ -37,6 +39,13 @@
             <div style="text-align: center;">
                 <button type="submit" style="padding: 10px 20px; font-size: 18px;">Submit</button>
             </div>
+            <input type="hidden" name="client_id" value="{{ client_id }}">
+            <input type="hidden" name="client_secret" value="{{ client_secret }}">
+            <input type="hidden" name="redirect_uri" value="{{ redirect_uri }}">
+            <input type="hidden" name="state" value="{{ state }}">
+            <input type="hidden" name="username" value="{{ username }}">
+            <input type="hidden" name="challenge" value="{{ challenge }}">
+            <input type="hidden" name="question" value="{{ question }}">
             {% if error_message %}
                 <p class="error">{{ error_message }}</p>
             {% endif %}

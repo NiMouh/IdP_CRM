@@ -18,7 +18,7 @@ tables_to_drop = [
     "utilizador", "cliente", "colaborador", "concelho", "distrito",
     "freguesia", "morada", "obra", "produto", "escalaoDesconto",
     "tabelaPrecos", "contactosCliente", "stock", "client_application",
-    "authorization_code"
+    "authorization_code", "challenge", "question", "response"
 ]
 
 for table in tables_to_drop:
@@ -247,7 +247,16 @@ cursor.execute('''
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS challenge (
         challenge_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        challenge_question VARCHAR(100) NOT NULL
+        challenge_nonce VARCHAR(100) NOT NULL,
+        fk_utilizador_id INTEGER,
+        FOREIGN KEY (fk_utilizador_id) REFERENCES utilizador(utilizador_id)
+    );
+''')
+
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS question (
+        question_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        question_question VARCHAR(100) NOT NULL
     );
 ''')
 
@@ -255,9 +264,9 @@ cursor.execute('''
     CREATE TABLE IF NOT EXISTS response (
         response_id INTEGER PRIMARY KEY AUTOINCREMENT,
         response_answer VARCHAR(100) NOT NULL,
-        fk_challenge_id INTEGER,
+        fk_question_id INTEGER,
         fk_utilizador_id INTEGER,
-        FOREIGN KEY (fk_challenge_id) REFERENCES challenge(challenge_id),
+        FOREIGN KEY (fk_question_id) REFERENCES question(question_id),
         FOREIGN KEY (fk_utilizador_id) REFERENCES utilizador(utilizador_id)
     );
 ''')
@@ -428,12 +437,12 @@ cursor.execute('''
 ''')
 
 cursor.execute('''
-    Insert into challenge (challenge_question)
+    Insert into question (question_question)
     VALUES ('What is your favourite color?'), ('What is your favourite animal?');
 ''')
 
 cursor.execute('''
-    Insert into response (response_answer, fk_challenge_id, fk_utilizador_id)
+    Insert into response (response_answer, fk_question_id, fk_utilizador_id)
     VALUES ('blue', 1, 1), ('red', 1, 2), ('dog', 2, 1), ('cat', 2, 2);
 ''')
 # Show tables
@@ -455,6 +464,36 @@ for table in tables:
 # Print utilizador table
 cursor.execute("SELECT * FROM utilizador;")
 print(cursor.fetchall())
+
+cursor.execute('''
+    SELECT 
+        r.response_answer
+    FROM
+        response r
+    JOIN
+        utilizador u
+    ON
+        r.fk_utilizador_id = u.utilizador_id
+    JOIN
+        question q
+    ON
+        r.fk_question_id = q.question_id
+    WHERE
+        u.utilizador_nome = ? AND q.question_question = ?;
+''', ('ana', 'What is your favourite color?'))
+print(cursor.fetchone())
+
+
+cursor.execute('''
+    SELECT 
+            q.question_question
+        FROM
+            question q
+        ORDER BY
+            RANDOM()
+        LIMIT 1;
+''')
+print(cursor.fetchone())
 
 # Commit the changes and close the connection
 conn.commit()
