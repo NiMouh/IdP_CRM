@@ -244,6 +244,23 @@ cursor.execute('''
     );
 ''')
 
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS challenge (
+        challenge_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        challenge_question VARCHAR(100) NOT NULL
+    );
+''')
+
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS response (
+        response_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        response_answer VARCHAR(100) NOT NULL,
+        fk_challenge_id INTEGER,
+        fk_utilizador_id INTEGER,
+        FOREIGN KEY (fk_challenge_id) REFERENCES challenge(challenge_id),
+        FOREIGN KEY (fk_utilizador_id) REFERENCES utilizador(utilizador_id)
+    );
+''')
 # Insert data into the table
 cursor.execute('''
     INSERT INTO tabelaPrecos (tabelaPrecos_Unit, fk_produto_id)
@@ -408,6 +425,16 @@ cursor.execute('''
 cursor.execute('''
     Insert into client_application (client_application_client_id, client_application_secret, client_application_redirect_uri)
     VALUES ('client_id', '123456', 'http://127.0.0.1:5000/authorize');
+''')
+
+cursor.execute('''
+    Insert into challenge (challenge_question)
+    VALUES ('What is your favourite color?'), ('What is your favourite animal?');
+''')
+
+cursor.execute('''
+    Insert into response (response_answer, fk_challenge_id, fk_utilizador_id)
+    VALUES ('blue', 1, 1), ('red', 1, 2), ('dog', 2, 1), ('cat', 2, 2);
 ''')
 # Show tables
 cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
