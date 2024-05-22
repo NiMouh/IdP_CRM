@@ -292,23 +292,43 @@ def create_email(recipient_email: str, totp_code: str, img_buffer: BytesIO) -> M
     message['To'] = recipient_email
     message['Subject'] = '2FA - CRM IAA'
 
+    recipient_name = recipient_email.split('@')[0] # name of the user
+
     html_content = f"""
     <html>
+    <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    </head>
+    <style>
+        img {{
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #eaeaea;
+            border-radius: 10px;
+        }}
+
+        .code-container {{
+            display: flex;
+            justify-content: center;
+        }}
+
+    </style>
     <body style="font-family: Arial, sans-serif; color: #333;">
         <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 10px;">
             <h2 style="color: #0056b3; text-align: center;">Verification Code</h2>
-            <p>Dear User,</p>
+            <p>Dear {recipient_name},</p>
             <p>We are pleased to provide you with your OTP code. Please use the code below to complete your verification process:</p>
             <div style="text-align: center; font-size: 24px; font-weight: bold; margin: 20px 0;">{totp_code}</div>
-            <p>Alternatively, you can scan the QR code below using an authenticator app such as Google Authenticator, Authy, or any other compatible app:</p>
-            <div style="text-align: center; margin: 20px 0;">
-                <img src="cid:qrcode.png" alt="QR Code" style="border: 1px solid #eaeaea; padding: 10px; border-radius: 10px;"/>
+            <p>Alternatively, you can scan the QR code below using an authenticator app such as <b>Google Authenticator</b>, <b>Authy</b>, or any other compatible app:</p>
+            <div class="code-container">
+                <img src="cid:qrcode.png" alt="QR Code"/>
             </div>
             <p>Thank you for using our service. If you have any questions, feel free to contact our support team.</p>
             <p>Best regards,</p>
             <p style="font-weight: bold;">CRM IAA</p>
             <hr style="border-top: 1px solid #eaeaea;"/>
-            <p style="font-size: 12px; color: #999;">This is an automated message, please do not reply. If you need assistance, contact support at support@yourcompany.com.</p>
+            <p style="font-size: 12px; color: #999;">This is an automated message, please do not reply. If you need assistance, contact support at support@crmiaa.com.</p>
         </div>
     </body>
     </html>
@@ -419,9 +439,9 @@ def two_factor_authentication():
             return render_template('error.html', error_message='Invalid client credentials'), STATUS_CODE['UNAUTHORIZED']
         
         USERS = fetch_users()
-        seed = USERS[username]['salt'].encode()
-        seedBase32 = base64.b32encode(seed).decode('utf-8')
-        totp = TOTP(seedBase32)
+        seed = USERS[username]['salt']
+        seed_base32 = base64.b32encode(seed.encode()).decode('utf-8').rstrip('=')
+        totp = TOTP(seed_base32)
 
         if not totp.verify(otp):
             return render_template('otp.html', client_id=client_id_received, redirect_uri=request.form.get('redirect_uri'), state=request.form.get('state'), username=username, error_message='Invalid code')
@@ -433,10 +453,10 @@ def two_factor_authentication():
 @app.route('/resend_otp/<string:username>', methods=['POST'])
 def resend_otp(username: str):
     USERS = fetch_users()
-    seed = USERS[username]['salt'].encode()
-    seedBase32 = base64.b32encode(seed).decode('utf-8')
+    seed = USERS[username]['salt']
+    seed_base32 = base64.b32encode(seed.encode()).decode('utf-8').rstrip('=')
     email_address = USERS[username]['email']
-    generate_otp(seedBase32, email_address)
+    generate_otp(seed_base32, email_address)
     return redirect('/2fa')
 
 @app.route('/authorize', methods=['GET', 'POST'])
@@ -481,10 +501,9 @@ def authorize(): # STEP 2 - Authorization Code Request
         risk_score = risk_based_authentication(request_ip, username)
         if risk_score >= 0:
             seed = USERS[username]['salt']
-            seedBase32 = base64.b32encode(seed.encode()).decode('utf-8')
+            seed_base32 = base64.b32encode(seed.encode()).decode('utf-8').rstrip('=')
             email_address = USERS[username]['email']
-            print(f'email_address: {email_address}')
-            generate_otp(seedBase32, email_address)
+            generate_otp(seed_base32, email_address)
             return redirect(f'/2fa?client_id={client_id_received}&redirect_uri={redirect_uri}&state={request.args.get("state")}&username={username}')
         
         authorization_code = make_nonce()
