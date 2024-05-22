@@ -263,20 +263,18 @@ def generate_otp(seed: str, email_address: str) -> bool:
         image_buffer = generate_qr_code(uri)
         message = create_email(email_address, totp_code, image_buffer)
         send_email(message)
-        print(f'Email sent to {email_address} with TOTP and QR code.')
         return True
     except Exception as e:
-        print(f'Failed to send email: {e}')
+        print(f'Failed to generate OTP: {e}')
         return False
 
 def create_totp(seed: str, email_address: str):
     totp = TOTP(seed)
     totp_code = totp.now()
-    uri = totp.provisioning_uri(name=email_address, issuer_name='Secure App')
+    uri = totp.provisioning_uri(name=email_address, issuer_name='CRM IAA')
     return totp_code, uri
 
 def generate_qr_code(uri: str) -> BytesIO:
-    # Generate QR code for the URI
     qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=10, border=4)
     qr.add_data(uri)
     qr.make(fit=True)
@@ -288,18 +286,40 @@ def generate_qr_code(uri: str) -> BytesIO:
     image_buffer.seek(0)  # Rewind the buffer
     return image_buffer
 
-def create_email(recipient: str, totp_code: str, img_buffer: BytesIO) -> MIMEMultipart: # TODO: Add email template
+def create_email(recipient_email: str, totp_code: str, img_buffer: BytesIO) -> MIMEMultipart:
     message = MIMEMultipart()
     message['From'] = SENDER_EMAIL
-    message['To'] = recipient
-    message['Subject'] = 'Your TOTP and QR Code'
-    
-    body = f'Your TOTP code is: {totp_code}'
-    message.attach(MIMEText(body, 'plain'))
-    
+    message['To'] = recipient_email
+    message['Subject'] = '2FA - CRM IAA'
+
+    html_content = f"""
+    <html>
+    <body style="font-family: Arial, sans-serif; color: #333;">
+        <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 10px;">
+            <h2 style="color: #0056b3; text-align: center;">Verification Code</h2>
+            <p>Dear User,</p>
+            <p>We are pleased to provide you with your OTP code. Please use the code below to complete your verification process:</p>
+            <div style="text-align: center; font-size: 24px; font-weight: bold; margin: 20px 0;">{totp_code}</div>
+            <p>Alternatively, you can scan the QR code below using an authenticator app such as Google Authenticator, Authy, or any other compatible app:</p>
+            <div style="text-align: center; margin: 20px 0;">
+                <img src="cid:qrcode.png" alt="QR Code" style="border: 1px solid #eaeaea; padding: 10px; border-radius: 10px;"/>
+            </div>
+            <p>Thank you for using our service. If you have any questions, feel free to contact our support team.</p>
+            <p>Best regards,</p>
+            <p style="font-weight: bold;">CRM IAA</p>
+            <hr style="border-top: 1px solid #eaeaea;"/>
+            <p style="font-size: 12px; color: #999;">This is an automated message, please do not reply. If you need assistance, contact support at support@yourcompany.com.</p>
+        </div>
+    </body>
+    </html>
+    """
+
+    message.attach(MIMEText(html_content, 'html'))
+
     image = MIMEImage(img_buffer.getvalue(), name='qrcode.png')
+    image.add_header('Content-ID', '<qrcode.png>')
     message.attach(image)
-    
+
     return message
 
 def send_email(msg: MIMEMultipart): 
@@ -399,12 +419,12 @@ def two_factor_authentication():
             return render_template('error.html', error_message='Invalid client credentials'), STATUS_CODE['UNAUTHORIZED']
         
         USERS = fetch_users()
-        seed = USERS[username]['salt']
-        seedBase32 = base64.b32encode(seed.encode()).decode('utf-8')
+        seed = USERS[username]['salt'].encode()
+        seedBase32 = base64.b32encode(seed).decode('utf-8')
         totp = TOTP(seedBase32)
 
         if not totp.verify(otp):
-            return render_template('otp.html', client_id=client_id_received, redirect_uri=request.form.get('redirect_uri'), state=request.form.get('state'), username=username, error_message='Invalid OTP')
+            return render_template('otp.html', client_id=client_id_received, redirect_uri=request.form.get('redirect_uri'), state=request.form.get('state'), username=username, error_message='Invalid code')
         
         authorization_code = make_nonce()
         add_authorization_code(authorization_code, client_id_received, username)
@@ -413,8 +433,8 @@ def two_factor_authentication():
 @app.route('/resend_otp/<string:username>', methods=['POST'])
 def resend_otp(username: str):
     USERS = fetch_users()
-    seed = USERS[username]['salt']
-    seedBase32 = base64.b32encode(seed.encode()).decode('utf-8')
+    seed = USERS[username]['salt'].encode()
+    seedBase32 = base64.b32encode(seed).decode('utf-8')
     email_address = USERS[username]['email']
     generate_otp(seedBase32, email_address)
     return redirect('/2fa')

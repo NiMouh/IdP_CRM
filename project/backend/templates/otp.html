@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Página OTP</title>
+    <title>IdP - 2FA</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -14,18 +14,21 @@
             margin: 0;
             background-color: #f0f0f0;
         }
-        .container {
+
+        .card {
             background: #fff;
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             text-align: center;
         }
+
         .otp-input {
             display: flex;
             justify-content: center;
             gap: 10px;
         }
+
         .otp-input input {
             font-size: 18px;
             padding: 10px;
@@ -36,47 +39,70 @@
             border-radius: 5px;
             box-sizing: border-box;
         }
+
         .countdown {
             font-size: 24px;
             color: #333;
             margin-top: 20px;
         }
+
         .resend-link {
             display: none;
             margin-top: 20px;
         }
+
         .resend-link a {
             text-decoration: none;
             color: #007bff;
             font-size: 16px;
         }
     </style>
+    <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet" />
 </head>
+
 <body>
     <div class="container">
-        <h1>Digite seu OTP</h1>
-        <form method="POST">
-            <div class="otp-input">
-                <input type="text" name="otp" maxlength="1" oninput="moveToNext(this, event)" autofocus>
-                <input type="text" name="otp" maxlength="1" oninput="moveToNext(this, event)">
-                <input type="text" name="otp" maxlength="1" oninput="moveToNext(this, event)">
-                <input type="text" name="otp" maxlength="1" oninput="moveToNext(this, event)">
-                <input type="text" name="otp" maxlength="1" oninput="moveToNext(this, event)">
-                <input type="text" name="otp" maxlength="1" oninput="moveToNext(this, event)">
+        <div class="row justify-content-center">
+            <div class="col-lg-5">
+                <div class="card">
+                    <div class="card-header">
+                        <h1>Two-Step Verification</h1>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST">
+                            <div class="otp-input">
+                                <input type="text" name="otp" maxlength="1" oninput="moveToNext(this, event)" autofocus>
+                                <input type="text" name="otp" maxlength="1" oninput="moveToNext(this, event)">
+                                <input type="text" name="otp" maxlength="1" oninput="moveToNext(this, event)">
+                                <input type="text" name="otp" maxlength="1" oninput="moveToNext(this, event)">
+                                <input type="text" name="otp" maxlength="1" oninput="moveToNext(this, event)">
+                                <input type="text" name="otp" maxlength="1" oninput="moveToNext(this, event)">
+                            </div>
+                            <input type="hidden" name="client_id" value="{{ client_id }}">
+                            <input type="hidden" name="client_secret" value="{{ client_secret }}">
+                            <input type="hidden" name="redirect_uri" value="{{ redirect_uri }}">
+                            <input type="hidden" name="state" value="{{ state }}">
+                            <input type="hidden" name="username" value="{{ username }}">
+                            <div class="countdown" id="countdown">30</div>
+                            <div class="resend-link" id="resend-link">
+                                <button class="btn btn-link" onclick="resendOTP('{{ username }}')">Reenviar</button>
+                            </div>
+                            {% if error_message %}
+                            <div class="alert alert-danger mt-3" role="alert">
+                                {{ error_message }}
+                            </div>
+                            {% endif %}
+                            <button class="btn btn-primary mt-3" type="submit">Enviar</button>
+                        </form>
+                    </div>
+                </div>
             </div>
-            <input type="hidden" name="client_id" value="{{ client_id }}">
-            <input type="hidden" name="client_secret" value="{{ client_secret }}">
-            <input type="hidden" name="redirect_uri" value="{{ redirect_uri }}">
-            <input type="hidden" name="state" value="{{ state }}">
-            <input type="hidden" name="username" value="{{ username }}">
-            <div class="countdown" id="countdown">30</div>
-            <div class="resend-link" id="resend-link">
-                <button onclick="resendOTP('{{ username }}')">Reenviar OTP</button>
-            </div>
-            <button type="submit">Enviar OTP</button>
-        </form>
+        </div>
     </div>
-
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script>
         let countdownElement = document.getElementById('countdown');
         let resendLinkElement = document.getElementById('resend-link');
@@ -111,10 +137,10 @@
             $.ajax({
                 type: 'POST',
                 url: '/resend_otp/' + username,
-                success: function(response) {
+                success: function (response) {
                     alert(response); // Exibe a mensagem de sucesso retornada pelo backend
                 },
-                error: function(xhr, status, error) {
+                error: function (xhr, status, error) {
                     alert('Erro ao reenviar OTP: ' + error); // Exibe um alerta em caso de erro
                 }
             });
@@ -122,6 +148,6 @@
 
         updateCountdown();
     </script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </body>
+
 </html>
