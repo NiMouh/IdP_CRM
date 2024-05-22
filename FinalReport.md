@@ -427,6 +427,17 @@ E foi utilizada a biblioteca `smtplib` para o envio de emails sobre o domínio d
 
 #### *Challenge-Response*
 
+Existem três tipos de provas de autenticação: 
+- **Algo que o utilizador sabe**: *passwords*, *PINs*, etc.;
+- **Algo que o utilizador tem**: *smartcards*, *tokens*, etc.;
+- **Algo que o utilizador é**: impressões digitais, reconhecimento facial, etc.
+
+Nesta a implementação do *Challenge-Response*, é feita uma abordagem com base em perguntas de segurança (**algo que o utilizador sabe**). Para isso foi guardada na base de dados, uma tabela com as perguntas de segurança e outra tabela com as respostas correspondentes a cada utilizador.
+
+No processo de autenticação, é enviado um *challenge* ao utilizador, neste caso um nonce (*number used once*), que é uma string aleatória gerada pelo *IdP*. O utilizador responde com a resposta à pergunta de segurança, junto com o *nonce*, sendo estes computados com uma função *digest* (SHA-256) e comparados com os valores guardados na base de dados.
+
+
+
 ### *Resource Server*
 
 #### Validação de *Tokens*
