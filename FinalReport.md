@@ -380,9 +380,9 @@ Sempre que um cliente tenta **aceder a um recurso**, o fluxo de mensagens é o s
 
 TODO: Escrever sobre o *Client* e a sua implementação.
 
-### Registo e Auditoria de *Logs*
+### Armazenamento e Auditoria de *Logs*
 
-Os *logs*, tanto de autenticação (*Authorization Server*) como de acesso a recursos (*Resource Server*), são armazenados na base de dados, contendo as seguintes informações:
+Os *logs*, tanto de autenticação (*Authorization Server*) como de acesso a recursos (*Resource Server*), são guardados na base de dados, contendo as seguintes informações, consoante o propósito do *log*:
 
 | Informação                    | Auditoria | Análise de Risco |
 | ----------------------------- | :-------: | :--------------: |
@@ -393,13 +393,21 @@ Os *logs*, tanto de autenticação (*Authorization Server*) como de acesso a rec
 | Nível de acesso do utilizador |     x     |        x         |
 | Nome do utilizador            |     -     |        x         |
 
+Existem dois tipos de *logs*:
+- `ERROR`: *Logs* de erro, que contêm informações sobre pedidos que falharam;
+  - `AUTHENTICATION_ERROR`: *Logs* de erro de autenticação, que contêm informações sobre pedidos de autenticação que falharam;
+  - `ACCESS_ERROR`: *Logs* de erro de acesso, que contêm informações sobre pedidos de acesso a recursos que falharam.
+- `INFO`: *Logs* de informação, que contêm informações sobre pedidos bem-sucedidos.
+  - `AUTHENTICATION_INFO`: *Logs* de informação de autenticação, que contêm informações sobre pedidos de autenticação bem-sucedidos;
+  - `ACCESS_INFO`: *Logs* de informação de acesso, que contêm informações sobre pedidos de acesso a recursos bem-sucedidos.
+
 ### *Identity Provider*
 
 #### OTP (*One-Time Password*)
 
 Para a implementação, foi utilizado a biblioteca `pyotp`, que permite a criação de códigos de autenticação com base no algoritmo `TOTP` (*Time-based One-Time Password*). Este algoritmo gera um código de autenticação que é válido apenas por um curto período de tempo, geralmente **30 segundos**, e é gerado com base numa *seed* e no tempo atual.
 
-O seguinte código mostra a geração de um código de autenticação, que recebe como argumentos a *seed* (que será a credencial do utilizador) e o email do utilizador e devolve o código e o URI para a criação de um *QR Code*:
+O seguinte código mostra a geração de um código de autenticação, que recebe como argumentos a *seed* (que será a credencial do utilizador) e o email do utilizador e devolve o código e o URI para a criação de um *QR Code*, compatíveis com aplicações como o *Google Authenticator*:
 
 ```python
 from pyotp import TOTP
@@ -434,9 +442,16 @@ Existem três tipos de provas de autenticação:
 
 Nesta a implementação do *Challenge-Response*, é feita uma abordagem com base em perguntas de segurança (**algo que o utilizador sabe**). Para isso foi guardada na base de dados, uma tabela com as perguntas de segurança e outra tabela com as respostas correspondentes a cada utilizador.
 
-No processo de autenticação, é enviado um *challenge* ao utilizador, neste caso um nonce (*number used once*), que é uma string aleatória gerada pelo *IdP*. O utilizador responde com a resposta à pergunta de segurança, junto com o *nonce*, sendo estes computados com uma função *digest* (SHA-256) e comparados com os valores guardados na base de dados.
+Durante a autenticação, é enviado um *challenge* ao utilizador, neste caso um nonce (*number used once*), que é uma string aleatória gerada pelo *IdP*. O utilizador responde com a resposta à pergunta de segurança, junto com o *nonce*, sendo estes computados com uma função *digest* (SHA-256) e comparados com os valores guardados na base de dados.
 
+Este fluxo encontra-se representado no seguinte diagrama:
 
+<p align="center">
+  <img src="img/challenge-response.png" width="300" title="Challenge-Response">
+</p>
+<p align="center" style="font-size: 10px;">
+  <i>Figura 10 - Representação do protocolo de autenticação Challenge-Response</i>
+</p>
 
 ### *Resource Server*
 
@@ -492,3 +507,6 @@ TODO: Ainda não chegamos cá...
 ## Conclusão
 
 TODO: Em suma, blah blah blah...
+
+## Referências
+
