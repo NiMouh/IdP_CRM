@@ -1,12 +1,14 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_jwt_extended import jwt_required, get_jwt_identity
+from functools import wraps
 from sqlite3 import connect, Error
 from secrets import token_urlsafe
 from hashlib import sha256
 import requests
-import base64
-from Crypto.PublicKey import RSA
+import json
+import jwt
+from jwt.algorithms import RSAAlgorithm
 from authorization_server import add_log
 
 app = Flask(__name__)
@@ -49,11 +51,27 @@ def get_public_key() -> bytes:
         raise Exception("No keys found in JWKS")
 
     key = jwks['keys'][0]
-    n = int.from_bytes(base64.urlsafe_b64decode(key['n'] + '=='), 'big')
-    e = int.from_bytes(base64.urlsafe_b64decode(key['e'] + '=='), 'big')
+    public_key = RSAAlgorithm.from_jwk(json.dumps(key))
+    return public_key
 
-    public_key = RSA.construct((n, e))
-    return public_key.export_key()
+def verify_token(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        token = request.headers.get('Authorization')
+        if not token:
+            return jsonify({'error_message': 'Missing Authorization header'}), STATUS_CODE['UNAUTHORIZED']
+
+        token = token.split(' ')[1]
+        public_key = get_public_key()
+        try:
+            decoded_token = jwt.decode(token, public_key, algorithms=['RS256'])
+            request.decoded_token = decoded_token
+            return f(*args, **kwargs)
+        except jwt.ExpiredSignatureError:
+            return jsonify({'error_message': 'Token has expired'}), STATUS_CODE['UNAUTHORIZED']
+        except jwt.InvalidTokenError:
+            return jsonify({'error_message': 'Invalid token'}), STATUS_CODE['UNAUTHORIZED']
+    return wrapper
 
 # API #
 

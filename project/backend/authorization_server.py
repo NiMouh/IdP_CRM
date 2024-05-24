@@ -258,7 +258,7 @@ def fetch_logs() -> list:
 # AUTHENTICATION STUFF #
 
 # challenge-response authentication
-def generate_challenge(username: str) -> str:
+def generate_challenge() -> str:
     challenge = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
     return challenge
 
@@ -306,16 +306,20 @@ def fetch_question() -> str:
 
     return question[0]
 
-def fetch_response(username : str, question : str) -> str:
+def fetch_challenge_and_response(username : str, question : str) -> tuple:
     conn = create_connection()
     cursor = conn.cursor()
     cursor.execute('''
         SELECT 
-            r.response_answer
+            c.challenge_nonce, r.response_answer
         FROM
-            response r
+            challenge c
         JOIN
             utilizador u
+        ON
+            c.fk_utilizador_id = u.utilizador_id
+        JOIN
+            response r
         ON
             r.fk_utilizador_id = u.utilizador_id
         JOIN
@@ -323,33 +327,25 @@ def fetch_response(username : str, question : str) -> str:
         ON
             r.fk_question_id = q.question_id
         WHERE
-            u.utilizador_nome = ? AND q.question_question = ?;
-    ''', (username, question))
-    response = cursor.fetchone()
-    cursor.close()
-
-    return response[0]
-
-def fetch_challenge(username : str) -> str:
-    conn = create_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-        SELECT 
-            c.challenge_nonce
-        FROM
-            challenge c
-        JOIN
-            utilizador u
-        ON
-            c.fk_utilizador_id = u.utilizador_id
-        WHERE
-            u.utilizador_nome = ?
+            u.utilizador_nome = ? AND q.question_question = ?
         ORDER BY c.challenge_id DESC
-    ''', (username,))
-    challenge = cursor.fetchone()
+    ''', (username, question))
+    challenge_response = cursor.fetchone()
     cursor.close()
 
-    return challenge[0]
+    return challenge_response
+
+def challenge_response_verified(username : str, question : str, user_response : str) -> bool:
+
+    # Obtain the challenge and response from the database and generate the verification response
+    db_challenge, db_response = fetch_challenge_and_response(username, question)
+    verification_response = sha256(db_challenge.encode() + db_response.encode()).hexdigest()
+
+    if user_response == verification_response:
+        return True
+    else:
+        return False
+    
 
 @app.route('/challenge', methods=['GET', 'POST'])
 def challenge():
@@ -368,35 +364,80 @@ def challenge():
         client_id_received = request.form.get('client_id')
         username = request.form.get('username')
         challenge = request.form.get('challenge')
-        password = request.form.get('response')
-        question = request.form.get('question')
+        question, answer = request.form['question'], request.form['response']
+
+        if not challenge or not username or not question:
+            return render_template('error.html', error_message='Invalid request'), STATUS_CODE['BAD_REQUEST']
+
+        if not answer:
+            return render_template('challenge.html', client_id=client_id_received, redirect_uri=request.form.get('redirect_uri'), state=request.form.get('state'), username=username, challenge=challenge, question=question, error_message='Missing credentials')
 
         CLIENTS = fetch_clients()
         if client_id_received not in CLIENTS:
             return render_template('error.html', error_message='Invalid client credentials'), STATUS_CODE['UNAUTHORIZED']
-
-        # digest do challenge com a password
-        response = sha256(challenge.encode() + password.encode()).hexdigest()
-
-        # Obter resposta do utilizador
-        get_password = fetch_response(username, question)
-
-        # Obter challenge do utilizador
-        get_challenge = fetch_challenge(username)
-
-        # digest da password e do challenge
-        verification_response = sha256(get_challenge.encode() + get_password.encode()).hexdigest()
-
-        if response != verification_response:
-            return render_template('challenge.html', client_id=client_id_received, redirect_uri=request.form.get('redirect_uri'), state=request.form.get('state'), username=username, challenge=challenge, question=question, error_message='Invalid response')
         
-        remove_challenge(username)
+        # Generate the user response
+        user_response = sha256(challenge.encode() + answer.encode()).hexdigest()
 
+        if challenge_response_verified(username, question, user_response):
+            remove_challenge(username)
+            authorization_code = make_nonce()
+            add_authorization_code(authorization_code, client_id_received, username)
+            return redirect(f'{request.form.get("redirect_uri")}?code={authorization_code}&state={request.form.get("state")}')
+        else: # Generate a new challenge and ask the user to try again
+            remove_challenge(username)
+            new_challenge = generate_challenge()
+            save_challenge(username, new_challenge)
+            return render_template('challenge.html', client_id=client_id_received, redirect_uri=request.form.get('redirect_uri'), state=request.form.get('state'), username=username, challenge=new_challenge, question=question, error_message='Invalid response')
+
+# TOTP #
+
+@app.route('/2fa', methods=['GET', 'POST'])
+def two_factor_authentication():
+    if request.method == 'GET':
+        CLIENTS = fetch_clients()
+        client_id_received = request.args.get('client_id')
+
+        if client_id_received not in CLIENTS:
+            return render_template('error.html', error_message='Invalid client credentials'), STATUS_CODE['UNAUTHORIZED']
+        
+        return render_template('otp.html', client_id=client_id_received, redirect_uri=request.args.get('redirect_uri'), state=request.args.get('state'), username=request.args.get('username'), error_message=None)
+
+    elif request.method == 'POST':
+        CLIENTS = fetch_clients()
+        client_id_received = request.form.get('client_id')
+        username = request.form.get('username')
+        otp = ''.join(request.form.getlist('otp'))
+
+        if not otp or len(otp) != 6:
+            return render_template('otp.html', client_id=client_id_received, redirect_uri=request.form.get('redirect_uri'), state=request.form.get('state'), username=username, error_message='Incomplete code')
+
+        if client_id_received not in CLIENTS:
+            return render_template('error.html', error_message='Invalid client credentials'), STATUS_CODE['UNAUTHORIZED']
+        
+        USERS = fetch_users()
+        seed = USERS[username]['salt']
+        seed_base32 = base64.b32encode(seed.encode()).decode('utf-8').rstrip('=')
+        totp = TOTP(seed_base32)
+
+        if not totp.verify(otp):
+            return render_template('otp.html', client_id=client_id_received, redirect_uri=request.form.get('redirect_uri'), state=request.form.get('state'), username=username, error_message='Invalid code')
+        
         authorization_code = make_nonce()
         add_authorization_code(authorization_code, client_id_received, username)
         return redirect(f'{request.form.get("redirect_uri")}?code={authorization_code}&state={request.form.get("state")}')
 
-# TOTP #
+@app.route('/resend_otp/<string:username>', methods=['POST'])
+def resend_otp(username: str):
+    if not username:
+        return render_template('error.html', error_message='Invalid request'), STATUS_CODE['BAD_REQUEST']
+
+    USERS = fetch_users()
+    seed = USERS[username]['salt']
+    seed_base32 = base64.b32encode(seed.encode()).decode('utf-8').rstrip('=')
+    email_address = USERS[username]['email']
+    generate_otp(seed_base32, email_address)
+    return redirect('/2fa')
 
 def generate_otp(seed: str, email_address: str) -> bool:
     try:
@@ -558,48 +599,6 @@ def risk_based_authentication(ip : str, username : str) -> int:
 def make_nonce() -> str:
     return token_urlsafe(22)
 
-@app.route('/2fa', methods=['GET', 'POST'])
-def two_factor_authentication():
-    if request.method == 'GET':
-        CLIENTS = fetch_clients()
-        client_id_received = request.args.get('client_id')
-
-        if client_id_received not in CLIENTS:
-            print('Caiu aqui')
-            return render_template('error.html', error_message='Invalid client credentials'), STATUS_CODE['UNAUTHORIZED']
-        
-        return render_template('otp.html', client_id=client_id_received, redirect_uri=request.args.get('redirect_uri'), state=request.args.get('state'), username=request.args.get('username'), error_message=None)
-
-    elif request.method == 'POST':
-        CLIENTS = fetch_clients()
-        client_id_received = request.form.get('client_id')
-        username = request.form.get('username')
-        otp = ''.join(request.form.getlist('otp'))
-
-        if client_id_received not in CLIENTS:
-            return render_template('error.html', error_message='Invalid client credentials'), STATUS_CODE['UNAUTHORIZED']
-        
-        USERS = fetch_users()
-        seed = USERS[username]['salt']
-        seed_base32 = base64.b32encode(seed.encode()).decode('utf-8').rstrip('=')
-        totp = TOTP(seed_base32)
-
-        if not totp.verify(otp):
-            return render_template('otp.html', client_id=client_id_received, redirect_uri=request.form.get('redirect_uri'), state=request.form.get('state'), username=username, error_message='Invalid code')
-        
-        authorization_code = make_nonce()
-        add_authorization_code(authorization_code, client_id_received, username)
-        return redirect(f'{request.form.get("redirect_uri")}?code={authorization_code}&state={request.form.get("state")}')
-
-@app.route('/resend_otp/<string:username>', methods=['POST'])
-def resend_otp(username: str):
-    USERS = fetch_users()
-    seed = USERS[username]['salt']
-    seed_base32 = base64.b32encode(seed.encode()).decode('utf-8').rstrip('=')
-    email_address = USERS[username]['email']
-    generate_otp(seed_base32, email_address)
-    return redirect('/2fa')
-
 @app.route('/authorize', methods=['GET', 'POST'])
 def authorize(): # STEP 2 - Authorization Code Request
     if request.method == 'GET':
@@ -641,7 +640,7 @@ def authorize(): # STEP 2 - Authorization Code Request
         
         risk_score = risk_based_authentication(request_ip, username)
         if risk_score >= 0:
-            challenge = generate_challenge(username)
+            challenge = generate_challenge()
             save_challenge(username, challenge)
             # add_log(ERROR_LOG, datetime.now(), 'High risk login', username, request_ip, USERS[username]['access_level'], 'Authorization')
             return redirect(f'/challenge?client_id={client_id_received}&redirect_uri={redirect_uri}&state={request.args.get("state")}&username={username}&challenge={challenge}')
@@ -649,7 +648,8 @@ def authorize(): # STEP 2 - Authorization Code Request
             seed = USERS[username]['salt']
             seed_base32 = base64.b32encode(seed.encode()).decode('utf-8').rstrip('=')
             email_address = USERS[username]['email']
-            generate_otp(seed_base32, email_address)
+            if not generate_otp(seed_base32, email_address):
+                return render_template('error.html', error_message='Failed to generate OTP'), STATUS_CODE['INTERNAL_SERVER_ERROR']
             return redirect(f'/2fa?client_id={client_id_received}&redirect_uri={redirect_uri}&state={request.args.get("state")}&username={username}')
 
         authorization_code = make_nonce()

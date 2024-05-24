@@ -462,16 +462,16 @@ Para validar os *tokens* de acesso, o *Resource Server* verifica a assinatura do
 Exemplo de um *JWKS*: 
 ```json
 {
-    "keys": [
-        {
-            "alg": "RS256",
-            "e": "AQAB",
-            "kid": "authorization-server-key",
-            "kty": "RSA",
-            "n": "txlzMo9bXTK-hCe8hKA0D2HR9imD0Xi_DtZrSGMwIehitrD_9H2EyBt50k5wBoS9s3Fnt42IdU09v8oR6gQ8EFWK7yndbDgk8ADeKWtM1x0w7N20ClmI-hd9yPABIwXfVuMfsX1eBA09_9xGiiXDw7sFRnQD8mYPFWp8AsNqCWfz2Fl7y3PbBFYS2IBAG_mFd9MLgQhUPttASQ0biPQRQ7ORAp0Xm27OfKrO5Ukpuv-36-luKtLI-1IwZ5mRr0OXqbiKINfMoa80TLfk77MMImj49genPeCAJq-obVFk4pboHkXZ0XmY0X4v_BgCM4GZ53Sd8VI3F-i_KpJWcIgunQ",
-            "use": "sig"
-        }
-    ]
+  "keys": [
+      {
+        "alg": "RS256",
+        "e": "AQAB",
+        "kid": "authorization-server-key",
+        "kty": "RSA",
+        "n": "txlzMo9bXTK-hCe8hKA0D2HR9imD0Xi_DtZrSGMwIehitrD_9H2EyBt50k5wBoS9s3Fnt42IdU09v8oR6gQ8EFWK7yndbDgk8ADeKWtM1x0w7N20ClmI-hd9yPABIwXfVuMfsX1eBA09_9xGiiXDw7sFRnQD8mYPFWp8AsNqCWfz2Fl7y3PbBFYS2IBAG_mFd9MLgQhUPttASQ0biPQRQ7ORAp0Xm27OfKrO5Ukpuv-36-luKtLI-1IwZ5mRr0OXqbiKINfMoa80TLfk77MMImj49genPeCAJq-obVFk4pboHkXZ0XmY0X4v_BgCM4GZ53Sd8VI3F-i_KpJWcIgunQ",
+        "use": "sig"
+      }
+  ]
 }
 ```
 
@@ -492,6 +492,31 @@ nQIDAQAB
 
 > Conversor de JWK para PEM: [JWK to PEM](https://8gwifi.org/jwkconvertfunctions.jsp)
 
+No *Resource Server*, é feita a validação do *token* de acesso, verificando a assinatura do *token* com a chave pública do *IdP*, da seguinte forma:
+
+```python
+def verify_token(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        token = request.headers.get('Authorization')
+        if not token:
+            return jsonify({'error_message': 'Missing Authorization header'}), STATUS_CODE['UNAUTHORIZED']
+
+        token = token.split(' ')[1]
+        public_key = get_public_key()
+        try:
+            decoded_token = jwt.decode(token, public_key, algorithms=['RS256'])
+            request.decoded_token = decoded_token
+            return f(*args, **kwargs)
+        except jwt.ExpiredSignatureError:
+            return jsonify({'error_message': 'Token has expired'}), STATUS_CODE['UNAUTHORIZED']
+        except jwt.InvalidTokenError:
+            return jsonify({'error_message': 'Invalid token'}), STATUS_CODE['UNAUTHORIZED']
+    return wrapper
+```
+
+Este *decorator* é aplicado a todos os *endpoints* que requerem autenticação (`@verify_token`), garantindo que apenas pedidos com *tokens* válidos têm acesso aos recursos.
+
 ## Testes de Validação
 
 TODO: Ainda não chegamos cá...
@@ -510,3 +535,13 @@ TODO: Em suma, blah blah blah...
 
 ## Referências
 
+- [Github - challenge-response-authentication example](https://github.com/abhisheklolage/challenge-response-auth/)
+- [Auth0 - JSON Web Key Set (JWKS)](https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-key-sets)
+- [Authlib Documentation](https://docs.authlib.org/en/latest/)
+- [PyOTP Documentation](https://pyauth.github.io/pyotp/)
+- [QRCode Documentation](https://pypi.org/project/qrcode/)
+- [Auth0 - Authorization Code Flow](https://auth0.com/docs/flows/authorization-code-flow)
+- [Auth0 - Which OAuth 2.0 Flow Should I Use?](https://auth0.com/docs/get-started/authentication-and-authorization-flow/which-oauth-2-0-flow-should-i-use)
+- [JWT.io](https://jwt.io/)
+- [Bootstrap](https://getbootstrap.com/)
+- [Flask Documentation](https://flask.palletsprojects.com/en/2.0.x/)
