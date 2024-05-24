@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -83,7 +84,7 @@
                             <input type="hidden" name="redirect_uri" value="{{ redirect_uri }}">
                             <input type="hidden" name="state" value="{{ state }}">
                             <input type="hidden" name="username" value="{{ username }}">
-                            <div class="countdown" id="countdown">30</div>
+                            <div class="countdown" id="countdown"></div>
                             <div class="resend-link" id="resend-link">
                                 <button class="btn btn-link" onclick="resendOTP('{{ username }}')">Reenviar</button>
                             </div>
@@ -106,15 +107,18 @@
     <script>
         let countdownElement = document.getElementById('countdown');
         let resendLinkElement = document.getElementById('resend-link');
-        let timeLeft = 30;
+        let countdown_time_seconds = 90;
 
         function updateCountdown() {
-            if (timeLeft <= 0) {
+            if (countdown_time_seconds <= 0) {
                 countdownElement.innerHTML = 'Tempo Esgotado!';
                 resendLinkElement.style.display = 'block';
             } else {
-                countdownElement.innerHTML = timeLeft;
-                timeLeft--;
+                let minutes = Math.floor(countdown_time_seconds / 60);
+                let seconds = countdown_time_seconds % 60;
+                let displayText = minutes > 0 ? `${minutes} minute${minutes > 1 ? 's' : ''} and ${seconds} second${seconds > 1 ? 's' : ''}` : `${seconds} second${seconds > 1 ? 's' : ''}`;
+                countdownElement.innerHTML = displayText;
+                countdown_time_seconds--;
                 setTimeout(updateCountdown, 1000);
             }
         }
@@ -138,10 +142,12 @@
                 type: 'POST',
                 url: '/resend_otp/' + username,
                 success: function (response) {
-                    alert(response); // Exibe a mensagem de sucesso retornada pelo backend
+                    alert(response); // Display success message returned by the backend
+                    countdown_time_seconds = 90;
+                    updateCountdown(); // Trigger countdown update
                 },
                 error: function (xhr, status, error) {
-                    alert('Erro ao reenviar OTP: ' + error); // Exibe um alerta em caso de erro
+                    alert('Error resending OTP: ' + error); // Display an alert in case of error
                 }
             });
         }

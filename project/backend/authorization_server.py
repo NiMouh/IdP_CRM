@@ -40,6 +40,8 @@ SENDER_PASSWORD = 'jfuaslvbkfjpiqxn'
 SUCCESS_LOG = 'INFO'
 ERROR_LOG = 'ERROR'
 
+TOTP_INTERVAL_SECONDS = 90
+
 # DATABASE STUFF #
 
 def create_connection() -> connect:
@@ -210,14 +212,16 @@ def fetch_level_access(username : str) -> str:
 
     cursor.close()
 
-    return access_level
+    return access_level[0]
 
 def add_log(log_type : str, log_date : datetime, log_message : str, username : str, ip : str, access_level : str, segmentation : str) -> None:
+
+    if log_type not in [SUCCESS_LOG, ERROR_LOG] or not log_date or not log_message or not ip or not access_level or not segmentation:
+        raise ValueError("Invalid log parameters")
 
     log_date_str = log_date.strftime('%Y-%m-%d %H:%M:%S')
 
     conn = create_connection()
-    print("Connection created")
     cursor = conn.cursor()
 
     try:
@@ -257,7 +261,8 @@ def fetch_logs() -> list:
 
 # AUTHENTICATION STUFF #
 
-# challenge-response authentication
+# Challenge-Response #
+
 def generate_challenge() -> str:
     challenge = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
     return challenge
@@ -345,7 +350,6 @@ def challenge_response_verified(username : str, question : str, user_response : 
         return True
     else:
         return False
-    
 
 @app.route('/challenge', methods=['GET', 'POST'])
 def challenge():
@@ -383,6 +387,7 @@ def challenge():
             remove_challenge(username)
             authorization_code = make_nonce()
             add_authorization_code(authorization_code, client_id_received, username)
+            add_log(SUCCESS_LOG, datetime.now(), 'Access granted', username, request.remote_addr, fetch_level_access(username), 'Authorization')
             return redirect(f'{request.form.get("redirect_uri")}?code={authorization_code}&state={request.form.get("state")}')
         else: # Generate a new challenge and ask the user to try again
             remove_challenge(username)
@@ -390,7 +395,7 @@ def challenge():
             save_challenge(username, new_challenge)
             return render_template('challenge.html', client_id=client_id_received, redirect_uri=request.form.get('redirect_uri'), state=request.form.get('state'), username=username, challenge=new_challenge, question=question, error_message='Invalid response')
 
-# TOTP #
+# Time-Based One-Time Password #
 
 @app.route('/2fa', methods=['GET', 'POST'])
 def two_factor_authentication():
@@ -412,20 +417,19 @@ def two_factor_authentication():
         if not otp or len(otp) != 6:
             return render_template('otp.html', client_id=client_id_received, redirect_uri=request.form.get('redirect_uri'), state=request.form.get('state'), username=username, error_message='Incomplete code')
 
+        if not username:
+            return render_template('error.html', error_message='Invalid request'), STATUS_CODE['BAD_REQUEST']
+
         if client_id_received not in CLIENTS:
             return render_template('error.html', error_message='Invalid client credentials'), STATUS_CODE['UNAUTHORIZED']
         
-        USERS = fetch_users()
-        seed = USERS[username]['salt']
-        seed_base32 = base64.b32encode(seed.encode()).decode('utf-8').rstrip('=')
-        totp = TOTP(seed_base32)
-
-        if not totp.verify(otp):
+        if otp_verified(username, otp):
+            authorization_code = make_nonce()
+            add_authorization_code(authorization_code, client_id_received, username)
+            add_log(SUCCESS_LOG, datetime.now(), 'Access granted', username, request.remote_addr, fetch_level_access(username), 'Authorization')
+            return redirect(f'{request.form.get("redirect_uri")}?code={authorization_code}&state={request.form.get("state")}')
+        else:
             return render_template('otp.html', client_id=client_id_received, redirect_uri=request.form.get('redirect_uri'), state=request.form.get('state'), username=username, error_message='Invalid code')
-        
-        authorization_code = make_nonce()
-        add_authorization_code(authorization_code, client_id_received, username)
-        return redirect(f'{request.form.get("redirect_uri")}?code={authorization_code}&state={request.form.get("state")}')
 
 @app.route('/resend_otp/<string:username>', methods=['POST'])
 def resend_otp(username: str):
@@ -439,6 +443,14 @@ def resend_otp(username: str):
     generate_otp(seed_base32, email_address)
     return redirect('/2fa')
 
+def otp_verified(username : str, otp : str) -> bool:
+    USERS = fetch_users()
+    seed = USERS[username]['salt']
+    seed_base32 = base64.b32encode(seed.encode()).decode('utf-8').rstrip('=')
+    totp = TOTP(seed_base32, interval=TOTP_INTERVAL_SECONDS)
+
+    return totp.verify(otp)
+
 def generate_otp(seed: str, email_address: str) -> bool:
     try:
         totp_code, uri = create_totp(seed, email_address)
@@ -451,7 +463,7 @@ def generate_otp(seed: str, email_address: str) -> bool:
         return False
 
 def create_totp(seed: str, email_address: str):
-    totp = TOTP(seed)
+    totp = TOTP(seed, interval=TOTP_INTERVAL_SECONDS)
     totp_code = totp.now()
     uri = totp.provisioning_uri(name=email_address, issuer_name='CRM IAA')
     return totp_code, uri
@@ -640,18 +652,18 @@ def authorize(): # STEP 2 - Authorization Code Request
         
         risk_score = risk_based_authentication(request_ip, username)
         if risk_score >= 0:
-            challenge = generate_challenge()
-            save_challenge(username, challenge)
-            # add_log(ERROR_LOG, datetime.now(), 'High risk login', username, request_ip, USERS[username]['access_level'], 'Authorization')
-            return redirect(f'/challenge?client_id={client_id_received}&redirect_uri={redirect_uri}&state={request.args.get("state")}&username={username}&challenge={challenge}')
-        if risk_score >= 2:
             seed = USERS[username]['salt']
             seed_base32 = base64.b32encode(seed.encode()).decode('utf-8').rstrip('=')
             email_address = USERS[username]['email']
             if not generate_otp(seed_base32, email_address):
                 return render_template('error.html', error_message='Failed to generate OTP'), STATUS_CODE['INTERNAL_SERVER_ERROR']
             return redirect(f'/2fa?client_id={client_id_received}&redirect_uri={redirect_uri}&state={request.args.get("state")}&username={username}')
-
+        if risk_score >= 2:
+            challenge = generate_challenge()
+            save_challenge(username, challenge)
+            return redirect(f'/challenge?client_id={client_id_received}&redirect_uri={redirect_uri}&state={request.args.get("state")}&username={username}&challenge={challenge}')
+        
+        # If doesn't pass the threshold, generate an authorization code
         authorization_code = make_nonce()
         add_authorization_code(authorization_code, request.args.get('client_id'), username)
 
