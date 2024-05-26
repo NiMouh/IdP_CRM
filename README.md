@@ -17,9 +17,9 @@ As diretorias do projeto estão organizadas da seguinte forma:
 project/ --> Diretoria principal
 │
 ├── frontend/ --> Diretoria das aplicações cliente
-│   ├── client1/ -> Diretoria da aplicação cliente 1 (com a aplicação cliente 1 e o seu *frontend*)
-│   ├── client2/ -> Diretoria da aplicação cliente 2 
-│   └── client3/ -> Diretoria da aplicação cliente 3
+│   ├── client1/ --> Diretoria da aplicação cliente 1 (com a aplicação cliente 1 e o seu *frontend*)
+│   ├── client2/ --> Diretoria da aplicação cliente 2 
+│   └── client3/ --> Diretoria da aplicação cliente 3
 │
 ├── backend/ --> Diretoria das aplicações servidor
 │   ├── database/
@@ -76,9 +76,11 @@ $ bash generate_rsa.bash
 - Desenvolvimento do Resource Server (Simão Andrade):
   - [x] Criação da estrutura da base de dados;
   - [x] Criação de funções que gerem aleatoriamente os dados da base de dados;
+  - [x] Chamadas à base dados para o *backend*;
+  - [ ] Validação dos *tokens* de acesso;
+  - [ ] Controlo de acessos;
   - [ ] Implementação de um sistema de logs;
   - [ ] Validação e sanitização dos dados inseridos pelo utilizador;
-  - [x] Chamadas à base dados para o *backend*;
 - Desenvolvimento do IdP (Simão Andrade e Ana Vidal):
   - [x] Desenvolvimento do *backend*;
   - [x] Desenvolvimento do *frontend* (design e interação com o utilizador);
@@ -90,6 +92,7 @@ $ bash generate_rsa.bash
   - [ ] Validação e sanitização dos dados inseridos pelo utilizador;
   - [ ] Implementação de autenticação por smartcard;
 - Desenvolvimento dos três Client Applications (Ana Vidal):
+  - [x] Implementação do *authentication code flow* do lado do cliente;
   - [ ] Implementação do *frontend* (design e interação com o utilizador);
   - [ ] Validação e sanitização dos dados inseridos pelo utilizador;
 - Testes à aplicação feita (Ana Vidal e Simão Andrade):
@@ -99,9 +102,9 @@ $ bash generate_rsa.bash
 - Relatório Final (Ana Vidal e Simão Andrade):
   - [x] Descrição das estruturas de dados armazenadas;
   - [x] Estrutura das mensagens trocadas e fluxos de mensagens;
+  - [x] Abordagem MFA e gestão de riscos;
   - [ ] Interfaces utilizadas e os seus parâmetros;
   - [ ] Alguns detalhes de implementação relevantes;
-  - [x] Abordagem MFA e gestão de riscos;
   - [ ] Resultados obtidos; 
 - Extra:
   - [ ] Documentação do projeto;
