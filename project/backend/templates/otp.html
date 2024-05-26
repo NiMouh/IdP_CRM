@@ -72,12 +72,18 @@
                     <div class="card-body">
                         <form method="POST">
                             <div class="otp-input">
-                                <input type="text" name="otp" maxlength="1" oninput="moveToNext(this, event)" autofocus>
-                                <input type="text" name="otp" maxlength="1" oninput="moveToNext(this, event)">
-                                <input type="text" name="otp" maxlength="1" oninput="moveToNext(this, event)">
-                                <input type="text" name="otp" maxlength="1" oninput="moveToNext(this, event)">
-                                <input type="text" name="otp" maxlength="1" oninput="moveToNext(this, event)">
-                                <input type="text" name="otp" maxlength="1" oninput="moveToNext(this, event)">
+                                <input type="text" name="otp" oninput="moveToNext(this, event)"
+                                    onkeydown="moveToNext(this, event)" pattern="[0-9]{1}" autofocus required>
+                                <input type="text" name="otp" oninput="moveToNext(this, event)"
+                                    onkeydown="moveToNext(this, event)" pattern="[0-9]{1}" required>
+                                <input type="text" name="otp" oninput="moveToNext(this, event)"
+                                    onkeydown="moveToNext(this, event)" pattern="[0-9]{1}" required>
+                                <input type="text" name="otp" oninput="moveToNext(this, event)"
+                                    onkeydown="moveToNext(this, event)" pattern="[0-9]{1}" required>
+                                <input type="text" name="otp" oninput="moveToNext(this, event)"
+                                    onkeydown="moveToNext(this, event)" pattern="[0-9]{1}" required>
+                                <input type="text" name="otp" oninput="moveToNext(this, event)"
+                                    onkeydown="moveToNext(this, event)" pattern="[0-9]{1}" required>
                             </div>
                             <input type="hidden" name="client_id" value="{{ client_id }}">
                             <input type="hidden" name="client_secret" value="{{ client_secret }}">
@@ -124,15 +130,19 @@
         }
 
         function moveToNext(currentInput, event) {
-            if (currentInput.value.length === 1 && event.inputType !== 'deleteContentBackward') {
-                let nextInput = currentInput.nextElementSibling;
-                if (nextInput) {
-                    nextInput.focus();
-                }
-            } else if (event.inputType === 'deleteContentBackward') {
+            // Handle backspace key press
+            if (event.key === 'Backspace') {
+                currentInput.value = '';
                 let prevInput = currentInput.previousElementSibling;
                 if (prevInput) {
                     prevInput.focus();
+                    // Prevent default behavior to stop deleting in the current input
+                    event.preventDefault();
+                }
+            } else if (event.type === 'input' && currentInput.value.length === 1) {
+                let nextInput = currentInput.nextElementSibling;
+                if (nextInput) {
+                    nextInput.focus();
                 }
             }
         }

@@ -39,6 +39,8 @@ oauth.register(
     client_kwargs={'scope': 'profile'}
 )
 
+# SESSION MANAGEMENT #
+
 @app.route('/login', methods=['GET'])
 def login(): # STEP 1 - Authorization Request
 
@@ -70,6 +72,7 @@ def logout():
     return response
 
 # ROUTES #
+
 @app.route('/', methods=['GET'])
 def index():
     if 'access_token' in request.cookies:
@@ -82,5 +85,10 @@ def dashboard():
         return redirect('/')
     access_token = request.cookies.get('access_token')
     return render_template('dashboard.html', access_token=access_token)
+
+@app.errorhandler(STATUS_CODE['NOT_FOUND'])
+def page_not_found(e):
+    return render_template('error.html'), STATUS_CODE['NOT_FOUND']
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

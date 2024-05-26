@@ -16,6 +16,8 @@ import jwt
 import os
 from io import BytesIO
 import base64
+from twilio.rest import Client
+import re
 
 app = Flask(__name__, template_folder="templates")
 app.secret_key = token_urlsafe(32) # 32 bytes = 256 bits
@@ -34,9 +36,16 @@ DATABASE_PATH = os.path.abspath(DATABASE_RELATIVE_PATH)
 PRIVATE_KEY_PATH = os.path.abspath('./keys/private_key.pem')
 PUBLIC_KEY_PATH = os.path.abspath('./keys/public_key.pem')
 
+# For the email service
 SENDER_EMAIL = 'crmiaa0@gmail.com'
 SENDER_PASSWORD = 'jfuaslvbkfjpiqxn'
 
+# For the SMS service
+SENDER_SMS_ACCOUNT_SID = 'AC89f729d31cdda7a33b7d03a22f4f7577'
+SENDER_SMS_AUTH_TOKEN = '1883fa4946a1feacf7f83db0785e97c5'
+SENDER_SMS_NUMBER = '+13365305137'
+
+# For the logs
 SUCCESS_LOG = 'INFO'
 ERROR_LOG = 'ERROR'
 
@@ -56,7 +65,7 @@ def fetch_users() -> dict:
     conn = create_connection()
     cursor = conn.cursor()
     cursor.execute('''SELECT 
-                        u.utilizador_nome, u.utilizador_password, u.utilizador_salt, n.nivel_acesso_nivel, u.utilizador_email
+                        u.utilizador_nome, u.utilizador_password, u.utilizador_salt, n.nivel_acesso_nivel, u.utilizador_email, u.utilizador_telemovel
                    FROM 
                         utilizador u
                    JOIN 
@@ -68,10 +77,34 @@ def fetch_users() -> dict:
     user_db = cursor.fetchall()
     users = {}
     for user in user_db:
-        users[user[0]] = {'password': user[1], 'salt': user[2], 'access_level': user[3], 'email': user[4]}
+        users[user[0]] = {'password': user[1], 'salt': user[2], 'access_level': user[3], 'email': user[4], 'telemovel': user[5]}
  
     cursor.close()
     return users
+
+def fetch_user(username : str) -> dict:
+    conn = create_connection()
+    cursor = conn.cursor()
+    cursor.execute('''SELECT 
+                        u.utilizador_nome, u.utilizador_salt, n.nivel_acesso_nivel, u.utilizador_email, u.utilizador_telemovel
+                   FROM 
+                        utilizador u
+                   JOIN 
+                        nivel_acesso n
+                   ON
+                        u.fk_nivel_acesso = n.nivel_acesso_id
+                   WHERE
+                        u.utilizador_nome = ?;
+    ''', (username,))
+    user_db = cursor.fetchone()
+    user = {
+        'salt': user_db[2],
+        'access_level': user_db[3],
+        'email': user_db[4],
+        'telemovel': user_db[5]
+    }
+    cursor.close()
+    return user
 
 def fetch_clients() -> dict:
     conn = create_connection()
@@ -261,98 +294,104 @@ def fetch_logs() -> list:
 
 # AUTHENTICATION STUFF #
 
-# Challenge-Response #
+# Challenge-Response w/ OTP #
 
 def generate_challenge() -> str:
-    challenge = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+    return ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+
+def send_sms(to: str, message: str):
+    if not re.match(r'^\+351\d{9}$', to):
+        raise ValueError(f'Invalid phone number format: {to}')
+    
+    client = Client(SENDER_SMS_ACCOUNT_SID, SENDER_SMS_AUTH_TOKEN)
+    try:
+        message = client.messages.create(
+            body=message,
+            from_=SENDER_SMS_NUMBER,
+            to=to
+        )
+    except Exception as e:
+        print(f"Failed to send SMS: {e}")
+        raise
+
+def generate_sms_code(to : str) -> str:
+    code = ''.join(random.choices(string.digits, k=6))
+    send_sms(to, f'Your verification code is {code}')
+    return code
+
+def start_challenge(username: str, phone : str) -> str:
+    challenge = generate_challenge()
+    code = generate_sms_code(phone)
+    save_challenge_code(challenge, code, username)
     return challenge
 
-def save_challenge(username : str, challenge : str) -> None:
-    conn = create_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-        INSERT INTO 
-            challenge (challenge_nonce, fk_utilizador_id)
-        VALUES 
-            (?, (SELECT utilizador_id FROM utilizador WHERE utilizador_nome = ?));
-    ''', (challenge, username))
-    conn.commit()
-    cursor.close()
-    conn.close()
+def save_challenge_code(challenge_code : str, authentication_code : str, username : str) -> None:
 
-def remove_challenge(username : str) -> None:
-    conn = create_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-        DELETE FROM 
-            challenge
-        WHERE 
-            fk_utilizador_id = (SELECT utilizador_id FROM utilizador WHERE utilizador_nome = ?);
-    ''', (username,))
-    conn.commit()
-    cursor.close()
-    conn.close()
+    if not challenge_code or not authentication_code:
+        raise ValueError('Challenge code and authentication code must be provided')
+    
+    challenge_response = sha256(challenge_code.encode() + authentication_code.encode()).hexdigest()
 
-def fetch_question() -> str:
-    conn = create_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-        SELECT 
-            q.question_question
-        FROM
-            question q
-        ORDER BY
-            RANDOM()
-        LIMIT 1;
-    ''')
-    question = cursor.fetchone()
+    try:
+        connection = connect(DATABASE_PATH)
+        cursor = connection.cursor()
+        cursor.execute('INSERT INTO challenge(challenge_response, fk_utilizador_id) VALUES (?, (SELECT utilizador_id FROM utilizador WHERE utilizador_nome = ?))', (challenge_response, username))
+        connection.commit()
+    except Error as e:
+        print(e)
 
-    cursor.close()
+def fetch_challenge_code(username : str) -> str:
 
-    return question[0]
+    if not username:
+        raise ValueError('Username must be provided')
+    
+    try:
+        connection = connect(DATABASE_PATH)
+        cursor = connection.cursor()
+        cursor.execute('''
+            SELECT challenge_response FROM challenge
+            JOIN utilizador ON utilizador.utilizador_id = challenge.fk_utilizador_id
+            WHERE utilizador.utilizador_nome = ?
+            ORDER BY challenge_data DESC
+        ''', (username,))
+        challenge_code = cursor.fetchone()
 
-def fetch_challenge_and_response(username : str, question : str) -> tuple:
-    conn = create_connection()
-    cursor = conn.cursor()
-    cursor.execute('''
-        SELECT 
-            c.challenge_nonce, r.response_answer
-        FROM
-            challenge c
-        JOIN
-            utilizador u
-        ON
-            c.fk_utilizador_id = u.utilizador_id
-        JOIN
-            response r
-        ON
-            r.fk_utilizador_id = u.utilizador_id
-        JOIN
-            question q
-        ON
-            r.fk_question_id = q.question_id
-        WHERE
-            u.utilizador_nome = ? AND q.question_question = ?
-        ORDER BY c.challenge_id DESC
-    ''', (username, question))
-    challenge_response = cursor.fetchone()
-    cursor.close()
+        if challenge_code is None:
+            return None
 
-    return challenge_response
+        return challenge_code[0]
+    except Error as e:
+        print(e)
+        return None
 
-def challenge_response_verified(username : str, question : str, user_response : str) -> bool:
+def remove_challenge_code(username : str) -> None:
+    if not username:
+        raise ValueError('Username must be provided')
+    
+    try:
+        connection = connect(DATABASE_PATH)
+        cursor = connection.cursor()
+        cursor.execute('''
+            DELETE FROM challenge
+            WHERE fk_utilizador_id = (
+                SELECT utilizador_id FROM utilizador
+                WHERE utilizador_nome = ?
+            )
+        ''', (username,))
+        connection.commit()
+    except Error as e:
+        print(e)
 
-    # Obtain the challenge and response from the database and generate the verification response
-    db_challenge, db_response = fetch_challenge_and_response(username, question)
-    verification_response = sha256(db_challenge.encode() + db_response.encode()).hexdigest()
+def sms_is_verified(challenge_response : str, username : str) -> bool:
 
-    if user_response == verification_response:
-        return True
-    else:
+    db_challenge_response = fetch_challenge_code(username)
+    if not db_challenge_response:
         return False
+    
+    return challenge_response == db_challenge_response
 
 @app.route('/challenge', methods=['GET', 'POST'])
-def challenge():
+def sms():
     if request.method == 'GET':
         client_id_received = request.args.get('client_id')
 
@@ -360,40 +399,33 @@ def challenge():
         if client_id_received not in CLIENTS:
             return render_template('error.html', error_message='Invalid client credentials'), STATUS_CODE['UNAUTHORIZED']
         
-        question = fetch_question()
-
-        return render_template('challenge.html', client_id=client_id_received, redirect_uri=request.args.get('redirect_uri'), state=request.args.get('state'), username=request.args.get('username'), challenge=request.args.get('challenge'), question=question, error_message=None)
-
-    elif request.method == 'POST':
+        return render_template('challenge.html', client_id=client_id_received, redirect_uri=request.args.get('redirect_uri'), state=request.args.get('state'), username=request.args.get('username'), challenge=request.args.get('challenge'), error_message=None)
+    if request.method == 'POST':
         client_id_received = request.form.get('client_id')
         username = request.form.get('username')
         challenge = request.form.get('challenge')
-        question, answer = request.form['question'], request.form['response']
-
-        if not challenge or not username or not question:
-            return render_template('error.html', error_message='Invalid request'), STATUS_CODE['BAD_REQUEST']
-
-        if not answer:
-            return render_template('challenge.html', client_id=client_id_received, redirect_uri=request.form.get('redirect_uri'), state=request.form.get('state'), username=username, challenge=challenge, question=question, error_message='Missing credentials')
+        response = request.form.get('response')
 
         CLIENTS = fetch_clients()
         if client_id_received not in CLIENTS:
             return render_template('error.html', error_message='Invalid client credentials'), STATUS_CODE['UNAUTHORIZED']
-        
-        # Generate the user response
-        user_response = sha256(challenge.encode() + answer.encode()).hexdigest()
 
-        if challenge_response_verified(username, question, user_response):
-            remove_challenge(username)
-            authorization_code = make_nonce()
-            add_authorization_code(authorization_code, client_id_received, username)
-            add_log(SUCCESS_LOG, datetime.now(), 'Access granted', username, request.remote_addr, fetch_level_access(username), 'Authorization')
-            return redirect(f'{request.form.get("redirect_uri")}?code={authorization_code}&state={request.form.get("state")}')
-        else: # Generate a new challenge and ask the user to try again
-            remove_challenge(username)
-            new_challenge = generate_challenge()
-            save_challenge(username, new_challenge)
-            return render_template('challenge.html', client_id=client_id_received, redirect_uri=request.form.get('redirect_uri'), state=request.form.get('state'), username=username, challenge=new_challenge, question=question, error_message='Invalid response')
+        if not challenge or not username or not response:
+            return render_template('error.html', error_message='Invalid request'), STATUS_CODE['BAD_REQUEST']
+        
+        challenge_response = sha256(challenge.encode() + response.encode()).hexdigest()
+        if not sms_is_verified(challenge_response, username):
+            remove_challenge_code(username)
+            USER = fetch_user(username)
+            challenge = start_challenge(username, USER['telemovel'])
+            return render_template('challenge.html', client_id=client_id_received, redirect_uri=request.form.get('redirect_uri'), state=request.form.get('state'), username=username, challenge=challenge, error_message='Invalid code')
+        
+        remove_challenge_code(username)
+
+        authorization_code = make_nonce()
+        add_authorization_code(authorization_code, client_id_received, username)
+        add_log(SUCCESS_LOG, datetime.now(), 'Access granted', username, request.remote_addr, fetch_level_access(username), 'Authorization')
+        return redirect(f'{request.form.get("redirect_uri")}?code={authorization_code}&state={request.form.get("state")}')
 
 # Time-Based One-Time Password #
 
@@ -436,16 +468,16 @@ def resend_otp(username: str):
     if not username:
         return render_template('error.html', error_message='Invalid request'), STATUS_CODE['BAD_REQUEST']
 
-    USERS = fetch_users()
-    seed = USERS[username]['salt']
+    USER = fetch_user(username)
+    seed = USER['salt']
     seed_base32 = base64.b32encode(seed.encode()).decode('utf-8').rstrip('=')
-    email_address = USERS[username]['email']
+    email_address = USER['email']
     generate_otp(seed_base32, email_address)
     return redirect('/2fa')
 
 def otp_verified(username : str, otp : str) -> bool:
-    USERS = fetch_users()
-    seed = USERS[username]['salt']
+    USER = fetch_user(username)
+    seed = USER['salt']
     seed_base32 = base64.b32encode(seed.encode()).decode('utf-8').rstrip('=')
     totp = TOTP(seed_base32, interval=TOTP_INTERVAL_SECONDS)
 
@@ -652,16 +684,15 @@ def authorize(): # STEP 2 - Authorization Code Request
         
         risk_score = risk_based_authentication(request_ip, username)
         if risk_score >= 0:
+            challenge = start_challenge(username, USERS[username]['telemovel'])
+            return redirect(f'/challenge?client_id={client_id_received}&redirect_uri={redirect_uri}&state={request.args.get("state")}&username={username}&challenge={challenge}')
+        if risk_score >= 2:
             seed = USERS[username]['salt']
             seed_base32 = base64.b32encode(seed.encode()).decode('utf-8').rstrip('=')
             email_address = USERS[username]['email']
             if not generate_otp(seed_base32, email_address):
                 return render_template('error.html', error_message='Failed to generate OTP'), STATUS_CODE['INTERNAL_SERVER_ERROR']
             return redirect(f'/2fa?client_id={client_id_received}&redirect_uri={redirect_uri}&state={request.args.get("state")}&username={username}')
-        if risk_score >= 2:
-            challenge = generate_challenge()
-            save_challenge(username, challenge)
-            return redirect(f'/challenge?client_id={client_id_received}&redirect_uri={redirect_uri}&state={request.args.get("state")}&username={username}&challenge={challenge}')
         
         # If doesn't pass the threshold, generate an authorization code
         authorization_code = make_nonce()
@@ -695,6 +726,8 @@ def access_token() -> jsonify: # STEP 4 - Access Token Grant
     token = generate_token(username)
 
     return jsonify({'access_token': f'{token}'}), STATUS_CODE['SUCCESS']
+
+# TOKEN GENERATION #
 
 def generate_token(username : str) -> str:
 

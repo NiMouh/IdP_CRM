@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8">
     <title>Challenge Response</title>
@@ -8,6 +9,7 @@
             font-family: Arial, sans-serif;
             color: #333;
         }
+
         .container {
             max-width: 600px;
             margin: auto;
@@ -15,26 +17,28 @@
             border: 1px solid #eaeaea;
             border-radius: 10px;
         }
+
         h2 {
             color: #0056b3;
             text-align: center;
         }
+
         .error {
             color: red;
             text-align: center;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h2>Challenge Response</h2>
         <p>Dear {{username}},</p>
-        <p>Answer the following challenge to complete the authentication process.</p>
-        <p>{{ question }}</p>
-        <p>Please enter the challenge response:</p>
+        <p>Please enter the PIN code sent by SMS</p>
         <form method="POST">
             <div style="text-align: center; margin: 20px 0;">
-                <input type="text" name="response" required style="font-size: 24px; padding: 10px; width: 100%; box-sizing: border-box;">
+                <input type="text" name="response" required
+                    style="font-size: 24px; padding: 10px; width: 100%; box-sizing: border-box;" pattern="[0-9]{6}">
             </div>
             <div style="text-align: center;">
                 <button type="submit" style="padding: 10px 20px; font-size: 18px;">Submit</button>
@@ -45,11 +49,11 @@
             <input type="hidden" name="state" value="{{ state }}">
             <input type="hidden" name="username" value="{{ username }}">
             <input type="hidden" name="challenge" value="{{ challenge }}">
-            <input type="hidden" name="question" value="{{ question }}">
             {% if error_message %}
-                <p class="error">{{ error_message }}</p>
+            <p class="error">{{ error_message }}</p>
             {% endif %}
         </form>
     </div>
 </body>
+
 </html>

@@ -18,7 +18,7 @@ tables_to_drop = [
     "utilizador", "cliente", "colaborador", "concelho", "distrito",
     "freguesia", "morada", "obra", "produto", "escalaoDesconto",
     "tabelaPrecos", "contactosCliente", "stock", "client_application",
-    "authorization_code", "challenge", "question", "response"
+    "authorization_code", "challenge"
 ]
 
 for table in tables_to_drop:
@@ -124,6 +124,7 @@ cursor.execute('''
         utilizador_password VARCHAR(50) NOT NULL,
         utilizador_salt VARCHAR(10) NOT NULL,
         utilizador_data_de_criacao DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        utilizador_telemovel VARCHAR(15) NOT NULL,
         utilizador_ultimo_login DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
         fk_nivel_acesso INTEGER,
         FOREIGN KEY (fk_nivel_acesso) REFERENCES nivel_acesso(nivel_acesso_id)
@@ -247,26 +248,9 @@ cursor.execute('''
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS challenge (
         challenge_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        challenge_nonce VARCHAR(100) NOT NULL,
+        challenge_response VARCHAR(260) NOT NULL,
+        challenge_data DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
         fk_utilizador_id INTEGER,
-        FOREIGN KEY (fk_utilizador_id) REFERENCES utilizador(utilizador_id)
-    );
-''')
-
-cursor.execute('''
-    CREATE TABLE IF NOT EXISTS question (
-        question_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        question_question VARCHAR(100) NOT NULL
-    );
-''')
-
-cursor.execute('''
-    CREATE TABLE IF NOT EXISTS response (
-        response_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        response_answer VARCHAR(100) NOT NULL,
-        fk_question_id INTEGER,
-        fk_utilizador_id INTEGER,
-        FOREIGN KEY (fk_question_id) REFERENCES question(question_id),
         FOREIGN KEY (fk_utilizador_id) REFERENCES utilizador(utilizador_id)
     );
 ''')
@@ -400,12 +384,13 @@ cursor.execute('''
     Insert into obra (obra_nome, obra_rua, obra_localidade, fk_cliente, fk_estado, fk_distrito, fk_concelho, fk_freguesia)
     VALUES ('Obra1', 'Rua do Campo', 'Aguada de Cima', 1, 1, 1, 1, 1), ('Obra2', 'Rua do Campo', 'Borralha', 1, 2, 3, 4, 2);
 ''')
+
 salt = os.urandom(4).hex()
 password_ana = sha256('ana'.encode() + salt.encode()).hexdigest()
 password_simao = sha256('simao'.encode() + salt.encode()).hexdigest()
 cursor.execute('''
-    INSERT INTO utilizador (utilizador_nome, utilizador_password, utilizador_salt, fk_nivel_acesso, utilizador_email)
-    VALUES ('ana', ?, ?, 1, 'raquelvidal99@hotmail.com'), ('simao', ?, ?, 2, 'simaoaugusto11@hotmail.com');
+    INSERT INTO utilizador (utilizador_nome, utilizador_password, utilizador_salt, fk_nivel_acesso, utilizador_email, utilizador_telemovel)
+    VALUES ('ana', ?, ?, 1, 'raquelvidal99@hotmail.com', '+351928113593'), ('simao', ?, ?, 2, 'simaoaugusto11@hotmail.com', '+351913385208');
 ''' , (password_ana, salt, password_simao, salt))
 
 cursor.execute('''
@@ -436,15 +421,7 @@ cursor.execute('''
     VALUES ('client_id', '123456', 'http://127.0.0.1:5000/authorize');
 ''')
 
-cursor.execute('''
-    Insert into question (question_question)
-    VALUES ('What is your favourite color?'), ('What is your favourite animal?');
-''')
 
-cursor.execute('''
-    Insert into response (response_answer, fk_question_id, fk_utilizador_id)
-    VALUES ('blue', 1, 1), ('red', 1, 2), ('dog', 2, 1), ('cat', 2, 2);
-''')
 # Show tables
 cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
 cursor.execute('''SELECT 
@@ -464,36 +441,6 @@ for table in tables:
 # Print utilizador table
 cursor.execute("SELECT * FROM utilizador;")
 print(cursor.fetchall())
-
-cursor.execute('''
-    SELECT 
-        r.response_answer
-    FROM
-        response r
-    JOIN
-        utilizador u
-    ON
-        r.fk_utilizador_id = u.utilizador_id
-    JOIN
-        question q
-    ON
-        r.fk_question_id = q.question_id
-    WHERE
-        u.utilizador_nome = ? AND q.question_question = ?;
-''', ('ana', 'What is your favourite color?'))
-print(cursor.fetchone())
-
-
-cursor.execute('''
-    SELECT 
-            q.question_question
-        FROM
-            question q
-        ORDER BY
-            RANDOM()
-        LIMIT 1;
-''')
-print(cursor.fetchone())
 
 # Commit the changes and close the connection
 conn.commit()

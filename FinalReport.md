@@ -254,14 +254,14 @@ Agora, podemos realizar uma avaliação de risco semelhante à anterior, atribui
 O sistema de autenticação irá ter os seguintes modos de autenticação:
 - **Autenticação via palavra-passe**: Será pedido ao utilizador que insira as credencias;
 - **Autenticação via *One-Time Password***: Será enviado um código de autenticação para o email/aplicação móvel do utilizador;
-- **Perguntas de segurança**: Serão feitas perguntas de segurança ao utilizador que foram solicitadas no registo;
+- **PIN**: Serão feitas PIN ao utilizador que foram solicitadas no registo;
 - **Autenticação via *Smartcard***: Será pedido ao utilizador que insira o seu cartão de autenticação.
 
 #### Motivação para a escolha dos métodos
 
 1. **Exposição de informações do cliente e acesso não autorizado às informações de vendas:** A autenticação através de One-Time Password (OTP) é uma escolha adequada, pois oferece um segundo fator de autenticação que é dinâmico e não pode ser facilmente forjado por atacantes, pois têm de ter acesso a um dispositivo fisico do utilizador ou credencias de acesso de uma outra aplicação de vinculo de autenticação do mesmo.
 
-2. **Risco de phishing e fraude de identidade:** As perguntas de segurança são úteis para mitigar o risco de phishing e fraude de identidade, pois adicionam uma camada extra de verificação da identidade do utilizador, sendo que só o utilizador legítimo conhece, dificultam então, a realização de ataques de phishing bem-sucedidos ou tentativas de fraude de identidade.
+2. **Risco de phishing e fraude de identidade:** As PIN são úteis para mitigar o risco de phishing e fraude de identidade, pois adicionam uma camada extra de verificação da identidade do utilizador, sendo que só o utilizador legítimo conhece, dificultam então, a realização de ataques de phishing bem-sucedidos ou tentativas de fraude de identidade.
 
 3. **Nível de segurança geral e diversificação de métodos:** A autenticação através de Smartcard é uma opção de decrescimo ao nível da usabilidade, mas para os utilizadores que precisam de um nível mais elevado de segurança, especialmente para acesso a informações sensíveis ou operações críticas. O uso de cartões de autenticação físicos adicionam uma camada adicional de proteção, pois requer que os utilizadores tenham posse física do seu cartão para autenticar-se.
 
@@ -403,9 +403,31 @@ Existem dois tipos de *logs*:
 
 ### *Identity Provider*
 
+#### *Challenge-Response*
+
+Existem três tipos de **provas de autenticação**: 
+- **Algo que o utilizador sabe**: *passwords*, *PINs*, etc.;
+- **Algo que o utilizador tem**: *smartcards*, *tokens*, etc.;
+- **Algo que o utilizador é**: impressões digitais, reconhecimento facial, etc.
+
+Nesta a implementação do *Challenge-Response*, é feita uma abordagem com base em PIN enviado por SMS (**algo que o utilizador sabe**). Para isso foi guardada na base de dados, uma tabela com o *challenge response* de cada utilizador com a respetiva data e hora de criação.
+
+> Estas mensagens SMS são enviadas através da API da Twilio.
+
+Durante a autenticação, é enviado um *challenge* ao utilizador, neste caso um nonce (*number used once*), que é uma string aleatória gerada pelo *IdP*. O utilizador responde com o PIN recebido, junto com o *nonce*, sendo estes computados com uma função *digest* (SHA-256) e comparados com os valores guardados na base de dados.
+
+Este fluxo encontra-se representado no seguinte diagrama:
+
+<p align="center">
+  <img src="img/challenge-response.png" width="300" title="Challenge-Response">
+</p>
+<p align="center" style="font-size: 10px;">
+  <i>Figura 10 - Representação do protocolo de autenticação Challenge-Response</i>
+</p>
+
 #### OTP (*One-Time Password*)
 
-Para a implementação, foi utilizado a biblioteca `pyotp`, que permite a criação de códigos de autenticação com base no algoritmo `TOTP` (*Time-based One-Time Password*). Este algoritmo gera um código de autenticação que é válido apenas por um curto período de tempo, geralmente **30 segundos**, e é gerado com base numa *seed* e no tempo atual.
+Para a implementação, foi utilizado a biblioteca `pyotp`, que permite a criação de códigos de autenticação com base no algoritmo `TOTP` (*Time-based One-Time Password*). Este algoritmo gera um código de autenticação que é válido apenas por um curto período de tempo, no caso **90 segundos**, e é gerado com base numa *seed* e no tempo atual.
 
 O seguinte código mostra a geração de um código de autenticação, que recebe como argumentos a *seed* (que será a credencial do utilizador) e o email do utilizador e devolve o código e o URI para a criação de um *QR Code*, compatíveis com aplicações como o *Google Authenticator*:
 
@@ -419,39 +441,13 @@ def create_totp(seed: str, email_address: str):
     return totp_code, uri
 ```
 
-> Mais informação sobre a biblioteca: [PyOTP](https://pyauth.github.io/pyotp/)
-
 O *QR code* é gerado com base no URI, usando a biblioteca `qrcode`, e é guardado num *buffer* de imagem para ser enviado ao utilizador por email.
-
-> Mais informação sobre a biblioteca: [QRCode](https://pypi.org/project/qrcode/)
 
 Para mandar o código de autenticação e o *QR code* por email, foi criada uma conta da Google para o envio de emails.
 
 > Informação sobre como criar uma palavra-passe para a aplicação: [Google - Criar uma palavra-passe para a aplicação](https://support.google.com/mail/answer/185833?hl=pt)
 
 E foi utilizada a biblioteca `smtplib` para o envio de emails sobre o domínio do Gmail (`smtp.gmail.com`).
-
-> Exemplo de utilização da biblioteca: [smtplib](https://docs.python.org/3/library/smtplib.html#smtp-example)
-
-#### *Challenge-Response*
-
-Existem três tipos de provas de autenticação: 
-- **Algo que o utilizador sabe**: *passwords*, *PINs*, etc.;
-- **Algo que o utilizador tem**: *smartcards*, *tokens*, etc.;
-- **Algo que o utilizador é**: impressões digitais, reconhecimento facial, etc.
-
-Nesta a implementação do *Challenge-Response*, é feita uma abordagem com base em perguntas de segurança (**algo que o utilizador sabe**). Para isso foi guardada na base de dados, uma tabela com as perguntas de segurança e outra tabela com as respostas correspondentes a cada utilizador.
-
-Durante a autenticação, é enviado um *challenge* ao utilizador, neste caso um nonce (*number used once*), que é uma string aleatória gerada pelo *IdP*. O utilizador responde com a resposta à pergunta de segurança, junto com o *nonce*, sendo estes computados com uma função *digest* (SHA-256) e comparados com os valores guardados na base de dados.
-
-Este fluxo encontra-se representado no seguinte diagrama:
-
-<p align="center">
-  <img src="img/challenge-response.png" width="300" title="Challenge-Response">
-</p>
-<p align="center" style="font-size: 10px;">
-  <i>Figura 10 - Representação do protocolo de autenticação Challenge-Response</i>
-</p>
 
 ### *Resource Server*
 
@@ -545,3 +541,4 @@ TODO: Em suma, blah blah blah...
 - [JWT.io](https://jwt.io/)
 - [Bootstrap](https://getbootstrap.com/)
 - [Flask Documentation](https://flask.palletsprojects.com/en/2.0.x/)
+- [Twilio - Verify API](https://www.twilio.com/docs/libraries/reference/twilio-python/index.html)
