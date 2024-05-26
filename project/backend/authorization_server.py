@@ -47,7 +47,7 @@ SENDER_SMS_NUMBER = '+13365305137'
 
 # For the logs
 SUCCESS_LOG = 'INFO'
-ERROR_LOG = 'ERROR'
+ERROR_LOG = 'ERROR' # TODO: Modificar o nome dos tipos de Logs e adicionar nos sitios devidos
 
 TOTP_INTERVAL_SECONDS = 90
 
@@ -682,7 +682,7 @@ def authorize(): # STEP 2 - Authorization Code Request
             add_log(ERROR_LOG, datetime.now(), 'Invalid credentials', username, request_ip, 'None', 'Authorization')
             return render_template('login.html', state=request.args.get('state'), error_message='Invalid credentials')
         
-        risk_score = risk_based_authentication(request_ip, username)
+        risk_score = risk_based_authentication(request_ip, username) # TODO: Após calcular o risco, avaliar quando pedir MFA (dependendo do nível de acesso)
         if risk_score >= 0:
             challenge = start_challenge(username, USERS[username]['telemovel'])
             return redirect(f'/challenge?client_id={client_id_received}&redirect_uri={redirect_uri}&state={request.args.get("state")}&username={username}&challenge={challenge}')

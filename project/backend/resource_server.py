@@ -75,6 +75,10 @@ def verify_token(f):
 
 # API #
 
+# TODO: Adicionar logs a cada todos os endpoints
+
+# TODO: Adicionar o decorator verify token e verificar qual o nível de acesso do utilizador
+
 @app.route('/api/create_user', methods=['POST'])
 def create_user() -> jsonify:
     user_data = request.get_json()

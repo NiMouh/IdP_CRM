@@ -82,12 +82,13 @@ $ bash generate_rsa.bash
 - Desenvolvimento do IdP (Simão Andrade e Ana Vidal):
   - [x] Desenvolvimento do *backend*;
   - [x] Desenvolvimento do *frontend* (design e interação com o utilizador);
-  - [ ] Implementação de MFAs;
+  - [x] Implementação de MFAs (excluindo o smartcard);
   - [x] Implementação de um sistema de logs;
   - [x] Gestão de *tokens* e *sessões*;
   - [x] Definição do cálculo do risco;
   - [ ] Proteção contra erros de CSRF (*Cross-Site Request Forgery*);
-  - [ ] Implementação do sistema RBAC;
+  - [ ] Validação e sanitização dos dados inseridos pelo utilizador;
+  - [ ] Implementação de autenticação por smartcard;
 - Desenvolvimento dos três Client Applications (Ana Vidal):
   - [ ] Implementação do *frontend* (design e interação com o utilizador);
   - [ ] Validação e sanitização dos dados inseridos pelo utilizador;
@@ -100,7 +101,7 @@ $ bash generate_rsa.bash
   - [x] Estrutura das mensagens trocadas e fluxos de mensagens;
   - [ ] Interfaces utilizadas e os seus parâmetros;
   - [ ] Alguns detalhes de implementação relevantes;
-  - [ ] Abordagem MFA e gestão de riscos;
+  - [x] Abordagem MFA e gestão de riscos;
   - [ ] Resultados obtidos; 
 - Extra:
   - [ ] Documentação do projeto;

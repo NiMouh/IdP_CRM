@@ -86,6 +86,8 @@ def dashboard():
     access_token = request.cookies.get('access_token')
     return render_template('dashboard.html', access_token=access_token)
 
+# TODO: Implementação de Refresh tokens
+
 @app.errorhandler(STATUS_CODE['NOT_FOUND'])
 def page_not_found(e):
     return render_template('error.html'), STATUS_CODE['NOT_FOUND']
