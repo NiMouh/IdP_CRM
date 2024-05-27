@@ -98,10 +98,11 @@ def fetch_user(username : str) -> dict:
     ''', (username,))
     user_db = cursor.fetchone()
     user = {
-        'salt': user_db[2],
-        'access_level': user_db[3],
-        'email': user_db[4],
-        'telemovel': user_db[5]
+        'username': user_db[0],
+        'salt': user_db[1],
+        'access_level': user_db[2],
+        'email': user_db[3],
+        'telemovel': user_db[4]
     }
     cursor.close()
     return user
@@ -684,15 +685,16 @@ def authorize(): # STEP 2 - Authorization Code Request
         
         risk_score = risk_based_authentication(request_ip, username) # TODO: Após calcular o risco, avaliar quando pedir MFA (dependendo do nível de acesso)
         if risk_score >= 0:
-            challenge = start_challenge(username, USERS[username]['telemovel'])
-            return redirect(f'/challenge?client_id={client_id_received}&redirect_uri={redirect_uri}&state={request.args.get("state")}&username={username}&challenge={challenge}')
-        if risk_score >= 2:
             seed = USERS[username]['salt']
             seed_base32 = base64.b32encode(seed.encode()).decode('utf-8').rstrip('=')
             email_address = USERS[username]['email']
             if not generate_otp(seed_base32, email_address):
                 return render_template('error.html', error_message='Failed to generate OTP'), STATUS_CODE['INTERNAL_SERVER_ERROR']
             return redirect(f'/2fa?client_id={client_id_received}&redirect_uri={redirect_uri}&state={request.args.get("state")}&username={username}')
+        
+        if risk_score >= 2:
+            challenge = start_challenge(username, USERS[username]['telemovel'])
+            return redirect(f'/challenge?client_id={client_id_received}&redirect_uri={redirect_uri}&state={request.args.get("state")}&username={username}&challenge={challenge}')            
         
         # If doesn't pass the threshold, generate an authorization code
         authorization_code = make_nonce()

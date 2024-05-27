@@ -275,7 +275,7 @@ cursor.execute('''
 
 cursor.execute('''
     INSERT INTO nivel_acesso (nivel_acesso_nome, nivel_acesso_nivel)
-    VALUES ('Vendedor', 2), ('admin', 1);
+    VALUES ('vendedor', 2), ('admin', 1);
 ''')
 
 cursor.execute('''
