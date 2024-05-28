@@ -4,11 +4,9 @@ from flask import Flask, redirect, url_for, render_template, make_response, requ
 from secrets import token_urlsafe
 from authlib.integrations.flask_client import OAuth
 from functools import wraps
-# Adiciona o diretório 'backend' ao sys.path
 backend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../backend'))
 sys.path.append(backend_path)
 
-# Agora a importação deve funcionar
 from middleware import check_permission
 
 app = Flask(__name__, template_folder="templates")
@@ -60,6 +58,9 @@ def login(): # STEP 1 - Authorization Request
 
 @app.route('/authorize')
 def authorize(): # STEP 3 - Access Token Request
+
+    print("State from the Client App: ", request.args.get('state'))
+
     token = oauth.idp.authorize_access_token(client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
 
     if 'error_message' in token:
@@ -73,7 +74,7 @@ def authorize(): # STEP 3 - Access Token Request
     return response
 
 @app.route('/logout', methods=['GET'])
-@check_permission(['admin', 'vendedor'])
+@check_permission(['vendedor', 'trabalhador_de_fabrica'])
 def logout():
     response = make_response(redirect('/'))
     response.set_cookie('access_token', '', expires=0)
@@ -89,7 +90,7 @@ def index():
     return render_template('index.html')
 
 @app.route('/dashboard', methods=['GET'])
-@check_permission(['admin', 'vendedor'])
+@check_permission(['vendedor', 'trabalhador_de_fabrica', 'diretor_de_obra'])
 def dashboard():
     if 'access_token' not in request.cookies:
         return redirect('/')

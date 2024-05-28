@@ -18,13 +18,21 @@ tables_to_drop = [
     "utilizador", "cliente", "colaborador", "concelho", "distrito",
     "freguesia", "morada", "obra", "produto", "escalaoDesconto",
     "tabelaPrecos", "contactosCliente", "stock", "client_application",
-    "authorization_code", "challenge"
+    "authorization_code", "challenge", "risco"
 ]
 
 for table in tables_to_drop:
     cursor.execute(f"DROP TABLE IF EXISTS {table};")
 
 # Create the table
+
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS risco (
+    risco_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    risco_nome VARCHAR(50) NOT NULL,
+    risco_valor INTEGER NOT NULL
+    );
+''')
 
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS log (
@@ -275,7 +283,12 @@ cursor.execute('''
 
 cursor.execute('''
     INSERT INTO nivel_acesso (nivel_acesso_nome, nivel_acesso_nivel)
-    VALUES ('vendedor', 2), ('admin', 1);
+    VALUES ('vendedor', 3), ('diretor_de_obra', 3), ('fornecedor', 2), ('trabalhador_de_fabrica', 2), ('tecnico_telecomunicacoes', 1);
+''')
+
+cursor.execute('''
+    INSERT INTO risco (risco_nome, risco_valor)
+    VALUES ('low', 0), ('medium', 2), ('high', 4);
 ''')
 
 cursor.execute('''
@@ -390,7 +403,7 @@ password_ana = sha256('ana'.encode() + salt.encode()).hexdigest()
 password_simao = sha256('simao'.encode() + salt.encode()).hexdigest()
 cursor.execute('''
     INSERT INTO utilizador (utilizador_nome, utilizador_password, utilizador_salt, fk_nivel_acesso, utilizador_email, utilizador_telemovel)
-    VALUES ('ana', ?, ?, 1, 'raquelvidal99@hotmail.com', '+351928113593'), ('simao', ?, ?, 2, 'simaoaugusto11@hotmail.com', '+351913385208');
+    VALUES ('ana', ?, ?, 2, 'raquelvidal99@hotmail.com', '+351913385208'), ('simao', ?, ?, 4, 'simaoaugusto11@hotmail.com', '+351913385208');
 ''' , (password_ana, salt, password_simao, salt))
 
 cursor.execute('''

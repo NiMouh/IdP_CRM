@@ -1,7 +1,7 @@
 from hashlib import sha256
 import random
 import string
-from flask import Flask, request, jsonify, redirect, render_template
+from flask import Flask, request, jsonify, redirect, render_template, session
 from secrets import token_urlsafe
 from datetime import timedelta,datetime
 from sqlite3 import connect, Error
@@ -65,7 +65,7 @@ def fetch_users() -> dict:
     conn = create_connection()
     cursor = conn.cursor()
     cursor.execute('''SELECT 
-                        u.utilizador_nome, u.utilizador_password, u.utilizador_salt, n.nivel_acesso_nivel, u.utilizador_email, u.utilizador_telemovel
+                        u.utilizador_nome, u.utilizador_password, u.utilizador_salt, n.nivel_acesso_nome, u.utilizador_email, u.utilizador_telemovel
                    FROM 
                         utilizador u
                    JOIN 
@@ -248,6 +248,31 @@ def fetch_level_access(username : str) -> str:
 
     return access_level[0]
 
+def fetch_all_access_levels() -> dict:
+    connection = create_connection()
+    cursor = connection.cursor()
+    cursor.execute('SELECT nivel_acesso_nome, nivel_acesso_nivel FROM nivel_acesso')
+    access_levels_db = cursor.fetchall()
+    access_levels = {}
+    for name, level in access_levels_db:
+        level = str(level)
+        if level not in access_levels:
+            access_levels[level] = set()
+        access_levels[level].add(name)
+    cursor.close()
+    return access_levels
+
+def fetch_risk_thresholds() -> dict:
+    connection = create_connection()
+    cursor = connection.cursor()
+    cursor.execute('SELECT risco_nome, risco_valor FROM risco')
+    risk_thresholds_db = cursor.fetchall()
+    risk_thresholds = {}
+    for name, value in risk_thresholds_db:
+        risk_thresholds[name] = value
+    cursor.close()
+    return risk_thresholds
+
 def add_log(log_type : str, log_date : datetime, log_message : str, username : str, ip : str, access_level : str, segmentation : str) -> None:
 
     if log_type not in [SUCCESS_LOG, ERROR_LOG] or not log_date or not log_message or not ip or not access_level or not segmentation:
@@ -383,11 +408,13 @@ def remove_challenge_code(username : str) -> None:
     except Error as e:
         print(e)
 
-def sms_is_verified(challenge_response : str, username : str) -> bool:
+def sms_is_verified(challenge : str, response : str, username : str) -> bool:
 
     db_challenge_response = fetch_challenge_code(username)
     if not db_challenge_response:
         return False
+    
+    challenge_response = sha256(challenge.encode() + response.encode()).hexdigest()
     
     return challenge_response == db_challenge_response
 
@@ -406,6 +433,8 @@ def sms():
         username = request.form.get('username')
         challenge = request.form.get('challenge')
         response = request.form.get('response')
+        redirect_uri = request.form.get('redirect_uri')
+        state = request.form.get('state')
 
         CLIENTS = fetch_clients()
         if client_id_received not in CLIENTS:
@@ -414,19 +443,20 @@ def sms():
         if not challenge or not username or not response:
             return render_template('error.html', error_message='Invalid request'), STATUS_CODE['BAD_REQUEST']
         
-        challenge_response = sha256(challenge.encode() + response.encode()).hexdigest()
-        if not sms_is_verified(challenge_response, username):
+        USER = fetch_user(username)
+        if not sms_is_verified(challenge, response, username):
             remove_challenge_code(username)
-            USER = fetch_user(username)
             challenge = start_challenge(username, USER['telemovel'])
-            return render_template('challenge.html', client_id=client_id_received, redirect_uri=request.form.get('redirect_uri'), state=request.form.get('state'), username=username, challenge=challenge, error_message='Invalid code')
+            return render_template('challenge.html', client_id=client_id_received, redirect_uri=redirect_uri, state=state, username=username, challenge=challenge, error_message='Invalid code')
         
         remove_challenge_code(username)
 
-        authorization_code = make_nonce()
-        add_authorization_code(authorization_code, client_id_received, username)
-        add_log(SUCCESS_LOG, datetime.now(), 'Access granted', username, request.remote_addr, fetch_level_access(username), 'Authorization')
-        return redirect(f'{request.form.get("redirect_uri")}?code={authorization_code}&state={request.form.get("state")}')
+        seed = USER['salt']
+        seed_base32 = base64.b32encode(seed.encode()).decode('utf-8').rstrip('=')
+        email_address = USER['email']
+        if not generate_otp(seed_base32, email_address):
+            return render_template('error.html', error_message='Failed to generate OTP'), STATUS_CODE['INTERNAL_SERVER_ERROR']
+        return redirect(f'/2fa?client_id={client_id_received}&redirect_uri={redirect_uri}&state={state}&username={username}')
 
 # Time-Based One-Time Password #
 
@@ -621,7 +651,7 @@ def risk_based_authentication(ip : str, username : str) -> int:
     else:
         counter = counter
  
-    # If there's more than 3 failed login attempts in the last 5 minutes, increase the counter
+    # If there's equal or more than 3 failed login attempts in the last 5 minutes, increase the counter
     cursor.execute('''
         SELECT
             COUNT(*)
@@ -632,7 +662,7 @@ def risk_based_authentication(ip : str, username : str) -> int:
     ''', (ERROR_LOG, username))
 
     failed_logins = cursor.fetchone()
-    if failed_logins[0] > 3:
+    if failed_logins[0] >= 3:
         counter += 1
     else:
         counter = counter
@@ -643,6 +673,9 @@ def risk_based_authentication(ip : str, username : str) -> int:
 
 def make_nonce() -> str:
     return token_urlsafe(22)
+
+def password_is_verified(password : str, salt : str, hashed_password : str) -> bool:
+    return sha256(password.encode() + salt.encode()).hexdigest() == hashed_password
 
 @app.route('/authorize', methods=['GET', 'POST'])
 def authorize(): # STEP 2 - Authorization Code Request
@@ -660,10 +693,13 @@ def authorize(): # STEP 2 - Authorization Code Request
     elif request.method == 'POST':
         USERS = fetch_users()
         CLIENTS = fetch_clients()
+        ACCESS_LEVELS = fetch_all_access_levels()
+        RISK_THRESHOLDS = fetch_risk_thresholds()
 
         request_ip = request.remote_addr
         client_id_received, client_secret_received, redirect_uri = request.args.get('client_id'), request.args.get('client_secret'), request.args.get('redirect_uri')
-        
+        state = request.args.get('state')
+
         if client_id_received not in CLIENTS or CLIENTS[client_id_received]['secret'] != client_secret_received or CLIENTS[client_id_received]['redirect_uri'] != redirect_uri:
             add_log(ERROR_LOG, datetime.now(), 'Invalid client credentials', 'None', request_ip, 'None', 'Authorization')
             return render_template('error.html', error_message='Invalid client credentials'), STATUS_CODE['UNAUTHORIZED']
@@ -672,36 +708,72 @@ def authorize(): # STEP 2 - Authorization Code Request
 
         if not username or not password:
             add_log(ERROR_LOG, datetime.now(), 'Missing credentials', 'None', request_ip, 'None', 'Authorization')
-            return render_template('login.html', state=request.args.get('state'), error_message='Missing credentials')
+            return render_template('login.html', state=state, error_message='Missing credentials')
         
         if username not in USERS:
             add_log(ERROR_LOG, datetime.now(), 'Invalid credentials', username, request_ip, 'None', 'Authorization')
-            return render_template('login.html', state=request.args.get('state'), error_message='Invalid credentials')
+            return render_template('login.html', state=state, error_message='Invalid credentials')
         
-        hashed_password = sha256(password.encode() + USERS[username]['salt'].encode()).hexdigest()
-        if USERS[username]['password'] != hashed_password:
+        if not password_is_verified(password, USERS[username]['salt'], USERS[username]['password']):
             add_log(ERROR_LOG, datetime.now(), 'Invalid credentials', username, request_ip, 'None', 'Authorization')
-            return render_template('login.html', state=request.args.get('state'), error_message='Invalid credentials')
+            return render_template('login.html', state=state, error_message='Invalid credentials')
         
-        risk_score = risk_based_authentication(request_ip, username) # TODO: Após calcular o risco, avaliar quando pedir MFA (dependendo do nível de acesso)
-        if risk_score >= 0:
-            seed = USERS[username]['salt']
-            seed_base32 = base64.b32encode(seed.encode()).decode('utf-8').rstrip('=')
-            email_address = USERS[username]['email']
-            if not generate_otp(seed_base32, email_address):
-                return render_template('error.html', error_message='Failed to generate OTP'), STATUS_CODE['INTERNAL_SERVER_ERROR']
-            return redirect(f'/2fa?client_id={client_id_received}&redirect_uri={redirect_uri}&state={request.args.get("state")}&username={username}')
-        
-        if risk_score >= 2:
-            challenge = start_challenge(username, USERS[username]['telemovel'])
-            return redirect(f'/challenge?client_id={client_id_received}&redirect_uri={redirect_uri}&state={request.args.get("state")}&username={username}&challenge={challenge}')            
-        
-        # If doesn't pass the threshold, generate an authorization code
-        authorization_code = make_nonce()
-        add_authorization_code(authorization_code, request.args.get('client_id'), username)
+        risk_score = risk_based_authentication(request_ip, username)
 
-        add_log(SUCCESS_LOG, datetime.now(), 'Access granted', username, request_ip, USERS[username]['access_level'], 'Authorization')
-        return redirect(f'{redirect_uri}?code={authorization_code}&state={request.args.get("state")}')
+        print("Risk Score: ", risk_score)
+
+        seed = USERS[username]['salt']
+        seed_base32 = base64.b32encode(seed.encode()).decode('utf-8').rstrip('=')
+        email_address = USERS[username]['email']
+        
+        print("Access Level: ", USERS[username]['access_level'])
+
+        print("Risk Thresholds: ", RISK_THRESHOLDS)
+
+        # FIXME: Implement the logic for the different access levels
+        if USERS[username]['access_level'] in ACCESS_LEVELS['1']:
+            print("Access Level 1")
+            if risk_score >= RISK_THRESHOLDS['low'] and risk_score < RISK_THRESHOLDS['medium']:
+                print("Risk Level: Low - MFA not required")
+            elif risk_score >= RISK_THRESHOLDS['medium']:
+                print("Risk Level: Medium - OTP required")
+                if not generate_otp(seed_base32, email_address):
+                    return render_template('error.html', error_message='Failed to generate OTP'), STATUS_CODE['INTERNAL_SERVER_ERROR']
+                return redirect(f'/2fa?client_id={client_id_received}&redirect_uri={redirect_uri}&state={state}&username={username}')
+        elif USERS[username]['access_level'] in ACCESS_LEVELS['2']:
+            print("Access Level 2")
+            if risk_score == RISK_THRESHOLDS['low']:
+                print("Risk Level: Low - MFA not required")
+            elif risk_score > RISK_THRESHOLDS['low'] and risk_score < RISK_THRESHOLDS['medium']:
+                print("Risk Level: Medium - OTP required")
+                if not generate_otp(seed_base32, email_address):
+                    return render_template('error.html', error_message='Failed to generate OTP'), STATUS_CODE['INTERNAL_SERVER_ERROR']
+                return redirect(f'/2fa?client_id={client_id_received}&redirect_uri={redirect_uri}&state={state}&username={username}')
+            elif risk_score >= RISK_THRESHOLDS['medium']:
+                print("Risk Level: High - Challenge and OTP required")
+                challenge = start_challenge(username, USERS[username]['telemovel'])
+                if not challenge:
+                    return render_template('error.html', error_message='Failed to start challenge'), STATUS_CODE['INTERNAL_SERVER_ERROR']
+                return redirect(f'/challenge?client_id={client_id_received}&redirect_uri={redirect_uri}&state={state}&username={username}&challenge={challenge}')
+        elif USERS[username]['access_level'] in ACCESS_LEVELS['3']:
+            print("Access Level 3")
+            if risk_score >= RISK_THRESHOLDS['low'] and risk_score < RISK_THRESHOLDS['medium']:
+                print("Risk Level: Medium - OTP required")
+                if not generate_otp(seed_base32, email_address):
+                    return render_template('error.html', error_message='Failed to generate OTP'), STATUS_CODE['INTERNAL_SERVER_ERROR']
+                return redirect(f'/2fa?client_id={client_id_received}&redirect_uri={redirect_uri}&state={state}&username={username}')
+            elif risk_score >= RISK_THRESHOLDS['medium'] and risk_score < RISK_THRESHOLDS['high']:
+                print("Risk Level: High - Challenge AND OTP required")
+                challenge = start_challenge(username, USERS[username]['telemovel'])
+                if not challenge:
+                    return render_template('error.html', error_message='Failed to start challenge'), STATUS_CODE['INTERNAL_SERVER_ERROR']
+                return redirect(f'/challenge?client_id={client_id_received}&redirect_uri={redirect_uri}&state={state}&username={username}&challenge={challenge}')
+            elif risk_score >= RISK_THRESHOLDS['high']:
+                print("Risk Level: Very High - Smartcard required") # FIXME: Implement Smartcard
+                return render_template('error.html', error_message='Smartcard required'), STATUS_CODE['UNAUTHORIZED']
+        else:
+            print("Access Level not found")
+            return render_template('error.html', error_message='Access level not found'), STATUS_CODE['INTERNAL_SERVER_ERROR']
 
 @app.route('/access_token', methods=['POST'])
 def access_token() -> jsonify: # STEP 4 - Access Token Grant

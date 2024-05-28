@@ -37,7 +37,6 @@ SECRET_KEY = get_public_key()
 
 #fazer decode do token para obter o utilizador
 def get_user(token):
-    print(token)
     if token:
         try:
             token_decoded = jwt.decode(token, SECRET_KEY,  audience='http://127.0.0.1:5020', algorithms=['RS256'])
@@ -58,21 +57,17 @@ def get_user_role(username):
     return role
 
 def check_permission(roles: list):
-    print(roles)
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
             access_token = request.cookies.get('access_token')
             if access_token is None:
                 return jsonify({"message": "No access token provided"}), 403
-            print('access token:',access_token)
             #obter do access toke o utilizador
             username = get_user(access_token)
-            print(username)
             if username is None:
                 return jsonify({"message": "No username provided"}), 403
             user_role = get_user_role(username)
-            print(user_role[0])
             if user_role[0] is None:
                 return jsonify({"message": "No role found"}), 403
             if user_role[0] not in roles:

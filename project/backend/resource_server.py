@@ -26,8 +26,6 @@ STATUS_CODE = {
     'INTERNAL_SERVER_ERROR': 500
 }
 
-JWKS_URL = 'http://127.0.0.1:5010/.well-known/jwks.json'
-
 DATABASE_PATH = r'.\database\db.sql'
 
 def create_connection() -> connect:
