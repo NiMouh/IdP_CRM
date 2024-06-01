@@ -283,9 +283,9 @@ Estas variáveis serão avaliadas usando os *logs* de autenticação e, com base
 - Número de tentativas de autenticação falhadas: 3 ou mais, num intervalo de 5 minutos;
 - Nível de confiança do dispositivo: pelo menos 5 autenticações bem-sucedidas num intervalo de 30 dias. 
   
-**Nível 1**: Um pedido de autenticação MFA, se as pelo menos uma das regras acima não for seguida;
+**Nível 1**: Um pedido de autenticação MFA, se as pelo menos duas das regras acima não for seguida;
 
-**Nível 2**: Dois pedidos de autenticação MFA, se pelo menos duas das regras acima não forem seguidas;
+**Nível 2**: Um pedido de autenticação MFA, se pelo menos uma regra não for seguida, e dois pedidos de autenticação MFA, se mais de duas das regras acima não forem seguidas;
 
 **Nível 3**: É sempre exigido um pedido de autenticação MFA, mas caso todas as regras acima não sejam seguidas, é exigido uma autenticação física.
 
@@ -313,13 +313,13 @@ Para a implementação do sistema, foram utilizadas as seguintes ferramentas:
 - **HTML/CSS/JS**: Linguagens de marcação e estilização utilizadas para o desenvolvimento do *frontend* da aplicação;
 
 Dentro da linguagem de programação Python, foram utilizadas as seguintes bibliotecas:
-- **JWT**: Biblioteca utilizada para a criação e validação de *tokens* de autenticação;
-- **Authlib**: Biblioteca utilizada para a implementação do *OAuth 2.0*;
-- **SQLite3**: Biblioteca utilizada para a criação e gestão da base de dados da aplicação.
+- **JWT**: Criação e validação de *tokens* de autenticação;
+- **Authlib**: Implementação do *OAuth 2.0*;
+- **SQLite3**: Criação e gestão da base de dados da aplicação.
 
 Além disso foi utilizado:
-- **Postman**: Ferramenta utilizada para a realização de testes de *endpoints* e validação de *tokens*.
-- **Figma**: Ferramenta utilizada para a criação de *wireframes* e *mockups* do *frontend* da aplicação.
+- **Postman**: Realização de testes de *endpoints* e validação de *tokens*.
+- **Figma**: Criação de *wireframes* e *mockups* do *frontend* da aplicação.
 
 A escolha destas ferramentas foi feita com base na sua facilidade de uso, documentação extensiva e suporte ativo.
 
@@ -334,7 +334,7 @@ Com base na descrição do sistema das entidades e relações feita na primeira 
   <i>Figura 8 - Diagrama Entidade-Relação da Base de Dados</i>
 </p>
 
-> O mesmo encontra-se armazenados neste repositório, na diretoria `server/database/`.
+> A mesma encontra-se armazenada neste repositório, na diretoria `server/database/`, sobre o nome `db.sql`
 
 ## Arquitetura do Sistema
 
@@ -360,17 +360,6 @@ A estrutura do projeto encontra-se organizada da seguinte forma:
 </p>
 
 ### Fluxo de mensagens
-
-Deste modo, sempre que o utilizador tenta **autenticar-se**, o fluxo de mensagens é o seguinte:
-1. *Client* **redireciona** o utilizador para o *IdP* para autenticação, enviando o `client_id`, `response_type`, `redirect_uri` e `scope` (*authorization endpoint*);
-2. *IdP* **autentica** o utilizador e **redireciona** (usando o `redirect_uri`) o utilizador para o *Client* com o `authorization_code`;
-3. Já com o `authorization_code`, o *Client* **envia** um pedido para o *IdP* para obter o *token* de acesso (*token endpoint*), em conjunto com o `client_id`, `client_secret`, `grant_type` e `redirect_uri`;
-4. *IdP* **verifica** o `authorization_code` e **envia** o *token* de acesso para o *Client*;
-
-Sempre que um cliente tenta **aceder a um recurso**, o fluxo de mensagens é o seguinte:
-1. *Client* **envia** o *token* para o *Resource Server* sempre que tenta aceder a um recurso. 
-2. *Resource Server* **valida o acesso e a integridade** do *token* e, caso seja válido, envia o recurso pedido.
-3. *Client* **recebe** o recurso pedido.
 
 > Este fluxo de mensagens encontra-se representado no diagrama presente na Figura 6.
 
@@ -401,20 +390,41 @@ Existem dois tipos de *logs*:
   - `AUTHENTICATION_INFO`: *Logs* de informação de autenticação, que contêm informações sobre pedidos de autenticação bem-sucedidos;
   - `ACCESS_INFO`: *Logs* de informação de acesso, que contêm informações sobre pedidos de acesso a recursos bem-sucedidos.
 
-### *Identity Provider*
+### IdP (*Identity Provider*)
 
-#### *Challenge-Response*
+### OAuth 2.0
+
+Assim como foi referido anteriormente na primeira parte do relatório, o fluxo escolhido para o processo de autenticação foi o *Authorization Code flow*.
+
+Sempre que o utilizador tenta **autenticar-se**, o fluxo de mensagens é o seguinte:
+1. *Client* **redireciona** o utilizador para o *IdP* para autenticação, enviando o `client_id`, `response_type`, `redirect_uri` e `scope` (`/authorize` *endpoint*);
+2. *IdP* **autentica** o utilizador e **redireciona** (usando o uri de redirecionamento) o utilizador para o *Client* com o `authorization_code`;
+3. Já com o `authorization_code`, o *Client* **envia** um pedido para o *IdP* para obter o *token* de acesso (`/access_token` *endpoint*), em conjunto com o `client_id`, `client_secret`, `grant_type` e `redirect_uri`;
+4. *IdP* **verifica** o `authorization_code` e **envia** o *token* de acesso para o *Client*;
+
+> Para que o fluxo se concretize **com sucesso**, o *Client* deve estar registado no *IdP* e o *state* deve ser mantido entre os pedidos, caso contrário, o pedido é considerado **inválido** devido a possíveis ataques de CSRF (*Cross-Site Request Forgery*).
 
 Existem três tipos de **provas de autenticação**: 
 - **Algo que o utilizador sabe**: *passwords*, *PINs*, etc.;
 - **Algo que o utilizador tem**: *smartcards*, *tokens*, etc.;
 - **Algo que o utilizador é**: impressões digitais, reconhecimento facial, etc.
 
-Nesta a implementação do *Challenge-Response*, é feita uma abordagem com base em PIN enviado por SMS (**algo que o utilizador sabe**). Para isso foi guardada na base de dados, uma tabela com o *challenge response* de cada utilizador com a respetiva data e hora de criação.
+Para a implementação do sistema, foram utilizadas as seguintes provas de autenticação:
 
-> Estas mensagens SMS são enviadas através da API da Twilio.
+#### *Challenge-Response*
 
-Durante a autenticação, é enviado um *challenge* ao utilizador, neste caso um nonce (*number used once*), que é uma string aleatória gerada pelo *IdP*. O utilizador responde com o PIN recebido, junto com o *nonce*, sendo estes computados com uma função *digest* (SHA-256) e comparados com os valores guardados na base de dados.
+Aqui é feita uma abordagem com base em PIN enviado por SMS (**algo que o utilizador sabe**). Para isso foi guardada na base de dados, uma tabela com o *challenge response* de cada utilizador com a respetiva data e hora de criação. Durante a autenticação, é enviado um *challenge* ao utilizador, neste caso um nonce (*number used once*), que é uma string aleatória gerada pelo *IdP*.
+
+A seguinte mensagens SMS é enviada através da API da *Twilio*:
+
+<p align="center">
+  <img src="img/sms_challenge.jpg" width="300" title="SMS Challenge">
+</p>
+<p align="center" style="font-size: 10px;">
+  <i>Figura 9 - Mensagem de SMS com o PIN de autenticação</i>
+</p>
+
+O utilizador responde com o PIN recebido, junto com o *nonce*, sendo estes computados com uma função *digest* (SHA-256) e comparados com os valores guardados na base de dados.
 
 Este fluxo encontra-se representado no seguinte diagrama:
 
@@ -429,7 +439,7 @@ Este fluxo encontra-se representado no seguinte diagrama:
 
 Para a implementação, foi utilizado a biblioteca `pyotp`, que permite a criação de códigos de autenticação com base no algoritmo `TOTP` (*Time-based One-Time Password*). Este algoritmo gera um código de autenticação que é válido apenas por um curto período de tempo, no caso **90 segundos**, e é gerado com base numa *seed* e no tempo atual.
 
-O seguinte código mostra a geração de um código de autenticação, que recebe como argumentos a *seed* (que será a credencial do utilizador) e o email do utilizador e devolve o código e o URI para a criação de um *QR Code*, compatíveis com aplicações como o *Google Authenticator*:
+O seguinte código mostra a geração de um código de autenticação, que recebe como argumentos a *seed* (que será a credencial do utilizador) e o email do utilizador e devolve o código e o URI para a criação de um *QR Code*:
 
 ```python
 from pyotp import TOTP
@@ -447,11 +457,30 @@ Para mandar o código de autenticação e o *QR code* por email, foi criada uma 
 
 > Informação sobre como criar uma palavra-passe para a aplicação: [Google - Criar uma palavra-passe para a aplicação](https://support.google.com/mail/answer/185833?hl=pt)
 
-E foi utilizada a biblioteca `smtplib` para o envio de emails sobre o domínio do Gmail (`smtp.gmail.com`).
+E foi utilizada a biblioteca `smtplib` para o envio de emails sobre o domínio do Gmail (`smtp.gmail.com`), obtendo assim o seguinte email de autenticação:
 
-### *Resource Server*
+<p align="center">
+  <img src="img/email_otp.jpg" width="300" title="Email OTP">
+</p>
+<p align="center" style="font-size: 10px;">
+  <i>Figura 11 - Email de autenticação com o código de autenticação e o QR Code</i>
+</p>
 
-#### Validação de *Tokens*
+> Os QRCodes gerados são compatíveis com aplicações como o *Google Authenticator*.
+
+#### *Smartcard*
+
+### Autorização c/ *tokens* de acesso
+
+Os *tokens* de acesso são gerados sobre o formato JWT (*JSON Web Token*), que contêm as seguintes informações:
+- `username`: Nome do utilizador;
+- `exp`: Validade do *token* (em segundos);
+- `iss`: Emissor do *token* (Authorization Server);
+- `aud`: Recetor do *token* (Resource Server).
+
+Estes são assinados usando o algoritmo `RS256` (*RSA Signature with SHA-256*), que envolve a criação de um par de chaves pública/privada, onde a chave privada é usada para assinar o *token*.
+
+### Validação dos *tokens*
 
 Para validar os *tokens* de acesso, o *Resource Server* verifica a assinatura do *token* através de JWKS (*JSON Web Key Set*), que contém as chaves públicas do *IdP*. Envolve a criação de um *endpoint* que retorna as chaves públicas do *IdP* usadas para assinar os *tokens* usando o algoritmo `RS256`.
 
@@ -513,17 +542,19 @@ def verify_token(f):
 
 Este *decorator* é aplicado a todos os *endpoints* que requerem autenticação (`@verify_token`), garantindo que apenas pedidos com *tokens* válidos têm acesso aos recursos.
 
+### *Resource Server*
+
+Com base na tabela de mapeamento de recursos definida na primeira parte do trabalho, foram implementados os *endpoints* que permitem o acesso aos recursos, condicionado pelo nível de acesso do utilizador.
+
+#### Implementação de *Middleware*
+
+Para a implementação do controlo de acesso, foi criado um *middleware* que verifica o nível de acesso do utilizador e o recurso a que está a tentar aceder, e permite ou nega o acesso ao recurso, consoante o nível de acesso do utilizador.
+
+#### Controlo de Acesso (Biba e LaPadula)
+
 ## Testes de Validação
 
 TODO: Ainda não chegamos cá...
-
-### *Endpoints*
-
-### Validação de *Tokens*
-
-### Pedidos de Autenticação MFA
-
-### Pedidos ao *Resource Server*
 
 ## Conclusão
 
@@ -531,13 +562,13 @@ TODO: Em suma, blah blah blah...
 
 ## Referências
 
-- [Github - challenge-response-authentication example](https://github.com/abhisheklolage/challenge-response-auth/)
 - [Auth0 - JSON Web Key Set (JWKS)](https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-key-sets)
 - [Authlib Documentation](https://docs.authlib.org/en/latest/)
-- [PyOTP Documentation](https://pyauth.github.io/pyotp/)
-- [QRCode Documentation](https://pypi.org/project/qrcode/)
 - [Auth0 - Authorization Code Flow](https://auth0.com/docs/flows/authorization-code-flow)
 - [Auth0 - Which OAuth 2.0 Flow Should I Use?](https://auth0.com/docs/get-started/authentication-and-authorization-flow/which-oauth-2-0-flow-should-i-use)
+- [Github - challenge-response-authentication example](https://github.com/abhisheklolage/challenge-response-auth/)
+- [PyOTP Documentation](https://pyauth.github.io/pyotp/)
+- [QRCode Documentation](https://pypi.org/project/qrcode/)
 - [JWT.io](https://jwt.io/)
 - [Bootstrap](https://getbootstrap.com/)
 - [Flask Documentation](https://flask.palletsprojects.com/en/2.0.x/)
