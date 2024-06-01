@@ -18,7 +18,7 @@ tables_to_drop = [
     "utilizador", "cliente", "colaborador", "concelho", "distrito",
     "freguesia", "morada", "obra", "produto", "escalaoDesconto",
     "tabelaPrecos", "contactosCliente", "stock", "client_application",
-    "authorization_code", "challenge", "risco"
+    "authorization_code", "challenge", "risco", "token"
 ]
 
 for table in tables_to_drop:
@@ -262,6 +262,17 @@ cursor.execute('''
         FOREIGN KEY (fk_utilizador_id) REFERENCES utilizador(utilizador_id)
     );
 ''')
+
+cursor.execute('''
+    CREATE TABLE IF NOT EXISTS token (
+        token_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        token_refresh VARCHAR(50) NOT NULL,
+        fk_utilizador_id INTEGER,
+        fk_client_application_id INTEGER,
+        FOREIGN KEY (fk_utilizador_id) REFERENCES utilizador(utilizador_id),
+        FOREIGN KEY (fk_client_application_id) REFERENCES client_application(client_application_id)    );
+''')
+
 # Insert data into the table
 cursor.execute('''
     INSERT INTO tabelaPrecos (tabelaPrecos_Unit, fk_produto_id)

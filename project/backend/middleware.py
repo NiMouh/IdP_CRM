@@ -33,13 +33,14 @@ def get_public_key() -> bytes:
     public_key = RSAAlgorithm.from_jwk(json.dumps(key))
     return public_key
 
-SECRET_KEY = get_public_key()
-
 #fazer decode do token para obter o utilizador
 def get_user(token):
     if token:
         try:
-            token_decoded = jwt.decode(token, SECRET_KEY,  audience='http://127.0.0.1:5020', algorithms=['RS256'])
+            public_key = get_public_key()
+            if public_key is None:
+                return None
+            token_decoded = jwt.decode(token, public_key,  audience='http://127.0.0.1:5020', algorithms=['RS256'])
             return token_decoded.get('username')
         except jwt.ExpiredSignatureError:
             return None

@@ -780,6 +780,7 @@ def access_token() -> jsonify: # STEP 4 - Access Token Grant
     CLIENTS = fetch_clients()
 
     client_id_received = request.form.get('client_id')
+
     client_secret_received = request.form.get('client_secret')
 
     if client_id_received not in CLIENTS or CLIENTS[client_id_received]['secret'] != client_secret_received:
@@ -798,25 +799,122 @@ def access_token() -> jsonify: # STEP 4 - Access Token Grant
     remove_authorization_code(authorization_code)
 
     token = generate_token(username)
+    refresh_token = generate_refresh_token(username, client_id_received)
 
-    return jsonify({'access_token': f'{token}'}), STATUS_CODE['SUCCESS']
+    return jsonify({'access_token': f'{token}', 'refresh_token': f'{refresh_token}'}), STATUS_CODE['SUCCESS']
 
 # TOKEN GENERATION #
-
 def generate_token(username : str) -> str:
 
-    time = (int) (datetime.now().timestamp() + timedelta(minutes=5).total_seconds())
-
-    payload = {
+    now = datetime.now()
+    access_exp = now + timedelta(minutes=5)
+    
+    payload_access = {
         'username': username,
-        'exp': time,
+        'exp': access_exp.timestamp(),
         'iss': 'http://127.0.0.1:5010', # Authorization Server
         'aud': 'http://127.0.0.1:5020' # Resource Server
     }
 
+    private_key = None
     with open(PRIVATE_KEY_PATH, 'r') as file:
         private_key = file.read()
-        return jwt.encode(payload, private_key, algorithm='RS256') 
+
+    access_token = jwt.encode(payload_access, private_key, algorithm='RS256')
+
+    return access_token
+
+def generate_refresh_token(username : str, client_id : str) -> str:
+
+    now = datetime.now()
+    refresh_exp = now + timedelta(days=10)
+
+    payload_refresh = {
+        'username': username,
+        'exp': refresh_exp.timestamp(),
+        'iss': 'http://127.0.0.1:5010',
+        'aud': 'http://127.0.0.1:5020',
+        'type': 'refresh'
+    }
+
+    private_key = None
+    with open(PRIVATE_KEY_PATH, 'r') as file:
+        private_key = file.read()
+
+    refresh_token = jwt.encode(payload_refresh, private_key, algorithm='RS256')
+
+    store_tokens(username, refresh_token, client_id)
+
+    return refresh_token
+
+@app.route('/refresh', methods=['POST'])
+def refresh_token() -> jsonify:
+    refresh_token = request.form.get('refresh_token')
+    if not refresh_token:
+        return jsonify({'error_message': 'Invalid refresh token'}), STATUS_CODE['BAD_REQUEST']
+    
+    try:
+        with open(PUBLIC_KEY_PATH, 'r') as file:
+            public_key_pem = file.read()
+
+        payload = jwt.decode(refresh_token, public_key_pem, audience='http://127.0.0.1:5020', algorithms=['RS256'])
+
+        if payload['type'] != 'refresh':
+            raise jwt.InvalidTokenError('Invalid token type')
+        
+        username = payload['username']
+
+        conn = create_connection()
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            SELECT 
+                token_refresh
+            FROM 
+                token
+            JOIN 
+                utilizador ON token.fk_utilizador_id = utilizador.utilizador_id
+            WHERE 
+                utilizador.utilizador_nome = ? and token_refresh = ?;
+        ''', (username, refresh_token))
+
+        token_record = cursor.fetchone()
+
+        cursor.close()
+        if not token_record:
+            return jsonify({'error_message': 'Invalid refresh token'}), STATUS_CODE['BAD_REQUEST']
+        
+        access_token = generate_token(username)
+
+        return jsonify({ 'access_token' : access_token}), STATUS_CODE['SUCCESS']
+    except jwt.InvalidTokenError as e:
+        return jsonify({'error_message': str(e)}), STATUS_CODE['BAD_REQUEST']
+
+def store_tokens(username : str,  refresh_token : str, client_id : str):
+    conn = create_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute('''
+            DELETE FROM 
+                token
+            WHERE 
+                fk_utilizador_id = (SELECT utilizador_id FROM utilizador WHERE utilizador_nome = ?);
+        ''', (username,))
+        cursor.execute('''
+            INSERT INTO 
+                token (fk_client_application_id, token_refresh, fk_utilizador_id)
+            VALUES 
+                ((SELECT client_application_id FROM client_application WHERE client_application_client_id = ?), ?, (SELECT utilizador_id FROM utilizador WHERE utilizador_nome = ?));
+        ''', (client_id, refresh_token, username))
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        print(f"Error storing tokens: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+
 
 @app.route('/.well-known/jwks.json', methods=['GET'])
 def jwks() -> jsonify:

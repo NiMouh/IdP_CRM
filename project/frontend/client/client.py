@@ -1,5 +1,6 @@
 import os
 import sys
+import requests
 from flask import Flask, redirect, url_for, render_template, make_response, request
 from secrets import token_urlsafe
 from authlib.integrations.flask_client import OAuth
@@ -23,6 +24,7 @@ STATUS_CODE = {
 IDP_URL_REQUEST_TOKEN = 'http://127.0.0.1:5010/oauth/request_token'
 IDP_URL_ACCESS_TOKEN = 'http://127.0.0.1:5010/access_token'
 IDP_AUTHORIZE_URL = 'http://127.0.0.1:5010/authorize'
+IDP_URL_REFRESH_TOKEN = 'http://127.0.0.1:5010/refresh'
 
 CLIENT_ID = 'client_id'
 CLIENT_SECRET = '123456'
@@ -40,7 +42,7 @@ oauth.register(
     authorize_params=None,
     access_token_url= IDP_URL_ACCESS_TOKEN,
     access_token_params=None,
-    refresh_token_url= None,
+    refresh_token_url= IDP_URL_REFRESH_TOKEN,
     refresh_token_params=None,
     client_kwargs={'scope': 'profile'}
 )
@@ -50,7 +52,7 @@ oauth.register(
 @app.route('/login', methods=['GET'])
 def login(): # STEP 1 - Authorization Request
 
-    if 'access_token' in request.cookies:
+    if 'access_token' and 'refresh_token' in request.cookies:
         return redirect('/')
 
     redirect_uri = url_for('authorize', _external=True)
@@ -59,25 +61,26 @@ def login(): # STEP 1 - Authorization Request
 @app.route('/authorize')
 def authorize(): # STEP 3 - Access Token Request
 
-    print("State from the Client App: ", request.args.get('state'))
-
     token = oauth.idp.authorize_access_token(client_id=CLIENT_ID, client_secret=CLIENT_SECRET)
 
     if 'error_message' in token:
-        return redirect('/')
+        return redirect('/')   
 
     access_token = token['access_token']
+    refresh_token = token['refresh_token']
+
 
     response = make_response(redirect('/dashboard'))
     response.set_cookie('access_token', access_token, httponly=True, secure=True)
+    response.set_cookie('refresh_token', refresh_token, httponly=True, secure=True)
 
     return response
 
 @app.route('/logout', methods=['GET'])
-@check_permission(['vendedor', 'trabalhador_de_fabrica'])
 def logout():
     response = make_response(redirect('/'))
     response.set_cookie('access_token', '', expires=0)
+    response.set_cookie('refresh_token', '', expires=0)
 
     return response
 
@@ -85,19 +88,52 @@ def logout():
 
 @app.route('/', methods=['GET'])
 def index():
-    if 'access_token' in request.cookies:
+    if 'access_token' and 'refresh_token' in request.cookies:
         return redirect('/dashboard')
     return render_template('index.html')
 
 @app.route('/dashboard', methods=['GET'])
 @check_permission(['vendedor', 'trabalhador_de_fabrica', 'diretor_de_obra'])
 def dashboard():
-    if 'access_token' not in request.cookies:
+    if ('access_token' and 'refresh_token') not in request.cookies:
         return redirect('/')
     access_token = request.cookies.get('access_token')
-    return render_template('dashboard.html', access_token=access_token)
+    refresh_token = request.cookies.get('refresh_token')
+    return render_template('dashboard.html', refresh_token=refresh_token, access_token=access_token)
 
 # TODO: Implementação de Refresh tokens
+@app.route('/refresh', methods=['GET'])
+def refresh():
+    refresh_token = request.cookies.get('refresh_token')
+    if refresh_token is None:
+        return redirect('/login')
+    
+    token_url = IDP_URL_REFRESH_TOKEN
+    client_id = CLIENT_ID
+    client_secret = CLIENT_SECRET
+
+    # Prepare the request payload
+    payload = {
+        'grant_type': 'refresh_token',
+        'refresh_token': refresh_token,
+        'client_id': client_id,
+        'client_secret': client_secret
+    }
+
+    # Make the request to the token endpoint
+    try:
+        response = requests.post(token_url, data=payload)
+        response.raise_for_status()
+        token = response.json()
+
+        access_token = token['access_token']
+        
+        response = make_response(redirect('/dashboard'))
+        response.set_cookie('access_token', access_token, httponly=True, secure=True)
+        return response
+
+    except requests.exceptions.HTTPError as e:
+        return redirect('/login')
 
 @app.errorhandler(STATUS_CODE['NOT_FOUND'])
 def page_not_found(e):
