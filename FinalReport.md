@@ -323,7 +323,7 @@ Além disso foi utilizado:
 
 A escolha destas ferramentas foi feita com base na sua facilidade de uso, documentação extensiva e suporte ativo.
 
-## Base de Dados
+## Base de Dados (ALTERAR IMAGEM)
 
 Com base na descrição do sistema das entidades e relações feita na primeira parte do trabalho, foi desenvolvida uma base de dados que reflete a estrutura do sistema CRM.
 
@@ -345,7 +345,7 @@ A arquitetura encontra-se dividida em três componentes principais:
 
 Cada *Client* tem acesso a diferentes recursos, e o seu acesso é condicionado pelo *IdP* e *Resource Server*.
 
-Temos três *Client's* com as seguintes funcionalidades:
+Temos três *Client's* com as seguintes funcionalidades (dependendo do seu nível de risco):
 1. Visualização do material da obra;
 2. Gestão do material em stock e utilizado por obra;
 3. Gestão de moradas e contactos dos clientes, diretores de obra e gestão de preços.
@@ -358,10 +358,6 @@ A estrutura do projeto encontra-se organizada da seguinte forma:
 <p align="center" style="font-size: 10px;">
   <i>Figura 9 - Diagrama de Implementação</i>
 </p>
-
-### Fluxo de mensagens
-
-> Este fluxo de mensagens encontra-se representado no diagrama presente na Figura 6.
 
 ## Implementação
 
@@ -403,6 +399,8 @@ Sempre que o utilizador tenta **autenticar-se**, o fluxo de mensagens é o segui
 4. *IdP* **verifica** o `authorization_code` e **envia** o *token* de acesso para o *Client*;
 
 > Para que o fluxo se concretize **com sucesso**, o *Client* deve estar registado no *IdP* e o *state* deve ser mantido entre os pedidos, caso contrário, o pedido é considerado **inválido** devido a possíveis ataques de CSRF (*Cross-Site Request Forgery*).
+
+> Este fluxo de mensagens encontra-se representado no diagrama presente na Figura 6.
 
 Existem três tipos de **provas de autenticação**: 
 - **Algo que o utilizador sabe**: *passwords*, *PINs*, etc.;
@@ -468,8 +466,6 @@ E foi utilizada a biblioteca `smtplib` para o envio de emails sobre o domínio d
 
 > Os QRCodes gerados são compatíveis com aplicações como o *Google Authenticator*.
 
-#### *Smartcard*
-
 ### Autorização c/ *tokens* de acesso
 
 Os *tokens* de acesso são gerados sobre o formato JWT (*JSON Web Token*), que contêm as seguintes informações:
@@ -479,6 +475,8 @@ Os *tokens* de acesso são gerados sobre o formato JWT (*JSON Web Token*), que c
 - `aud`: Recetor do *token* (Resource Server).
 
 Estes são assinados usando o algoritmo `RS256` (*RSA Signature with SHA-256*), que envolve a criação de um par de chaves pública/privada, onde a chave privada é usada para assinar o *token*.
+
+> Este par de chaves foi gerado usando a ferramenta *OpenSSL* e encontram-se guardadas na diretoria `backend/keys/` em formato `.pem`.
 
 ### Validação dos *tokens*
 
@@ -550,6 +548,40 @@ Com base na tabela de mapeamento de recursos definida na primeira parte do traba
 
 Para a implementação do controlo de acesso, foi criado um *middleware* que verifica o nível de acesso do utilizador e o recurso a que está a tentar aceder, e permite ou nega o acesso ao recurso, consoante o nível de acesso do utilizador.
 
+Esta verificação é feita usando o seguinte *decorator*:
+```python
+def check_permission(roles: list):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            access_token = request.cookies.get('access_token')
+            if access_token is None:
+                return jsonify({"message": "No access token provided"}), STATUS_CODE['FORBIDDEN']
+
+            username = get_user(access_token)
+            if username is None:
+                return jsonify({"message": "No username provided"}), STATUS_CODE['FORBIDDEN']
+            
+            user_role = get_user_role(username)
+            if user_role[0] is None:
+                return jsonify({"message": "No role found"}), STATUS_CODE['FORBIDDEN']
+            
+            if user_role[0] not in roles:
+                return jsonify({"message": "Unauthorized"}), STATUS_CODE['FORBIDDEN']
+            
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
+```
+
+Este é aplicado a todos os *endpoints* que requerem controlo de acesso, garantindo que apenas utilizadores com o nível de acesso adequado têm acesso aos recursos, da seguinte forma:
+```python
+@app.route('/exemplo', methods=['GET'])
+@check_permission(['nivel_1', 'nivel_2', 'nivel_3'])
+def get_resource():
+    return jsonify({"message": "Resource accessed"})
+```
+
 #### Controlo de Acesso (Biba e LaPadula)
 
 ## Testes de Validação
@@ -558,7 +590,9 @@ TODO: Ainda não chegamos cá...
 
 ## Conclusão
 
-TODO: Em suma, blah blah blah...
+Com este trabalho, foi possível aprofundar os conhecimentos sobre processos de autenticação e autorização, bem como a implementação de sistemas de controlo de acesso, que são fundamentais para garantir a segurança dos sistemas de informação.
+
+Em suma, todos os objetivos propostos para a segunda parte do trabalho foram alcançados, à exceção do *smartcard* que não foi implementado. O sistema foi desenvolvido com base nos princípios de integridade, autenticação e autorização, garantindo a segurança e a confidencialidade dos dados dos utilizadores.
 
 ## Referências
 
