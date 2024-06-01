@@ -62,17 +62,23 @@ def check_permission(roles: list):
         @wraps(func)
         def wrapper(*args, **kwargs):
             access_token = request.cookies.get('access_token')
+
             if access_token is None:
                 return jsonify({"message": "No access token provided"}), 403
-            #obter do access toke o utilizador
+            
+            # Obter do access token do utilizador
             username = get_user(access_token)
+
             if username is None:
                 return jsonify({"message": "No username provided"}), 403
+            
             user_role = get_user_role(username)
+
             if user_role[0] is None:
                 return jsonify({"message": "No role found"}), 403
             if user_role[0] not in roles:
                 return jsonify({"message": "Unauthorized"}), 403
+
             return func(*args, **kwargs)
         return wrapper
     return decorator

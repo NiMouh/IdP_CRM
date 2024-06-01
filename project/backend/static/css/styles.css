@@ -2314,6 +2314,10 @@ textarea.form-control-lg {
   margin-right: 1rem;
 }
 
+.blank-space {
+  height: 100px;
+}
+
 .btn-check {
   position: absolute;
   clip: rect(0, 0, 0, 0);

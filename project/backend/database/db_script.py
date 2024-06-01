@@ -145,6 +145,7 @@ cursor.execute('''
         cliente_nome VARCHAR(50) NOT NULL,
         cliente_data_de_criacao DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
         cliente_zona INTEGER NOT NULL,
+        cliente_tipo VARCHAR(50) NOT NULL,
         fk_escalaoDesconto INTEGER,
         fk_colaborador INTEGER,
         FOREIGN KEY (fk_escalaoDesconto) REFERENCES escalaoDesconto(escalaoDesconto_id),
@@ -208,6 +209,7 @@ cursor.execute('''
         produto_id INTEGER PRIMARY KEY AUTOINCREMENT,
         produtoCodigo INTEGER NOT NULL,
         produtoNome VARCHAR(50) NOT NULL,
+        produtoQuantidade INTEGER,
         fk_obra_id INTEGER,
         FOREIGN KEY (fk_obra_id) REFERENCES obra(obra_id)
     );
@@ -215,10 +217,10 @@ cursor.execute('''
 
 cursor.execute('''
     CREATE TABLE IF NOT EXISTS tabelaPrecos (    
-            tabelaPrecos_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            fk_produto_id INTEGER,
-            tabelaPrecos_Unit FLOAT,
-            FOREIGN KEY (fk_produto_id) REFERENCES produto(produto_id)
+        tabelaPrecos_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        fk_produto_id INTEGER,
+        tabelaPrecos_Unit FLOAT,
+        FOREIGN KEY (fk_produto_id) REFERENCES produto(produto_id)
     );
 ''')
 
@@ -227,9 +229,7 @@ cursor.execute('''
         stock_id INTEGER PRIMARY KEY AUTOINCREMENT,
         stock_quantidade INTEGER,
         fk_produto_id INTEGER,
-        fk_tabelaPrecos_id INTEGER,
         FOREIGN KEY (fk_produto_id) REFERENCES produto(produto_id)
-        FOREIGN KEY (fk_tabelaPrecos_id) REFERENCES tabelaPrecos(tabelaPrecos_id)
     );
 ''')
 
@@ -308,8 +308,9 @@ cursor.execute('''
 ''')
 
 cursor.execute('''
-    INSERT INTO contactosCliente (contactosCliente_email, contactosCliente_telefone, contactosCliente_fax)
-    VALUES ('cliente1@email.pt', '912345111', '912345112'),('cliente2@email.pt', '912345222', '912345223');
+    INSERT INTO contactosCliente (contactosCliente_email, contactosCliente_telefone, contactosCliente_fax, fk_cliente_id)
+    VALUES ('cliente1@email.pt', '912345111', '912345112', 1),('cliente2@email.pt', '912345222', '912345223', 2),
+               ('cliente3@email.pt', '912345333', '912345334', 3), ('cliente4@email.pt', '912345444', '912345445', 4), ('cliente5@email.pt', '912345555', '912345556', 5);
 ''')
 
 cursor.execute('''
@@ -351,9 +352,12 @@ cursor.execute('''
 ''')
 
 cursor.execute('''
-    INSERT INTO cliente (cliente_nome, cliente_zona, fk_escalaoDesconto, fk_colaborador)
-    VALUES ('Client1', 1, 1, 1),
-        ('Client2', 2, 2, 1);
+    INSERT INTO cliente (cliente_nome, cliente_zona, cliente_tipo, fk_escalaoDesconto, fk_colaborador)
+    VALUES ('Client1', 1, 'diretor de obra', 1, 1),
+        ('Client2', 2, 'diretor de obra', 2, 1),
+        ('Client3', 3, 'instalador', 3, 2),
+        ('Client4', 4, 'projetista', 4, 2),
+        ('Client5', 5, 'instalador', 5, 2);
 ''')
 
 cursor.execute('''
@@ -418,21 +422,21 @@ cursor.execute('''
 ''' , (password_ana, salt, password_simao, salt))
 
 cursor.execute('''
-    INSERT INTO produto (produtoCodigo, produtoNome, fk_obra_id)
-    VALUES (1, 'Produto1', 1),
-      (2, 'Produto2', 2),
-      (3, 'Produto3', 3),
-      (4, 'Produto4', 4),
-      (5, 'Produto5', 5);
+    INSERT INTO produto (produtoCodigo, produtoNome, produtoQuantidade, fk_obra_id)
+    VALUES (1, 'Produto1', 200, 1),
+      (2, 'Produto2', 100, 2),
+      (3, 'Produto3', 1000, 3),
+      (4, 'Produto4', 2354, 4),
+      (5, 'Produto5', 7472, 5);
 ''')
 
 cursor.execute('''
-    INSERT INTO stock (stock_quantidade, fk_produto_id, fk_tabelaPrecos_id)
-    VALUES (10, 1, 1),
-      (20, 2, 2),
-      (30, 3, 3),
-      (40, 4, 4),
-      (50, 5, 5);
+    INSERT INTO stock (stock_quantidade, fk_produto_id)
+    VALUES (10, 1),
+      (20, 2),
+      (30, 3),
+      (40, 4),
+      (50, 5);
 ''')
 
 cursor.execute('''

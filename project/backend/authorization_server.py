@@ -801,13 +801,13 @@ def access_token() -> jsonify: # STEP 4 - Access Token Grant
     token = generate_token(username)
     refresh_token = generate_refresh_token(username, client_id_received)
 
-    return jsonify({'access_token': f'{token}', 'refresh_token': f'{refresh_token}'}), STATUS_CODE['SUCCESS']
+    return jsonify({'access_token': f'{token}', 'refresh_token': f'{refresh_token}', 'username' : f'{username}'}), STATUS_CODE['SUCCESS']
 
 # TOKEN GENERATION #
 def generate_token(username : str) -> str:
 
     now = datetime.now()
-    access_exp = now + timedelta(minutes=5)
+    access_exp = now + timedelta(days=1)
     
     payload_access = {
         'username': username,
@@ -849,6 +849,14 @@ def generate_refresh_token(username : str, client_id : str) -> str:
 
 @app.route('/refresh', methods=['POST'])
 def refresh_token() -> jsonify:
+
+    # verificar o client_id e o client_secret
+    client_id_received = request.form.get('client_id')
+
+    CLIENTS = fetch_clients()
+    if client_id_received not in CLIENTS:
+        return jsonify({'error_message': 'Invalid client credentials'}), STATUS_CODE['UNAUTHORIZED']
+
     refresh_token = request.form.get('refresh_token')
     if not refresh_token:
         return jsonify({'error_message': 'Invalid refresh token'}), STATUS_CODE['BAD_REQUEST']

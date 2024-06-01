@@ -3816,6 +3816,10 @@ textarea.form-control-lg {
   position: static;
 }
 
+.blank-space {
+  height: 100px;
+}
+
 .navbar-text {
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
