@@ -25,6 +25,7 @@ A arquitetura do sistema é composta por três componentes principais: o *IdP* (
 
 No sistema descrito, temos as seguintes entidades:
 - Diretor da Obra;
+- Diretor de Telecomunicações;
 - Fornecedor;
 - Técnico de Telecomunicações;
 - Trabalhador de Fábrica;
@@ -45,11 +46,11 @@ De modo a melhor compreender o funcionamento do sistema, foi desenvolvido um dia
 Para uma melhor compreensão das medidas de segurança a se tomar, foi descrito o funcionamento das características principais do sistema, de modo a criar uma solução adequada para o mesmo. Esta descrição foi feita com base em diagramas de caso de uso, obtendo-se os seguintes resultados:
 
 <div style="display: flex; justify-content: center;margin-bottom: 40px;">
-    <div>
+    <div style="padding:10px;">
         <img src="img/RealizarObra.png" alt="Pedir Orçamento" width="300"/>
         <p align="center" style="font-size: 10px;">Figura 2: Diagrama de caso de uso para a realização de um pedido de Obra.</p>
     </div>
-    <div>
+    <div style="padding:10px;">
         <img src="img/RealizarOrcamento.png" alt="Pedir Orçamento" width="300"/>
         <p align="center" style="font-size: 10px;">Figura 3: Diagrama de caso de uso para a realização de um pedido de orçamento.</p>
     </div>
@@ -74,7 +75,7 @@ Como o sistema é composto por diversos tipos de utilizados, onde os mesmos aced
 Com base nas funções desempenhadas pelos utilizadores do sistema e sensibilidade dos recursos acedidos, foi desenvolvida a seguinte **hierarquia de acesso**:
 
 <p align="center">
-  <img src="img/Hierarquia_CRM.png" alt="Hierarquia dos Utilizadores" width="400"/>
+  <img src="img/Hierarquia_CRM.png" alt="Hierarquia dos Utilizadores" width="600"/>
 </p>
 
 <p align="center" style="font-size: 10px;">
@@ -112,16 +113,17 @@ Para a implementação do controlo de acesso, foi feito um enumeração dos recu
 
 Com isto, foi definida a seguinte estrutura baseada:
 
-| Acessos                         | Vendedor | Dir. da Obra | Fornecedor | Tec. Telecom | Trab. de Fábrica |
-| ------------------------------- | -------- | ------------ | ---------- | ------------ | ---------------- |
-| Morada e contactos dos Clientes | Sim      | Sim          | Não        | Não          | Não              |
-| Contactos do diretor da obra    | Sim      | -            | Sim        | Não          | Não              |
-| Morada da obra                  | Sim      | Sim          | Não        | Não          | Não              |
-| Material da obra                | Sim      | Sim          | Sim        | Sim          | Sim              |
-| Material em stock               | Não      | Não          | Sim        | Não          | Sim              |
-| Tabela de preços                | Sim      | Sim          | Sim        | Não          | Não              |
-| Escalão de desconto             | Sim      | Não          | Não        | Sim          | Não              |
-| Status da obra                  | Sim      | Sim          | Não        | Não          | Não              |
+| Acessos                         | Vendedor | Dir. da Obra | Fornecedor | Tec. Telecom | Trab. de Fábrica | Dir. de Telecom |
+| ------------------------------- | -------- | ------------ | ---------- | ------------ | ---------------- | --------------- |
+| Morada e contactos dos Clientes | Sim      | Não          | Não        | Não          | Não              | Sim             |
+| Contactos do diretor da obra    | Sim      | Não          | Sim        | Não          | Não              | Sim             |
+| Morada da obra                  | Sim      | Não          | Não        | Não          | Não              | Sim             |
+| Material da obra                | Sim      | Não          | Sim        | Sim          | Sim              | Sim             |
+| Material em stock               | Não      | Não          | Sim        | Não          | Sim              | Não             |
+| Tabela de preços                | Sim      | Sim          | Sim        | Não          | Não              | Sim             |
+| Status da obra                  | Sim      | Não          | Não        | Não          | Não              | Sim             |
+
+> **Nota:** O Diretor da obra apenas tem acesso às informações da obra do próprio.
 
 ## *Authentication* e *Authorization flow*
 
@@ -339,11 +341,13 @@ Com base na descrição do sistema das entidades e relações feita na primeira 
 ## Arquitetura do Sistema
 
 A arquitetura encontra-se dividida em três componentes principais: 
-- **Client's**: Onde se encontra o *frontend* das aplicações;
-- **IdP**: Onde se encontra o *backend* da aplicação, responsável pela autenticação e autorização dos utilizadores;
+- **Client's**: Onde se encontra o *frontend* e *backend* das aplicações;
+- **IdP**: Onde se encontra o *frontend* e *backend* da aplicação responsável pela autenticação e autorização dos utilizadores;
 - **Resource Server**: Onde se encontra o *backend* da aplicação, responsável pela gestão dos recursos e controlo de acessos.
 
-Cada *Client* tem acesso a diferentes recursos, e o seu acesso é condicionado pelo *IdP* e *Resource Server*.
+Cada *Client* tem acesso a diferentes recursos, e o seu acesso é condicionado por: 
+- *IdP*: gestão de acessos (autenticação), 
+- *Resource Server*: gestão de recursos (autorização).
 
 Temos três *Client's* com as seguintes funcionalidades (dependendo do seu nível de risco):
 1. Visualização do material da obra;
@@ -365,7 +369,16 @@ A estrutura do projeto encontra-se organizada da seguinte forma:
 
 TODO: Escrever sobre o *Client* e a sua implementação.
 
-### Armazenamento e Auditoria de *Logs*
+Client 1:
+Gestão do stock de material e ver preços dos produtos(fornecedor);(trabalhador de fábrica)
+
+Client 2:
+Gestão de moradas, clientes e diretores de obra(fornecedor);(vendedor)
+
+Client 3:
+Gestão de preços dos produtos(Diretor Telecom), material obra(técnico Telecom, vendedor), status obra(diretorTelcom, vendedor, técnico telecom) e ver clientes.(Diretor Telecom)
+
+### *Logs*: Armazenamento e Auditoria
 
 Os *logs*, tanto de autenticação (*Authorization Server*) como de acesso a recursos (*Resource Server*), são guardados na base de dados, contendo as seguintes informações, consoante o propósito do *log*:
 
@@ -382,13 +395,13 @@ Existem dois tipos de *logs*:
 - `ERROR`: *Logs* de erro, que contêm informações sobre pedidos que falharam;
   - `AUTHENTICATION_ERROR`: *Logs* de erro de autenticação, que contêm informações sobre pedidos de autenticação que falharam;
   - `ACCESS_ERROR`: *Logs* de erro de acesso, que contêm informações sobre pedidos de acesso a recursos que falharam.
-- `INFO`: *Logs* de informação, que contêm informações sobre pedidos bem-sucedidos.
-  - `AUTHENTICATION_INFO`: *Logs* de informação de autenticação, que contêm informações sobre pedidos de autenticação bem-sucedidos;
-  - `ACCESS_INFO`: *Logs* de informação de acesso, que contêm informações sobre pedidos de acesso a recursos bem-sucedidos.
+- `INFO`: *Logs* de informação, que contêm informações sobre pedidos com sucesso.
+  - `AUTHENTICATION_INFO`: *Logs* de informação de autenticação, que contêm informações sobre pedidos de autenticação com sucesso;
+  - `ACCESS_INFO`: *Logs* de informação de acesso, que contêm informações sobre pedidos de acesso a recursos com sucesso.
 
 ### IdP (*Identity Provider*)
 
-### OAuth 2.0
+#### OAuth 2.0
 
 Assim como foi referido anteriormente na primeira parte do relatório, o fluxo escolhido para o processo de autenticação foi o *Authorization Code flow*.
 
@@ -437,17 +450,14 @@ Este fluxo encontra-se representado no seguinte diagrama:
 
 Para a implementação, foi utilizado a biblioteca `pyotp`, que permite a criação de códigos de autenticação com base no algoritmo `TOTP` (*Time-based One-Time Password*). Este algoritmo gera um código de autenticação que é válido apenas por um curto período de tempo, no caso **90 segundos**, e é gerado com base numa *seed* e no tempo atual.
 
-O seguinte código mostra a geração de um código de autenticação, que recebe como argumentos a *seed* (que será a credencial do utilizador) e o email do utilizador e devolve o código e o URI para a criação de um *QR Code*:
+A geração de um código de autenticação, recebe como argumentos a *seed* (que será o *salt* do utilizador) e o email do utilizador e devolve o código e o URI para a criação de um *QR Code*:
 
-```python
-from pyotp import TOTP
-
-def create_totp(seed: str, email_address: str):
-    totp = TOTP(seed)
-    totp_code = totp.now()
-    uri = totp.provisioning_uri(name=email_address, issuer_name='CRM IAA')
-    return totp_code, uri
-```
+<p align="center">
+  <img src="img/totp.png" width="400" title="OTP">
+</p>
+<p align="center" style="font-size: 10px;">
+  <i>Figura 11 - Código de autenticação gerado com base no algoritmo TOTP</i>
+</p>
 
 O *QR code* é gerado com base no URI, usando a biblioteca `qrcode`, e é guardado num *buffer* de imagem para ser enviado ao utilizador por email.
 
@@ -461,7 +471,7 @@ E foi utilizada a biblioteca `smtplib` para o envio de emails sobre o domínio d
   <img src="img/email_otp.jpg" width="300" title="Email OTP">
 </p>
 <p align="center" style="font-size: 10px;">
-  <i>Figura 11 - Email de autenticação com o código de autenticação e o QR Code</i>
+  <i>Figura 12 - Email de autenticação com o código de autenticação e o QR Code</i>
 </p>
 
 > Os QRCodes gerados são compatíveis com aplicações como o *Google Authenticator*.
@@ -478,9 +488,9 @@ Estes são assinados usando o algoritmo `RS256` (*RSA Signature with SHA-256*), 
 
 > Este par de chaves foi gerado usando a ferramenta *OpenSSL* e encontram-se guardadas na diretoria `backend/keys/` em formato `.pem`.
 
-### Validação dos *tokens*
+### Integridade de *tokens*
 
-Para validar os *tokens* de acesso, o *Resource Server* verifica a assinatura do *token* através de JWKS (*JSON Web Key Set*), que contém as chaves públicas do *IdP*. Envolve a criação de um *endpoint* que retorna as chaves públicas do *IdP* usadas para assinar os *tokens* usando o algoritmo `RS256`.
+Para validar a assinatura dos *tokens* de acesso, é feito através de **JWKS** (*JSON Web Key Set*), que contém todas as chaves públicas do *IdP*. 
 
 Exemplo de um *JWKS*: 
 ```json
@@ -498,22 +508,25 @@ Exemplo de um *JWKS*:
 }
 ```
 
+Envolve a criação de um *endpoint* que retorna as chaves públicas do *IdP* usadas para assinar os *tokens* usando o algoritmo `RS256`. É feito da seguinte forma:
+
+<p align="center">
+  <img src="img/jwks-flow.png" width="500" title="JWKS Endpoint">
+</p>
+<p align="center" style="font-size: 10px;">
+  <i>Figura 13 - Fluxo de mensagens para a obtenção das chaves públicas do IdP</i>
+</p>
+
+
 > Mais informação sobre este *standard* (RFC 7517): [Auth0 - JSON Web Key Set (JWKS)](https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-key-sets)
 
-Ficheiro .PEM correspondente à chave pública:
-```pem
------BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtxlzMo9bXTK+hCe8hKA0
-D2HR9imD0Xi/DtZrSGMwIehitrD/9H2EyBt50k5wBoS9s3Fnt42IdU09v8oR6gQ8
-EFWK7yndbDgk8ADeKWtM1x0w7N20ClmI+hd9yPABIwXfVuMfsX1eBA09/9xGiiXD
-w7sFRnQD8mYPFWp8AsNqCWfz2Fl7y3PbBFYS2IBAG/mFd9MLgQhUPttASQ0biPQR
-Q7ORAp0Xm27OfKrO5Ukpuv+36+luKtLI+1IwZ5mRr0OXqbiKINfMoa80TLfk77MM
-Imj49genPeCAJq+obVFk4pboHkXZ0XmY0X4v/BgCM4GZ53Sd8VI3F+i/KpJWcIgu
-nQIDAQAB
------END PUBLIC KEY-----
-```
-
 > Conversor de JWK para PEM: [JWK to PEM](https://8gwifi.org/jwkconvertfunctions.jsp)
+
+### *Resource Server*
+
+Com base na tabela de mapeamento de recursos definida na primeira parte do trabalho, foram implementados os *endpoints* que permitem o acesso aos recursos, condicionado pelo nível de acesso do utilizador.
+
+#### Validação de *tokens*
 
 No *Resource Server*, é feita a validação do *token* de acesso, verificando a assinatura do *token* com a chave pública do *IdP*, da seguinte forma:
 
@@ -540,15 +553,11 @@ def verify_token(f):
 
 Este *decorator* é aplicado a todos os *endpoints* que requerem autenticação (`@verify_token`), garantindo que apenas pedidos com *tokens* válidos têm acesso aos recursos.
 
-### *Resource Server*
-
-Com base na tabela de mapeamento de recursos definida na primeira parte do trabalho, foram implementados os *endpoints* que permitem o acesso aos recursos, condicionado pelo nível de acesso do utilizador.
-
-#### Implementação de *Middleware*
+#### *Middleware*
 
 Para a implementação do controlo de acesso, foi criado um *middleware* que verifica o nível de acesso do utilizador e o recurso a que está a tentar aceder, e permite ou nega o acesso ao recurso, consoante o nível de acesso do utilizador.
 
-Esta verificação é feita usando o seguinte *decorator*:
+Esta verificação é feita usando o *decorator* `check_permission`, que recebe uma lista de níveis de acesso e verifica se o nível de acesso do utilizador está presente na lista, da seguinte forma:
 ```python
 def check_permission(roles: list):
     def decorator(func):
@@ -579,14 +588,10 @@ Este é aplicado a todos os *endpoints* que requerem controlo de acesso, garanti
 @app.route('/exemplo', methods=['GET'])
 @check_permission(['nivel_1', 'nivel_2', 'nivel_3'])
 def get_resource():
-    return jsonify({"message": "Resource accessed"})
+    return resource
 ```
 
 #### Controlo de Acesso (Biba e LaPadula)
-
-## Testes de Validação
-
-TODO: Ainda não chegamos cá...
 
 ## Conclusão
 
@@ -597,13 +602,13 @@ Em suma, todos os objetivos propostos para a segunda parte do trabalho foram alc
 ## Referências
 
 - [Auth0 - JSON Web Key Set (JWKS)](https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-key-sets)
-- [Authlib Documentation](https://docs.authlib.org/en/latest/)
 - [Auth0 - Authorization Code Flow](https://auth0.com/docs/flows/authorization-code-flow)
 - [Auth0 - Which OAuth 2.0 Flow Should I Use?](https://auth0.com/docs/get-started/authentication-and-authorization-flow/which-oauth-2-0-flow-should-i-use)
-- [Github - challenge-response-authentication example](https://github.com/abhisheklolage/challenge-response-auth/)
-- [PyOTP Documentation](https://pyauth.github.io/pyotp/)
-- [QRCode Documentation](https://pypi.org/project/qrcode/)
-- [JWT.io](https://jwt.io/)
+- [Authlib Documentation](https://docs.authlib.org/en/latest/)
 - [Bootstrap](https://getbootstrap.com/)
 - [Flask Documentation](https://flask.palletsprojects.com/en/2.0.x/)
+- [Github - challenge-response-authentication example](https://github.com/abhisheklolage/challenge-response-auth/)
+- [JWT.io](https://jwt.io/)
+- [PyOTP Documentation](https://pyauth.github.io/pyotp/)
+- [QRCode Documentation](https://pypi.org/project/qrcode/)
 - [Twilio - Verify API](https://www.twilio.com/docs/libraries/reference/twilio-python/index.html)

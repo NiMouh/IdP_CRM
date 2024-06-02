@@ -17,9 +17,9 @@ As diretorias do projeto estão organizadas da seguinte forma:
 project/ --> Diretoria principal
 │
 ├── frontend/ --> Diretoria das aplicações cliente
-│   ├── client1/ --> Diretoria da aplicação cliente 1 (com a aplicação cliente 1 e o seu *frontend*)
-│   ├── client2/ --> Diretoria da aplicação cliente 2 
-│   └── client3/ --> Diretoria da aplicação cliente 3
+│   ├── client1/
+│   ├── client2/
+│   └── client3/
 │
 ├── backend/ --> Diretoria das aplicações servidor
 │   ├── database/
@@ -77,34 +77,45 @@ $ bash generate_rsa.bash
   - [x] Criação da estrutura da base de dados;
   - [x] Criação de funções que gerem aleatoriamente os dados da base de dados;
   - [x] Chamadas à base dados para o *backend*;
-  - [ ] Validação dos *tokens* de acesso;
+  - [x] Validação dos *tokens* de acesso;
   - [ ] Controlo de acessos;
-  - [ ] Implementação de um sistema de logs;
+  - [x] Implementação de um sistema de logs;
   - [ ] Validação e sanitização dos dados inseridos pelo utilizador;
 - Desenvolvimento do IdP (Simão Andrade e Ana Vidal):
   - [x] Desenvolvimento do *backend*;
   - [x] Desenvolvimento do *frontend* (design e interação com o utilizador);
-  - [x] Implementação de MFAs (excluindo o smartcard);
+  - [x] Implementação de MFAs (excluindo o *smartcard*);
   - [x] Implementação de um sistema de logs;
   - [x] Gestão de *tokens* e *sessões*;
   - [x] Definição do cálculo do risco;
   - [ ] Proteção contra erros de CSRF (*Cross-Site Request Forgery*);
   - [ ] Validação e sanitização dos dados inseridos pelo utilizador;
-  - [ ] Implementação de autenticação por smartcard;
+  - [ ] Implementação de autenticação por *smartcard*;
 - Desenvolvimento dos três Client Applications (Ana Vidal):
   - [x] Implementação do *authentication code flow* do lado do cliente;
   - [ ] Implementação do *frontend* (design e interação com o utilizador);
   - [ ] Validação e sanitização dos dados inseridos pelo utilizador;
 - Testes à aplicação feita (Ana Vidal e Simão Andrade):
-  - [ ] Testes de validação;
-  - [ ] Testes de stress;
-  - [ ] Testes com risco alto;
+  - [x] Testes de validação;
+  - [x] Testes de stress;
+  - [x] Testes com risco alto;
 - Relatório Final (Ana Vidal e Simão Andrade):
   - [x] Descrição das estruturas de dados armazenadas;
   - [x] Estrutura das mensagens trocadas e fluxos de mensagens;
   - [x] Abordagem MFA e gestão de riscos;
   - [ ] Interfaces utilizadas e os seus parâmetros;
-  - [ ] Alguns detalhes de implementação relevantes;
-  - [ ] Resultados obtidos; 
+  - [x] Alguns detalhes de implementação relevantes;
+  - [x] Resultados obtidos; 
 - Extra:
   - [ ] Documentação do projeto;
+
+
+## TODO:
+
+- [ ] Acabar todos os routes de acesso
+  - [ ] Tabela de preços
+- [ ] Fazer os routes de inserção de dados
+- [ ] Replicar para os três clientes (ideia: em cada cliente ter um serviço diferente, exemplo, no client app 1 é para gestão de stocks, no client app 2 é para gestão de clientes, no client app 3 é para gestão de obras)
+- [ ] Mudar a tabela da base de dados no relatório
+- [ ] Tirar prints do projeto para o relatório
+- [ ] Rever o relatório
