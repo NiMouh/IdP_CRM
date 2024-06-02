@@ -109,19 +109,37 @@ Estas regras garantem que apenas as pessoas autorizadas tenham acesso e permiss�
 
 #### Mapeamento de recursos
 
-Para a implementação do controlo de acesso, foi feito um enumeração dos recursos que cada tipo de utilizador pode aceder.
+Para a implementação do controlo de acesso, foi feito um enumeração dos recursos que cada tipo de utilizador pode aceder nas diferentes client applications.
 
 Com isto, foi definida a seguinte estrutura baseada:
+
+##### Client 1
+
+| Acessos           | Vendedor | Dir. da Obra | Fornecedor | Tec. Telecom | Trab. de Fábrica | Dir. de Telecom |
+| ----------------- | -------- | ------------ | ---------- | ------------ | ---------------- | --------------- |
+| Material da obra  | Sim      | Não          | Não        | Sim          | Sim              | Sim             |
+| Material em stock | Sim      | Não          | Não        | Não          | Sim              | Não             |
+| Tabela de preços  | Sim      | Sim          | Sim        | Sim          | Sim              | Sim             |
+| Status da obra    | Sim      | Não          | Não        | Não          | Não              | Sim             |
+| Ver Clientes      | Sim      | Não          | Não        | Não          | Não              | Sim             |
+
+##### Client 2
 
 | Acessos                         | Vendedor | Dir. da Obra | Fornecedor | Tec. Telecom | Trab. de Fábrica | Dir. de Telecom |
 | ------------------------------- | -------- | ------------ | ---------- | ------------ | ---------------- | --------------- |
 | Morada e contactos dos Clientes | Sim      | Não          | Não        | Não          | Não              | Sim             |
-| Contactos do diretor da obra    | Sim      | Não          | Sim        | Não          | Não              | Sim             |
 | Morada da obra                  | Sim      | Não          | Não        | Não          | Não              | Sim             |
-| Material da obra                | Sim      | Não          | Sim        | Sim          | Sim              | Sim             |
-| Material em stock               | Não      | Não          | Sim        | Não          | Sim              | Não             |
-| Tabela de preços                | Sim      | Sim          | Sim        | Não          | Não              | Sim             |
-| Status da obra                  | Sim      | Não          | Não        | Não          | Não              | Sim             |
+
+##### Client 3
+
+| Acessos           | Vendedor | Dir. da Obra | Fornecedor | Tec. Telecom | Trab. de Fábrica | Dir. de Telecom |
+| ----------------- | -------- | ------------ | ---------- | ------------ | ---------------- | --------------- |
+| Ver Clientes      | Sim      | Não          | Não        | Não          | Não              | Sim             |
+| Morada da obra    | Sim      | Não          | Não        | Não          | Não              | Sim             |
+| Material da obra  | Sim      | Não          | Não        | Sim          | Sim              | Sim             |
+| Material em stock | Sim      | Não          | Sim        | Não          | Sim              | Não             |
+| Tabela de preços  | Sim      | Sim          | Sim        | Sim          | Sim              | Sim             |
+| Status da obra    | Sim      | Não          | Não        | Não          | Não              | Sim             |
 
 > **Nota:** O Diretor da obra apenas tem acesso às informações da obra do próprio.
 

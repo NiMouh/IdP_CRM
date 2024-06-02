@@ -7,7 +7,7 @@ from authlib.integrations.flask_client import OAuth
 backend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../backend'))
 sys.path.append(backend_path)
 
-from middleware import check_permission
+from middleware import check_permission, TokenRefresher
 
 app = Flask(__name__, template_folder="templates")
 app.secret_key = token_urlsafe(32) # 32 bytes = 256 bits
@@ -46,6 +46,8 @@ oauth.register(
     refresh_token_params=None,
     client_kwargs={'scope': 'profile'}
 )
+
+TokenRefresher(app)
 
 # SESSION MANAGEMENT #
 
@@ -102,38 +104,6 @@ def dashboard():
     username = request.cookies.get('username')
     return render_template('dashboard.html', username=username)
 
-# TODO: Implementação de Refresh tokens
-@app.route('/refresh', methods=['GET'])
-def refresh():
-    refresh_token = request.cookies.get('refresh_token')
-    if refresh_token is None:
-        return redirect('/login')
-    
-    token_url = IDP_URL_REFRESH_TOKEN
-    client_id = CLIENT_ID
-
-    # Prepare the request payload
-    payload = {
-        'grant_type': 'refresh_token',
-        'refresh_token': refresh_token,
-        'client_id': client_id
-    }
-
-    # Make the request to the token endpoint
-    try:
-        response = requests.post(token_url, data=payload)
-        response.raise_for_status()
-        token = response.json()
-
-        access_token = token['access_token']
-        
-        response = make_response(redirect('/dashboard'))
-        response.set_cookie('access_token', access_token, httponly=True, secure=True)
-        return response
-
-    except requests.exceptions.HTTPError as e:
-        return redirect('/login')
-
 @app.route('/ver_clientes', methods=['GET'])
 @check_permission(['vendedor', 'diretor_telecomunicacoes'])
 def ver_clientes():
@@ -147,7 +117,7 @@ def ver_clientes():
     response = requests.get(url, headers=headers)
     print('Ver Clientes', response.json())
 
-    if response.status_code != 200:
+    if response.status_code != STATUS_CODE['SUCCESS']:
         return redirect('/login')
     return render_template('tables_ver_clients.html', clientes=response.json(), username=request.cookies.get('username'))
 

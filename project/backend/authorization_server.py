@@ -774,6 +774,11 @@ def authorize(): # STEP 2 - Authorization Code Request
         else:
             print("Access Level not found")
             return render_template('error.html', error_message='Access level not found'), STATUS_CODE['INTERNAL_SERVER_ERROR']
+        
+        authorization_code = make_nonce()
+        add_authorization_code(authorization_code, client_id_received, username)
+        add_log(SUCCESS_LOG, datetime.now(), 'Access granted', username, request_ip, USERS[username]['access_level'], 'Authorization')
+        return redirect(f'{redirect_uri}?code={authorization_code}&state={state}')
 
 @app.route('/access_token', methods=['POST'])
 def access_token() -> jsonify: # STEP 4 - Access Token Grant
@@ -807,7 +812,7 @@ def access_token() -> jsonify: # STEP 4 - Access Token Grant
 def generate_token(username : str) -> str:
 
     now = datetime.now()
-    access_exp = now + timedelta(days=1)
+    access_exp = now + timedelta(minutes=5)
     
     payload_access = {
         'username': username,
@@ -827,7 +832,7 @@ def generate_token(username : str) -> str:
 def generate_refresh_token(username : str, client_id : str) -> str:
 
     now = datetime.now()
-    refresh_exp = now + timedelta(days=10)
+    refresh_exp = now + timedelta(hours=2)
 
     payload_refresh = {
         'username': username,
@@ -898,6 +903,34 @@ def refresh_token() -> jsonify:
     except jwt.InvalidTokenError as e:
         return jsonify({'error_message': str(e)}), STATUS_CODE['BAD_REQUEST']
 
+@app.route('/revoke', methods=['POST'])
+def revoke_token() -> jsonify:
+
+    client_id_received = request.form.get('client_id')
+    CLIENTS = fetch_clients()
+    if client_id_received not in CLIENTS:
+        return jsonify({'error_message': 'Invalid client credentials'}), STATUS_CODE['UNAUTHORIZED']
+
+    refresh_token = request.form.get('refresh_token')
+    if not refresh_token:
+        return jsonify({'error_message': 'Invalid refresh token'}), STATUS_CODE['BAD_REQUEST']
+
+    # Remove the refresh token from the database
+    conn = create_connection()
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        DELETE FROM
+            token
+        WHERE
+            token_refresh = ?;
+    ''', (refresh_token,))
+
+    conn.commit()
+    cursor.close()
+
+    return jsonify({'message': 'Token revoked'}), STATUS_CODE['SUCCESS']
+
 def store_tokens(username : str,  refresh_token : str, client_id : str):
     conn = create_connection()
     cursor = conn.cursor()
@@ -922,7 +955,6 @@ def store_tokens(username : str,  refresh_token : str, client_id : str):
     finally:
         cursor.close()
         conn.close()
-
 
 @app.route('/.well-known/jwks.json', methods=['GET'])
 def jwks() -> jsonify:

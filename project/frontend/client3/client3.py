@@ -7,7 +7,7 @@ from authlib.integrations.flask_client import OAuth
 backend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../backend'))
 sys.path.append(backend_path)
 
-from middleware import check_permission
+from middleware import check_permission, TokenRefresher
 
 app = Flask(__name__, template_folder="templates")
 app.secret_key = token_urlsafe(32) # 32 bytes = 256 bits
@@ -46,6 +46,8 @@ oauth.register(
     refresh_token_params=None,
     client_kwargs={'scope': 'profile'}
 )
+
+TokenRefresher(app)
 
 # SESSION MANAGEMENT #
 
