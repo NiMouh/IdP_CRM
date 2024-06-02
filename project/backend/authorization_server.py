@@ -36,20 +36,19 @@ DATABASE_PATH = os.path.abspath(DATABASE_RELATIVE_PATH)
 PRIVATE_KEY_PATH = os.path.abspath('./keys/private_key.pem')
 PUBLIC_KEY_PATH = os.path.abspath('./keys/public_key.pem')
 
-# For the email service
+# For the OTP service
 SENDER_EMAIL = 'crmiaa0@gmail.com'
 SENDER_PASSWORD = 'jfuaslvbkfjpiqxn'
+TOTP_INTERVAL_SECONDS = 90
 
-# For the SMS service
+# For the Challenge-Response service
 SENDER_SMS_ACCOUNT_SID = 'AC89f729d31cdda7a33b7d03a22f4f7577'
 SENDER_SMS_AUTH_TOKEN = '1883fa4946a1feacf7f83db0785e97c5'
 SENDER_SMS_NUMBER = '+13365305137'
 
 # For the logs
-SUCCESS_LOG = 'INFO'
-ERROR_LOG = 'ERROR' # TODO: Modificar o nome dos tipos de Logs e adicionar nos sitios devidos
-
-TOTP_INTERVAL_SECONDS = 90
+SUCCESS_LOG = 'AUTHENTICATION_INFO'
+ERROR_LOG = 'AUTHENTICATION_ERROR'
 
 # DATABASE STUFF #
 
@@ -877,8 +876,8 @@ def refresh_token() -> jsonify:
         
         username = payload['username']
 
-        conn = create_connection()
-        cursor = conn.cursor()
+        connection = create_connection()
+        cursor = connection.cursor()
 
         cursor.execute('''
             SELECT 
@@ -894,12 +893,16 @@ def refresh_token() -> jsonify:
         token_record = cursor.fetchone()
 
         cursor.close()
+        connection.close()
         if not token_record:
             return jsonify({'error_message': 'Invalid refresh token'}), STATUS_CODE['BAD_REQUEST']
         
         access_token = generate_token(username)
+        refresh_token = generate_refresh_token(username, client_id_received)
 
-        return jsonify({ 'access_token' : access_token}), STATUS_CODE['SUCCESS']
+        store_tokens(username, refresh_token, client_id_received)
+
+        return jsonify({ 'access_token' : access_token, 'refresh_token' : refresh_token}), STATUS_CODE['SUCCESS']
     except jwt.InvalidTokenError as e:
         return jsonify({'error_message': str(e)}), STATUS_CODE['BAD_REQUEST']
 

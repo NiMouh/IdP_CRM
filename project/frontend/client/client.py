@@ -54,7 +54,7 @@ TokenRefresher(app)
 @app.route('/login', methods=['GET'])
 def login(): # STEP 1 - Authorization Request
 
-    if 'access_token' and 'refresh_token' in request.cookies:
+    if 'access_token' in request.cookies:
         return redirect('/')
 
     redirect_uri = url_for('authorize', _external=True)

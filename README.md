@@ -69,6 +69,8 @@ Para a geração de assinaturas de *tokens* JWT, é usado um par de chaves RSA. 
 $ bash generate_rsa.bash
 ```
 
+> [!IMPORTANT]
+> Quando utilizar a aplicação, é necessário gerar um novo par de chaves RSA, de modo a não comprometer a segurança da aplicação.
 
 
 ## Divisão de Tarefas
@@ -78,7 +80,7 @@ $ bash generate_rsa.bash
   - [x] Criação de funções que gerem aleatoriamente os dados da base de dados;
   - [x] Chamadas à base dados para o *backend*;
   - [x] Validação dos *tokens* de acesso;
-  - [ ] Controlo de acessos;
+  - [x] Controlo de acessos;
   - [x] Implementação de um sistema de logs;
   - [ ] Validação e sanitização dos dados inseridos pelo utilizador;
 - Desenvolvimento do IdP (Simão Andrade e Ana Vidal):
@@ -88,12 +90,12 @@ $ bash generate_rsa.bash
   - [x] Implementação de um sistema de logs;
   - [x] Gestão de *tokens* e *sessões*;
   - [x] Definição do cálculo do risco;
-  - [ ] Proteção contra erros de CSRF (*Cross-Site Request Forgery*);
+  - [x] Proteção contra erros de CSRF (*Cross-Site Request Forgery*);
   - [ ] Validação e sanitização dos dados inseridos pelo utilizador;
   - [ ] Implementação de autenticação por *smartcard*;
 - Desenvolvimento dos três Client Applications (Ana Vidal):
   - [x] Implementação do *authentication code flow* do lado do cliente;
-  - [ ] Implementação do *frontend* (design e interação com o utilizador);
+  - [x] Implementação do *frontend* (design e interação com o utilizador);
   - [ ] Validação e sanitização dos dados inseridos pelo utilizador;
 - Testes à aplicação feita (Ana Vidal e Simão Andrade):
   - [x] Testes de validação;
@@ -112,10 +114,10 @@ $ bash generate_rsa.bash
 
 ## TODO:
 
-- [ ] Acabar todos os routes de acesso
-  - [ ] Tabela de preços
-- [ ] Fazer os routes de inserção de dados
-- [ ] Replicar para os três clientes (ideia: em cada cliente ter um serviço diferente, exemplo, no client app 1 é para gestão de stocks, no client app 2 é para gestão de clientes, no client app 3 é para gestão de obras)
+- [x] Acabar todos os routes de acesso
+  - [x] Tabela de preços
+- [x] Fazer os routes de inserção de dados
+- [x] Replicar para os três clientes (ideia: em cada cliente ter um serviço diferente, exemplo, no client app 1 é para gestão de stocks, no client app 2 é para gestão de clientes, no client app 3 é para gestão de obras)
 - [ ] Mudar a tabela da base de dados no relatório
 - [ ] Tirar prints do projeto para o relatório
 - [ ] Rever o relatório

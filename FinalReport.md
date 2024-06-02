@@ -96,12 +96,12 @@ Essas regras garantem que apenas as pessoas autorizadas tenham acesso e permiss�
 
 #### Regras de Integridade
 
-1. **Regra de Não-Escrita (Não Acrescentar):** Esta regra é crucial para evitar que informações sensíveis ou críticas sejam alteradas por indivíduos que não têm autorização para fazê-lo. Por exemplo:
+1. **Regra de Não-Escrita (No Write Up):** Esta regra é crucial para evitar que informações sensíveis ou críticas sejam alteradas por indivíduos que não têm autorização para fazê-lo. Por exemplo:
    - Um vendedor pode precisar aceder a informações sobre clientes, diretores de obra e materiais, mas não deve ter permissão para modificar detalhes sobre a obra, fornecedores, tecnologia de telecomunicações ou trabalho de fábrica, pois isso pode interferir nas operações internas.
    - Um diretor de obra pode precisar atualizar informações sobre a obra, mas não deve ter permissão para modificar detalhes sobre fornecedores, tecnologia de telecomunicações ou trabalho de fábrica, pois isso pode afetar os processos de aquisição e comunicação.
    - Um fornecedor pode fornecer informações sobre materiais, mas não deve ter permissão para alterar detalhes sobre tecnologia de telecomunicações ou trabalho de fábrica, pois isso pode comprometer a integridade dos dados de produção.
 
-2. **Regra de Não-Leitura (Não Visualizar para Baixo):** Esta regra impede que informações confidenciais sejam acessadas por indivíduos que não têm autorização para fazê-lo. Por exemplo:
+2. **Regra de Não-Leitura (No Read Down):** Esta regra impede que informações confidenciais sejam acessadas por indivíduos que não têm autorização para fazê-lo. Por exemplo:
    - Os trabalhadores da fábrica podem precisar aceder a informações sobre materiais em stock e escalões de desconto para realizar suas funções, mas não devem ter permissão para visualizar dados sobre clientes, diretores de obra ou fornecedores, pois isso pode expor informações confidenciais a pessoal não autorizado.
    - Da mesma forma, os técnicos de telecomunicações podem precisar de acesso a informações sobre materiais em stock e escalões de desconto para fins de manutenção, mas não devem ter permissão para visualizar dados sobre clientes, diretores de obra ou fornecedores, pois isso pode comprometer a segurança das informações.
 
@@ -486,7 +486,7 @@ Para mandar o código de autenticação e o *QR code* por email, foi criada uma 
 E foi utilizada a biblioteca `smtplib` para o envio de emails sobre o domínio do Gmail (`smtp.gmail.com`), obtendo assim o seguinte email de autenticação:
 
 <p align="center">
-  <img src="img/email_otp.jpg" width="300" title="Email OTP">
+  <img src="img/email_otp.jpg" width="200" title="Email OTP">
 </p>
 <p align="center" style="font-size: 10px;">
   <i>Figura 12 - Email de autenticação com o código de autenticação e o QR Code</i>
@@ -529,7 +529,7 @@ Exemplo de um *JWKS*:
 Envolve a criação de um *endpoint* que retorna as chaves públicas do *IdP* usadas para assinar os *tokens* usando o algoritmo `RS256`. É feito da seguinte forma:
 
 <p align="center">
-  <img src="img/jwks-flow.png" width="500" title="JWKS Endpoint">
+  <img src="img/jwks-flow.png" width="300" title="JWKS Endpoint">
 </p>
 <p align="center" style="font-size: 10px;">
   <i>Figura 13 - Fluxo de mensagens para a obtenção das chaves públicas do IdP</i>
@@ -609,7 +609,41 @@ def get_resource():
     return resource
 ```
 
-#### Controlo de Acesso (Biba e LaPadula)
+> Além disso o *middleware* também é responsável pelos pedidos de *refresh* de *tokens*, usando a classe `TokenRefresher`.
+
+#### Controlo de Acesso
+
+Todos os controlos de acesso anteriormente enumerados foram implementados no *Resource Server*, garantindo que apenas utilizadores autenticados e autorizados têm acesso aos recursos.
+
+Na página de *dashboard* de cada uma das aplicações cliente, é possível visualizar os recursos disponíveis:
+
+<p align="center">
+  <img src="img/dashboard.png" width="500" title="Dashboard">
+</p>
+<p align="center" style="font-size: 10px;">
+  <i>Figura 14 - Página de Dashboard de uma aplicação cliente</i>
+</p>
+
+Onde se o utilizador não tenha permissão para aceder a um recurso, é apresentada uma mensagem de erro a informar que o acesso foi negado (HTTP 403):
+
+<p align="center">
+  <img src="img/error_message.png" width="500" title="Forbidden">
+</p>
+<p align="center" style="font-size: 10px;">
+  <i>Figura 15 - Mensagem de erro de acesso negado</i>
+</p>
+
+
+Caso o mesmo tenha permissão, é apresentado o recurso correspondente:
+
+<p align="center">
+  <img src="img/success_message.png" width="500" title="Resource">
+</p>
+<p align="center" style="font-size: 10px;">
+  <i>Figura 16 - Recurso disponível para o utilizador</i>
+</p>
+
+Além disso, o *Resource Server* guarda *logs* de acesso a recursos, que contêm informações como o ip de origem do pedido, o tipo de pedido, o nível de acesso do utilizador, que podem ser usados para auditoria e análise de risco.
 
 ## Conclusão
 

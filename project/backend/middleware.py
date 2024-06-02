@@ -1,7 +1,7 @@
 from functools import wraps
 import os
 from sqlite3 import Error, connect
-from flask import Flask, jsonify, request, make_response, redirect
+from flask import request, make_response, redirect, render_template
 import time
 import jwt
 import json
@@ -11,6 +11,29 @@ import requests
 DATABASE_RELATIVE_PATH = 'database/db.sql'
 DATABASE_PATH = os.path.join(os.path.dirname(__file__), DATABASE_RELATIVE_PATH)
 
+JWKS_URL = 'http://127.0.0.1:5010/.well-known/jwks.json'
+
+IDP_URL_REFRESH_TOKEN = 'http://127.0.0.1:5010/refresh'
+IDP_URL_REVOKE_TOKEN = 'http://127.0.0.1:5010/revoke'
+RESOURCE_SERVER = 'http://127.0.0.1:5020'
+
+CLIENTS = { # Host : Client ID
+    '127.0.0.1:5000': 'client_id',
+    '127.0.0.1:5001': 'client_id2',
+    '127.0.0.1:5002': 'client_id3'
+}
+
+STATUS_CODE = {
+    'SUCCESS': 200,
+    'BAD_REQUEST': 400,
+    'UNAUTHORIZED': 401,
+    'FORBIDDEN': 403,
+    'NOT_FOUND': 404,
+    'INTERNAL_SERVER_ERROR': 500
+}
+
+AUTHENTICATION_PATHS = ['/login', '/', '/logout', '/authorize']
+
 def create_connection() -> connect:
     try:
         conn = connect(DATABASE_PATH, check_same_thread=False)
@@ -18,8 +41,6 @@ def create_connection() -> connect:
     except Error as e:
         print("Erro ao conectar ao banco de dados:",e)
         return None
-
-JWKS_URL = 'http://127.0.0.1:5010/.well-known/jwks.json'
 
 def get_public_key() -> bytes:
     response = requests.get(JWKS_URL)
@@ -36,18 +57,6 @@ def get_public_key() -> bytes:
 
     public_key = RSAAlgorithm.from_jwk(json.dumps(key))
     return public_key
-
-IDP_URL_REFRESH_TOKEN = 'http://127.0.0.1:5010/refresh'
-IDP_URL_REVOKE_TOKEN = 'http://127.0.0.1:5010/revoke'
-RESOURCE_SERVER = 'http://127.0.0.1:5020'
-
-CLIENTS = { # Host : Client ID
-    '127.0.0.1:5000': 'client_id',
-    '127.0.0.1:5001': 'client_id2',
-    '127.0.0.1:5002': 'client_id3'
-}
-
-AUTHENTICATION_PATHS = ['/login', '/', '/logout', '/authorize']
 
 class TokenRefresher:
     def __init__(self, app):
@@ -66,10 +75,11 @@ class TokenRefresher:
             host = request.host  # Accessing request context here
 
             if self.token_expired(access_token):
-                refreshed_token = self.refresh_token(refresh_token, host)  # Passing host to refresh_token
-                if refreshed_token:
+                new_access_token, refresh_token = self.refresh_token(refresh_token, host)  # Passing host to refresh_token
+                if new_access_token:
                     response = make_response(redirect(request.path))
-                    response.set_cookie('access_token', refreshed_token, httponly=True, secure=True)
+                    response.set_cookie('access_token', new_access_token, httponly=True, secure=True)
+                    response.set_cookie('refresh_token', refresh_token, httponly=True, secure=True)
                     return response
                 else:
                     response = make_response(redirect('/login'))
@@ -80,7 +90,7 @@ class TokenRefresher:
         else:
             return redirect('/login')
 
-    def token_expired(self, access_token): # Check if the token is 5 minutes from expiring
+    def token_expired(self, access_token):
         if access_token:
             try:
                 public_key = get_public_key()
@@ -101,9 +111,9 @@ class TokenRefresher:
                 if public_key is None:
                     return None
                 token_decoded = jwt.decode(refresh_token, public_key, audience=RESOURCE_SERVER, algorithms=['RS256'])
-                if token_decoded.get('exp') < int(time.time()):  # Check if refresh token is expired
+                if token_decoded.get('exp') < int(time.time()):
                     return None
-            except jwt.ExpiredSignatureError: # TODO: If it's expired, revoke it
+            except jwt.ExpiredSignatureError:
                 self.revoke_refresh_token(refresh_token, host)
                 return None
             except jwt.InvalidTokenError:
@@ -112,13 +122,14 @@ class TokenRefresher:
             payload = {
                 'grant_type': 'refresh_token',
                 'refresh_token': refresh_token,
-                'client_id': CLIENTS.get(host)
+                'client_id': CLIENTS.get(host),
+                'username': token_decoded.get('username'),
             }
             try:
                 response = requests.post(IDP_URL_REFRESH_TOKEN, data=payload)
                 response.raise_for_status()
                 token = response.json()
-                return token.get('access_token')
+                return token.get('access_token'), token.get('refresh_token')
             except requests.exceptions.HTTPError:
                 return None
         return None
@@ -165,20 +176,20 @@ def check_permission(roles: list):
             access_token = request.cookies.get('access_token')
 
             if access_token is None:
-                return jsonify({"message": "No access token provided"}), 403
+                return render_template('401.html'), STATUS_CODE['UNAUTHORIZED']
             
             # Obter do access token do utilizador
             username = get_user(access_token)
 
             if username is None:
-                return jsonify({"message": "No username provided"}), 403
+                return render_template('401.html'), STATUS_CODE['UNAUTHORIZED']
             
             user_role = get_user_role(username)
 
             if user_role[0] is None:
-                return jsonify({"message": "No role found"}), 403
+                return render_template('401.html'), STATUS_CODE['UNAUTHORIZED']
             if user_role[0] not in roles:
-                return jsonify({"message": "Unauthorized"}), 403
+                return render_template('403.html'), STATUS_CODE['FORBIDDEN']
 
             return func(*args, **kwargs)
         return wrapper
