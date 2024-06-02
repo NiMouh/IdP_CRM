@@ -26,8 +26,8 @@ IDP_URL_REFRESH_TOKEN = 'http://127.0.0.1:5010/refresh'
 
 RESOURCE_SERVER_URL = 'http://127.0.0.1:5020'
 
-CLIENT_ID = 'client_id'
-CLIENT_SECRET = '123456'
+CLIENT_ID = 'client_id2'
+CLIENT_SECRET = '123457'
 
 # OAUTH - AUTHORIZATION CODE FLOW  #
 
@@ -134,62 +134,47 @@ def refresh():
     except requests.exceptions.HTTPError as e:
         return redirect('/login')
 
-@app.route('/ver_clientes', methods=['GET'])
-@check_permission(['vendedor', 'diretor_telecomunicacoes'])
-def ver_clientes():
+@app.route('/contactos_clientes', methods=['GET'])
+@check_permission(['vendedor', 'diretor_de_obra'])
+def contactos_clientes():
     if ('access_token' and 'refresh_token') not in request.cookies:
         return redirect('/')
     
-    url = 'http://127.0.0.1:5020/api/ver_clientes'
+    url = 'http://127.0.0.1:5020/api/contactos_clientes'
     headers = {
         'Authorization': 'Bearer ' + request.cookies.get('access_token')
     }
     response = requests.get(url, headers=headers)
-    print('Ver Clientes', response.json())
+    print('Contactos Clientes', response.json())
 
     if response.status_code != 200:
         return redirect('/login')
-    return render_template('tables_ver_clients.html', clientes=response.json(), username=request.cookies.get('username'))
+    return render_template('tables_clients_contactos.html', contactos=response.json(), username=request.cookies.get('username'))
 
-@app.route('/obra_estado', methods=['GET'])
-@check_permission(['vendedor', 'diretor_telecomunicacoes'])
-def obra_estado():
+@app.route('/moradas_clientes', methods=['GET'])
+@check_permission(['vendedor', 'diretor_de_obra'])
+def moradas_clientes():
     if ('access_token' and 'refresh_token') not in request.cookies:
         return redirect('/')
     
-    url = 'http://127.0.0.1:5020/api/obra_estado'
+    url = 'http://127.0.0.1:5020/api/moradas_clientes'
     headers = {
         'Authorization': 'Bearer ' + request.cookies.get('access_token')
     }
     response = requests.get(url, headers=headers)
+    print('Moradas Clientes', response.json())
 
     if response.status_code != 200:
         return redirect('/login')
-    return render_template('tables_obra_estado.html', estados=response.json(), username=request.cookies.get('username'))
+    return render_template('tables_clients_moradas.html', moradas=response.json(), username=request.cookies.get('username'))
 
-@app.route('/material_obra', methods=['GET'])
-@check_permission(['vendedor', 'trabalhador_de_fabrica', 'tecnico_telecomunicacoes', 'diretor_de_obra', 'diretor_telecomunicacoes'])
-def material_obra():
+@app.route('/morada_obra', methods=['GET'])
+@check_permission(['vendedor', 'diretor_de_obra'])
+def morada_obra():
     if ('access_token' and 'refresh_token') not in request.cookies:
         return redirect('/')
     
-    url = 'http://127.0.0.1:5020/api/material_obra'
-    headers = {
-        'Authorization': 'Bearer ' + request.cookies.get('access_token')
-    }
-    response = requests.get(url, headers=headers)
-
-    if response.status_code != 200:
-        return redirect('/login')
-    return render_template('tables_obra_material.html', materials=response.json(), username=request.cookies.get('username'))
-
-@app.route('/tabela_preco', methods=['GET'])
-@check_permission(['vendedor', 'diretor_de_obra', 'fornecedor', 'tecnico_telecomunicacoes', 'diretor_telecomunicacoes'])
-def tabela_preco():
-    if ('access_token' and 'refresh_token') not in request.cookies:
-        return redirect('/')
-    
-    url = 'http://127.0.0.1:5020/api/tabela_preco'
+    url = 'http://127.0.0.1:5020/api/morada_obra'
     headers = {
         'Authorization': 'Bearer ' + request.cookies.get('access_token')
     }
@@ -197,27 +182,11 @@ def tabela_preco():
 
     if response.status_code != 200:
         return redirect('/login')
-    return render_template('tables_obra_preco.html', prices=response.json(), username=request.cookies.get('username'))
-
-@app.route('/stock', methods=['GET'])
-@check_permission(['trabalhador_de_fabrica', 'vendedor'])
-def stock():
-    if ('access_token' and 'refresh_token') not in request.cookies:
-        return redirect('/')
-    
-    url = 'http://127.0.0.1:5020/api/stock'
-    headers = {
-        'Authorization': 'Bearer ' + request.cookies.get('access_token')
-    }
-    response = requests.get(url, headers=headers)
-
-    if response.status_code != 200:
-        return redirect('/login')
-    return render_template('tables_obra_stock.html', stock=response.json(), username=request.cookies.get('username'))
+    return render_template('tables_obra_morada.html', addresses=response.json(), username=request.cookies.get('username'))
 
 @app.errorhandler(STATUS_CODE['NOT_FOUND'])
 def page_not_found(e):
     return render_template('error.html'), STATUS_CODE['NOT_FOUND']
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5001)

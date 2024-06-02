@@ -82,6 +82,32 @@ def verify_token(f):
 # TODO: Adicionar logs a cada todos os endpoints
 
 # TODO: Adicionar o decorator verify token e verificar qual o nível de acesso do utilizador
+@app.route('/api/ver_clientes', methods=['GET'])
+@verify_token
+def ver_clientes() -> jsonify:
+    connection = create_connection()
+    if connection is None:
+        return jsonify({'error_message': 'Database connection failed'}), STATUS_CODE['INTERNAL_SERVER_ERROR']
+
+    cursor = connection.cursor()
+    cursor.execute('''
+        SELECT 
+        cliente_nome, 
+        cliente_tipo 
+        FROM 
+        cliente;
+    ''')
+    db_clientes = cursor.fetchall()
+
+    clientes = {}
+    for cliente in db_clientes:
+        clientes.update({cliente[0]: cliente[1]})
+
+    cursor.close()
+    connection.close()
+
+    return jsonify(clientes), STATUS_CODE['SUCCESS']
+
 @app.route('/api/contactos_clientes', methods=['GET'])
 @verify_token
 def dashboard() -> jsonify:
@@ -339,6 +365,36 @@ def material_obra() -> jsonify:
 
     return jsonify(materials), STATUS_CODE['SUCCESS']
 
+@app.route('/api/tabela_preco', methods=['GET'])
+@verify_token
+def tabela_preco() -> jsonify:
+    connection = create_connection()
+    if connection is None:
+        return jsonify({'error_message': 'Database connection failed'}), STATUS_CODE['INTERNAL_SERVER_ERROR']
+    
+    cursor = connection.cursor()
+    cursor.execute('''
+        SELECT 
+            p.produtoNome,
+            tp.tabelaPrecos_Unit
+        FROM 
+            tabelaPrecos tp
+        JOIN
+            produto p
+        ON
+            tp.fk_produto_id = p.produto_id;
+    ''')
+    db_prices = cursor.fetchall()
+
+    prices = {}
+    for price in db_prices:
+        prices.update({price[0]: price[1]})
+
+    cursor.close()
+    connection.close()
+
+    return jsonify(prices), STATUS_CODE['SUCCESS']
+
 @app.route('/api/stock', methods=['GET'])
 @verify_token
 def stock() -> jsonify:
@@ -455,8 +511,6 @@ def create_user() -> jsonify:
     connection.close()
 
     return jsonify({'success_message': 'User created successfully'}), STATUS_CODE['SUCCESS']
-
-
 
 @app.route('/api/delete_user/<username>', methods=['DELETE'])
 def delete_user(username : str) -> jsonify:

@@ -294,7 +294,7 @@ cursor.execute('''
 
 cursor.execute('''
     INSERT INTO nivel_acesso (nivel_acesso_nome, nivel_acesso_nivel)
-    VALUES ('vendedor', 3), ('diretor_de_obra', 3), ('fornecedor', 2), ('trabalhador_de_fabrica', 2), ('tecnico_telecomunicacoes', 1);
+    VALUES ('vendedor', 3), ('diretor_de_obra', 1), ('fornecedor', 2), ('trabalhador_de_fabrica', 2), ('tecnico_telecomunicacoes', 1), ('diretor_telecomunicacoes', 3);
 ''')
 
 cursor.execute('''
@@ -446,7 +446,9 @@ cursor.execute('''
 
 cursor.execute('''
     Insert into client_application (client_application_client_id, client_application_secret, client_application_redirect_uri)
-    VALUES ('client_id', '123456', 'http://127.0.0.1:5000/authorize');
+    VALUES ('client_id', '123456', 'http://127.0.0.1:5000/authorize'),
+        ('client_id2', '123457', 'http://127.0.0.1:5001/authorize'),
+        ('client_id3', '123458', 'http://127.0.0.1:5002/authorize');
 ''')
 
 
