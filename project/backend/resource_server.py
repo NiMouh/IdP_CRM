@@ -33,6 +33,8 @@ STATUS_CODE = {
 DATABASE_RELATIVE_PATH = 'database/db.sql'
 DATABASE_PATH = os.path.join(os.path.dirname(__file__), DATABASE_RELATIVE_PATH)
 
+RESOURCE_SERVER_URL = 'http://127.0.0.1:5020'
+
 SUCCESS_LOG = 'ACCESS_INFO'
 ERROR_LOG = 'ACCESS_ERROR'
 
@@ -48,7 +50,7 @@ def create_connection() -> connect:
 
 def get_public_key() -> bytes:
     response = requests.get(JWKS_URL)
-    if response.status_code != 200:
+    if response.status_code != STATUS_CODE['SUCCESS']:
         raise Exception(f"Failed to fetch JWKS: {response.status_code}")
 
     jwks = response.json()
@@ -69,9 +71,8 @@ def verify_token(f):
         token = token.split(' ')[1]
         public_key = get_public_key()
         try:
-            decoded_token = jwt.decode(token, public_key, audience='http://127.0.0.1:5020', algorithms=['RS256'])
+            decoded_token = jwt.decode(token, public_key, audience=RESOURCE_SERVER_URL, algorithms=['RS256'])
             request.decoded_token = decoded_token
-            print('Decoded Token:', decoded_token)
             return f(*args, **kwargs)
         except jwt.ExpiredSignatureError:
             return jsonify({'error_message': 'Token has expired'}), STATUS_CODE['UNAUTHORIZED']
@@ -96,7 +97,7 @@ def add_log(log_type : str, log_date : datetime, log_message : str, ip : str, ac
             INSERT INTO 
                 log (log_tipo, log_data, log_mensagem, log_ip, log_nivel_acesso, log_segmentacao)
             VALUES 
-                (?, ?, ?, ?, ?, ?, ?);
+                (?, ?, ?, ?, ?, ?);
         ''', (log_type, log_date_str, log_message, ip, access_level, segmentation))
         print("Log added")
         conn.commit()
@@ -114,7 +115,7 @@ def add_log(log_type : str, log_date : datetime, log_message : str, ip : str, ac
 def show_clients() -> jsonify:
     connection = create_connection()
     if connection is None:
-        return render_template('500.html'), STATUS_CODE['INTERNAL_SERVER_ERROR']
+        return jsonify({'status': STATUS_CODE['INTERNAL_SERVER_ERROR']})
 
     cursor = connection.cursor()
     cursor.execute('''
@@ -142,7 +143,7 @@ def dashboard() -> jsonify:
     connection = create_connection()
     if connection is None:
         add_log(ERROR_LOG, datetime.now(), 'Failed to connect to database', request.remote_addr, 'vendedor', 'contacts')
-        return render_template('500.html'), STATUS_CODE['INTERNAL_SERVER_ERROR']
+        return jsonify({'status': STATUS_CODE['INTERNAL_SERVER_ERROR']})
     
     cursor = connection.cursor()
     cursor.execute('''
@@ -181,7 +182,7 @@ def clients_addresses() -> jsonify:
     connection = create_connection()
     if connection is None:
         add_log(ERROR_LOG, datetime.now(), 'Failed to connect to database', request.remote_addr, 'vendedor', 'addresses')
-        return render_template('500.html'), STATUS_CODE['INTERNAL_SERVER_ERROR']
+        return jsonify({'status': STATUS_CODE['INTERNAL_SERVER_ERROR']})
     
     cursor = connection.cursor()
     cursor.execute('''
@@ -244,7 +245,7 @@ def contactos_diretor_obra() -> jsonify:
     connection = create_connection()
     if connection is None:
         add_log(ERROR_LOG, datetime.now(), 'Failed to connect to database', request.remote_addr, 'diretor_de_obra', 'contacts')
-        return render_template('500.html'), STATUS_CODE['INTERNAL_SERVER_ERROR']
+        return jsonify({'status': STATUS_CODE['INTERNAL_SERVER_ERROR']})
     
     cursor = connection.cursor()
     cursor.execute('''
@@ -285,7 +286,7 @@ def obra_estado() -> jsonify:
     connection = create_connection()
     if connection is None:
         add_log(ERROR_LOG, datetime.now(), 'Failed to connect to database', request.remote_addr, 'vendedor', 'states')
-        return render_template('500.html'), STATUS_CODE['INTERNAL_SERVER_ERROR']
+        return jsonify({'status': STATUS_CODE['INTERNAL_SERVER_ERROR']})
     
     cursor = connection.cursor()
     cursor.execute('''
@@ -317,7 +318,7 @@ def morada_obra() -> jsonify:
     connection = create_connection()
     if connection is None:
         add_log(ERROR_LOG, datetime.now(), 'Failed to connect to database', request.remote_addr, 'vendedor', 'addresses')
-        return render_template('500.html'), STATUS_CODE['INTERNAL_SERVER_ERROR']
+        return jsonify({'status': STATUS_CODE['INTERNAL_SERVER_ERROR']})
     
     cursor = connection.cursor()
     cursor.execute('''
@@ -368,7 +369,7 @@ def material_obra() -> jsonify:
     connection = create_connection()
     if connection is None:
         add_log(ERROR_LOG, datetime.now(), 'Failed to connect to database', request.remote_addr, 'vendedor', 'materials')
-        return render_template('500.html'), STATUS_CODE['INTERNAL_SERVER_ERROR']
+        return jsonify({'status': STATUS_CODE['INTERNAL_SERVER_ERROR']})
     
     cursor = connection.cursor()
     cursor.execute('''
@@ -411,7 +412,7 @@ def tabela_preco() -> jsonify:
     connection = create_connection()
     if connection is None:
         add_log(ERROR_LOG, datetime.now(), 'Failed to connect to database', request.remote_addr, 'vendedor', 'prices')
-        return render_template('500.html'), STATUS_CODE['INTERNAL_SERVER_ERROR']
+        return jsonify({'status': STATUS_CODE['INTERNAL_SERVER_ERROR']})
     
     cursor = connection.cursor()
     cursor.execute('''
@@ -442,7 +443,7 @@ def stock() -> jsonify:
     connection = create_connection()
     if connection is None:
         add_log(ERROR_LOG, datetime.now(), 'Failed to connect to database', request.remote_addr, 'vendedor', 'stock')
-        return render_template('500.html'), STATUS_CODE['INTERNAL_SERVER_ERROR']
+        return jsonify({'status': STATUS_CODE['INTERNAL_SERVER_ERROR']})
     
     cursor = connection.cursor()
     cursor.execute('''
@@ -479,7 +480,7 @@ def edit_stock() -> jsonify:
     connection = create_connection()
     if connection is None:
         add_log(ERROR_LOG, datetime.now(), 'Failed to connect to database', request.remote_addr, 'vendedor', 'stock')
-        return render_template('500.html'), STATUS_CODE['INTERNAL_SERVER_ERROR']
+        return jsonify({'status': STATUS_CODE['INTERNAL_SERVER_ERROR']})
     cursor = connection.cursor()
 
     if request.method == 'DELETE':
@@ -488,7 +489,7 @@ def edit_stock() -> jsonify:
         
         if not product:
             add_log(ERROR_LOG, datetime.now(), 'Invalid product data', request.remote_addr, 'vendedor', 'stock')
-            return render_template('400.html'), STATUS_CODE['BAD_REQUEST']
+            return jsonify({'status': STATUS_CODE['BAD_REQUEST']})
         
         cursor.execute('''
             DELETE FROM stock
@@ -508,7 +509,7 @@ def edit_stock() -> jsonify:
 
         if not stock_data or not isinstance(stock_data, list):
             add_log(ERROR_LOG, datetime.now(), 'Invalid stock data', request.remote_addr, 'vendedor', 'stock')
-            return render_template('400.html'), STATUS_CODE['BAD_REQUEST']
+            return jsonify({'status': STATUS_CODE['BAD_REQUEST']})
 
         for item in stock_data:
             product = item['product']
@@ -516,7 +517,7 @@ def edit_stock() -> jsonify:
             
             if not product or not quantity:
                 add_log(ERROR_LOG, datetime.now(), 'Invalid stock data', request.remote_addr, 'vendedor', 'stock')
-                return render_template('400.html'), STATUS_CODE['BAD_REQUEST']
+                return jsonify({'status': STATUS_CODE['BAD_REQUEST']})
             
             cursor.execute('''
                 UPDATE stock
@@ -529,7 +530,7 @@ def edit_stock() -> jsonify:
     connection.close()
 
     add_log(SUCCESS_LOG, datetime.now(), 'Stock updated successfully', request.remote_addr, 'vendedor', 'stock')
-    return jsonify({'success_message': 'Stock updated successfully'}), STATUS_CODE['SUCCESS']
+    return jsonify({'status': STATUS_CODE['SUCCESS']})
 
 if __name__ == '__main__':
     app.run(debug=True, port=5020) # Different port than the client

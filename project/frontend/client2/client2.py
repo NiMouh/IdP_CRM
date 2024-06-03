@@ -47,7 +47,7 @@ oauth.register(
     client_kwargs={'scope': 'profile'}
 )
 
-TokenRefresher(app)
+token_refresher = TokenRefresher(app)
 
 # SESSION MANAGEMENT #
 
@@ -82,12 +82,9 @@ def authorize(): # STEP 3 - Access Token Request
 
 @app.route('/logout', methods=['GET'])
 def logout():
-    response = make_response(redirect('/'))
-    response.set_cookie('access_token', '', expires=0)
-    response.set_cookie('refresh_token', '', expires=0)
-    response.set_cookie('username', '', expires=0)
-
-    return response
+    if 'refresh_token' in request.cookies:
+        token_refresher.revoke_refresh_token(request.cookies.get('refresh_token'), request.host)
+    return token_refresher.clear_cookies()
 
 # ROUTES #
 
@@ -104,38 +101,6 @@ def dashboard():
     username = request.cookies.get('username')
     return render_template('dashboard.html', username=username)
 
-# TODO: Implementação de Refresh tokens
-@app.route('/refresh', methods=['GET'])
-def refresh():
-    refresh_token = request.cookies.get('refresh_token')
-    if refresh_token is None:
-        return redirect('/login')
-    
-    token_url = IDP_URL_REFRESH_TOKEN
-    client_id = CLIENT_ID
-
-    # Prepare the request payload
-    payload = {
-        'grant_type': 'refresh_token',
-        'refresh_token': refresh_token,
-        'client_id': client_id
-    }
-
-    # Make the request to the token endpoint
-    try:
-        response = requests.post(token_url, data=payload)
-        response.raise_for_status()
-        token = response.json()
-
-        access_token = token['access_token']
-        
-        response = make_response(redirect('/dashboard'))
-        response.set_cookie('access_token', access_token, httponly=True, secure=True)
-        return response
-
-    except requests.exceptions.HTTPError as e:
-        return redirect('/login')
-
 @app.route('/contactos_clientes', methods=['GET'])
 @check_permission(['vendedor', 'diretor_de_obra'])
 def contactos_clientes():
@@ -147,7 +112,6 @@ def contactos_clientes():
         'Authorization': 'Bearer ' + request.cookies.get('access_token')
     }
     response = requests.get(url, headers=headers)
-    print('Contactos Clientes', response.json())
 
     if response.status_code != 200:
         return redirect('/login')
@@ -164,7 +128,6 @@ def moradas_clientes():
         'Authorization': 'Bearer ' + request.cookies.get('access_token')
     }
     response = requests.get(url, headers=headers)
-    print('Moradas Clientes', response.json())
 
     if response.status_code != 200:
         return redirect('/login')
@@ -188,7 +151,7 @@ def morada_obra():
 
 @app.errorhandler(STATUS_CODE['NOT_FOUND'])
 def page_not_found(e):
-    return render_template('error.html'), STATUS_CODE['NOT_FOUND']
+    return render_template('404.html'), STATUS_CODE['NOT_FOUND']
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)

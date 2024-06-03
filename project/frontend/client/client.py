@@ -47,7 +47,7 @@ oauth.register(
     client_kwargs={'scope': 'profile'}
 )
 
-TokenRefresher(app)
+token_refresher = TokenRefresher(app)
 
 # SESSION MANAGEMENT #
 
@@ -82,12 +82,9 @@ def authorize(): # STEP 3 - Access Token Request
 
 @app.route('/logout', methods=['GET'])
 def logout():
-    response = make_response(redirect('/'))
-    response.set_cookie('access_token', '', expires=0)
-    response.set_cookie('refresh_token', '', expires=0)
-    response.set_cookie('username', '', expires=0)
-
-    return response
+    if 'refresh_token' in request.cookies:
+        token_refresher.revoke_refresh_token(request.cookies.get('refresh_token'), request.host)
+    return token_refresher.clear_cookies()
 
 # ROUTES #
 
@@ -104,22 +101,41 @@ def dashboard():
     username = request.cookies.get('username')
     return render_template('dashboard.html', username=username)
 
+def make_api_get_request(tab: str) -> dict:
+    url = RESOURCE_SERVER_URL + '/api/' + tab
+
+    headers = {
+        'Authorization': 'Bearer ' + request.cookies.get('access_token')
+    }
+
+    response = requests.get(url, headers=headers)
+    if response.status_code != STATUS_CODE['SUCCESS']:
+        return redirect('/login')
+    
+    return response.json()
+
+def make_api_post_request(tab: str, payload: dict) -> dict:
+    url = RESOURCE_SERVER_URL + '/api/' + tab
+
+    headers = {
+        'Authorization': 'Bearer ' + request.cookies.get('access_token')
+    }
+
+    response = requests.post(url, headers=headers, json=payload)
+    if response.status_code != STATUS_CODE['SUCCESS']:
+        return redirect('/login')
+    
+    return response.json()
+
 @app.route('/ver_clientes', methods=['GET'])
 @check_permission(['vendedor', 'diretor_telecomunicacoes'])
 def ver_clientes():
     if ('access_token' and 'refresh_token') not in request.cookies:
         return redirect('/')
     
-    url = 'http://127.0.0.1:5020/api/ver_clientes'
-    headers = {
-        'Authorization': 'Bearer ' + request.cookies.get('access_token')
-    }
-    response = requests.get(url, headers=headers)
-    print('Ver Clientes', response.json())
+    clients = make_api_get_request('ver_clientes')
 
-    if response.status_code != STATUS_CODE['SUCCESS']:
-        return redirect('/login')
-    return render_template('tables_ver_clients.html', clientes=response.json(), username=request.cookies.get('username'))
+    return render_template('tables_ver_clients.html', clients=clients, username=request.cookies.get('username'))
 
 @app.route('/obra_estado', methods=['GET'])
 @check_permission(['vendedor', 'diretor_telecomunicacoes'])
@@ -127,15 +143,9 @@ def obra_estado():
     if ('access_token' and 'refresh_token') not in request.cookies:
         return redirect('/')
     
-    url = 'http://127.0.0.1:5020/api/obra_estado'
-    headers = {
-        'Authorization': 'Bearer ' + request.cookies.get('access_token')
-    }
-    response = requests.get(url, headers=headers)
+    estados = make_api_get_request('obra_estado')
 
-    if response.status_code != 200:
-        return redirect('/login')
-    return render_template('tables_obra_estado.html', estados=response.json(), username=request.cookies.get('username'))
+    return render_template('tables_obra_estado.html', estados=estados, username=request.cookies.get('username'))
 
 @app.route('/material_obra', methods=['GET'])
 @check_permission(['vendedor', 'trabalhador_de_fabrica', 'tecnico_telecomunicacoes', 'diretor_de_obra', 'diretor_telecomunicacoes'])
@@ -143,15 +153,9 @@ def material_obra():
     if ('access_token' and 'refresh_token') not in request.cookies:
         return redirect('/')
     
-    url = 'http://127.0.0.1:5020/api/material_obra'
-    headers = {
-        'Authorization': 'Bearer ' + request.cookies.get('access_token')
-    }
-    response = requests.get(url, headers=headers)
+    materials = make_api_get_request('material_obra')
 
-    if response.status_code != 200:
-        return redirect('/login')
-    return render_template('tables_obra_material.html', materials=response.json(), username=request.cookies.get('username'))
+    return render_template('tables_obra_material.html', materials=materials, username=request.cookies.get('username'))
 
 @app.route('/tabela_preco', methods=['GET'])
 @check_permission(['vendedor', 'diretor_de_obra', 'fornecedor', 'tecnico_telecomunicacoes', 'diretor_telecomunicacoes'])
@@ -159,15 +163,9 @@ def tabela_preco():
     if ('access_token' and 'refresh_token') not in request.cookies:
         return redirect('/')
     
-    url = 'http://127.0.0.1:5020/api/tabela_preco'
-    headers = {
-        'Authorization': 'Bearer ' + request.cookies.get('access_token')
-    }
-    response = requests.get(url, headers=headers)
+    prices = make_api_get_request('tabela_preco')
 
-    if response.status_code != 200:
-        return redirect('/login')
-    return render_template('tables_obra_preco.html', prices=response.json(), username=request.cookies.get('username'))
+    return render_template('tables_obra_preco.html', prices=prices, username=request.cookies.get('username'))
 
 @app.route('/stock', methods=['GET'])
 @check_permission(['trabalhador_de_fabrica', 'vendedor'])
@@ -175,19 +173,67 @@ def stock():
     if ('access_token' and 'refresh_token') not in request.cookies:
         return redirect('/')
     
-    url = 'http://127.0.0.1:5020/api/stock'
+    stock = make_api_get_request('stock')
+
+    return render_template('tables_obra_stock.html', stock=stock, username=request.cookies.get('username'))
+
+@app.route('/stock/update', methods=['POST'])
+@check_permission(['fornecedor', 'trabalhador_de_fabrica', 'diretor_de_obra'])
+def update_stock():
+    if ('access_token' and 'refresh_token') not in request.cookies:
+        return redirect('/')
+    
+    products = request.form.getlist('produto')
+    quantities = request.form.getlist('quantidade')
+
+    if not products or not quantities or len(products) != len(quantities):
+        return redirect('/stock')
+
+    payload = [
+        {
+            'product': product, 
+            'quantity': quantity
+        } 
+        for product, quantity in zip(products, quantities)]
+
+    response = make_api_post_request('stock', payload)
+    response = response.json()
+
+    if response['status'] != STATUS_CODE['SUCCESS']:
+        stock = make_api_get_request('stock')
+        return render_template('tables_obra_stock.html', stock=stock, username=request.cookies.get('username'), error_message='Erro ao atualizar stock')
+
+    return redirect('/stock')
+
+
+@app.route('/stock/delete', methods=['POST'])
+@check_permission(['fornecedor', 'trabalhador_de_fabrica', 'diretor_de_obra'])
+def delete_stock():
+    if ('access_token' and 'refresh_token') not in request.cookies:
+        return redirect('/')
+    
+    product = request.form.get('produto_delete')
+
+    url = f'http://127.0.0.1:5020/api/stock'
     headers = {
         'Authorization': 'Bearer ' + request.cookies.get('access_token')
     }
-    response = requests.get(url, headers=headers)
 
-    if response.status_code != 200:
-        return redirect('/login')
-    return render_template('tables_obra_stock.html', stock=response.json(), username=request.cookies.get('username'))
+    payload = {
+        'product': product
+    }
+
+    response = requests.delete(url, headers=headers, json=payload)
+
+    if response.status_code !=  STATUS_CODE['SUCCESS']:
+        stock = make_api_get_request('stock')
+        return render_template('tables_obra_stock.html', stock=stock, username=request.cookies.get('username'), error_message='Erro ao apagar stock')
+
+    return redirect('/stock')
 
 @app.errorhandler(STATUS_CODE['NOT_FOUND'])
 def page_not_found(e):
-    return render_template('error.html'), STATUS_CODE['NOT_FOUND']
+    return render_template('404.html'), STATUS_CODE['NOT_FOUND']
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

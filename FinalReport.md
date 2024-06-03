@@ -84,7 +84,7 @@ Com base nas funções desempenhadas pelos utilizadores do sistema e sensibilida
 
 Sendo, o **Nível 3** o acesso **mais restrito** e o **Nível 1** o acesso **mais permissivo**.
 
-#### Regras de Confidencialidade
+#### Regras de Confidencialidade TODO: Rever e modificar consoante a tabela de cima
 
 1. **Regra de Não-Leitura (No Read Up):** Esta regra impede que indivíduos em níveis de segurança mais baixos acessem informações em níveis de segurança mais altos, evitando assim a divulgação não autorizada de informações sensíveis. Por exemplo:
    - Um vendedor, um diretor de obra, um fornecedor, um técnico de telecomunicações e um trabalhador de fábrica, todos eles possuem permissão para aceder informações sobre clientes, diretores de obra, moradas e contatos de clientes, moradas da obra, materiais da obra, tabelas de preços e status da obra. No entanto, nenhum deles pode aceder a informações sobre materiais em stock ou escalões de desconto, pois essas informações são consideradas mais sensíveis e podem afetar a segurança e a integridade do sistema se divulgadas a pessoas não autorizadas.
@@ -94,7 +94,7 @@ Sendo, o **Nível 3** o acesso **mais restrito** e o **Nível 1** o acesso **mai
 
 Essas regras garantem que apenas as pessoas autorizadas tenham acesso e permissão para visualizar e modificar informações relevantes, protegendo assim a confidencialidade e a segurança dos dados no sistema.
 
-#### Regras de Integridade
+#### Regras de Integridade TODO: Rever e modificar consoante a tabela de cima
 
 1. **Regra de Não-Escrita (No Write Up):** Esta regra é crucial para evitar que informações sensíveis ou críticas sejam alteradas por indivíduos que não têm autorização para fazê-lo. Por exemplo:
    - Um vendedor pode precisar aceder a informações sobre clientes, diretores de obra e materiais, mas não deve ter permissão para modificar detalhes sobre a obra, fornecedores, tecnologia de telecomunicações ou trabalho de fábrica, pois isso pode interferir nas operações internas.
@@ -343,7 +343,7 @@ Além disso foi utilizado:
 
 A escolha destas ferramentas foi feita com base na sua facilidade de uso, documentação extensiva e suporte ativo.
 
-## Base de Dados (ALTERAR IMAGEM)
+## Base de Dados TODO: Alterar Imagem
 
 Com base na descrição do sistema das entidades e relações feita na primeira parte do trabalho, foi desenvolvida uma base de dados que reflete a estrutura do sistema CRM.
 
@@ -383,39 +383,16 @@ A estrutura do projeto encontra-se organizada da seguinte forma:
 
 ## Implementação
 
-### *Client Applications*
+### *Client Applications* TODO: Elaborar mais
 
-TODO: Escrever sobre o *Client* e a sua implementação.
-
-Client 1:
+#### Client 1
 Gestão do stock de material e ver preços dos produtos(fornecedor);(trabalhador de fábrica)
 
-Client 2:
+#### Client 2
 Gestão de moradas, clientes e diretores de obra(fornecedor);(vendedor)
 
-Client 3:
-Gestão de preços dos produtos(Diretor Telecom), material obra(técnico Telecom, vendedor), status obra(diretorTelcom, vendedor, técnico telecom) e ver clientes.(Diretor Telecom)
-
-### *Logs*: Armazenamento e Auditoria
-
-Os *logs*, tanto de autenticação (*Authorization Server*) como de acesso a recursos (*Resource Server*), são guardados na base de dados, contendo as seguintes informações, consoante o propósito do *log*:
-
-| Informação                    | Auditoria | Análise de Risco |
-| ----------------------------- | :-------: | :--------------: |
-| Data e hora do pedido         |     x     |        x         |
-| IP de origem do pedido        |     -     |        x         |
-| Sucesso ou falha do pedido    |     x     |        x         |
-| Tipo de pedido                |     x     |        x         |
-| Nível de acesso do utilizador |     x     |        x         |
-| Nome do utilizador            |     -     |        x         |
-
-Existem dois tipos de *logs*:
-- `ERROR`: *Logs* de erro, que contêm informações sobre pedidos que falharam;
-  - `AUTHENTICATION_ERROR`: *Logs* de erro de autenticação, que contêm informações sobre pedidos de autenticação que falharam;
-  - `ACCESS_ERROR`: *Logs* de erro de acesso, que contêm informações sobre pedidos de acesso a recursos que falharam.
-- `INFO`: *Logs* de informação, que contêm informações sobre pedidos com sucesso.
-  - `AUTHENTICATION_INFO`: *Logs* de informação de autenticação, que contêm informações sobre pedidos de autenticação com sucesso;
-  - `ACCESS_INFO`: *Logs* de informação de acesso, que contêm informações sobre pedidos de acesso a recursos com sucesso.
+#### Client 3
+Gestão de preços dos produtos (Diretor Telecom), material obra(técnico Telecom, vendedor), status obra(diretorTelcom, vendedor, técnico telecom) e ver clientes.(Diretor Telecom)
 
 ### IdP (*Identity Provider*)
 
@@ -494,7 +471,7 @@ E foi utilizada a biblioteca `smtplib` para o envio de emails sobre o domínio d
 
 > Os QRCodes gerados são compatíveis com aplicações como o *Google Authenticator*.
 
-### Autorização c/ *tokens* de acesso
+#### Autorização c/ *tokens* de acesso
 
 Os *tokens* de acesso são gerados sobre o formato JWT (*JSON Web Token*), que contêm as seguintes informações:
 - `username`: Nome do utilizador;
@@ -506,7 +483,24 @@ Estes são assinados usando o algoritmo `RS256` (*RSA Signature with SHA-256*), 
 
 > Este par de chaves foi gerado usando a ferramenta *OpenSSL* e encontram-se guardadas na diretoria `backend/keys/` em formato `.pem`.
 
-### Integridade de *tokens*
+#### *Refresh Tokens*
+
+Estes *tokens* são usados para a renovação dos *tokens* de acesso, sem a necessidade de autenticação do utilizador. São *tokens* de longa duração, que são usados para obter um novo *token* de acesso, caso o *token* atual tenha expirado.
+
+Para a implementação dos mesmos, foi criada uma classe no *Middleware* que verifica a validade do *token* de acesso a cada pedido feito pelas *Client Applications*. Caso o *token* de acesso tenha expirado, é feito um pedido ao *IdP* para a renovação do *token* de acesso, usando o *refresh token*.
+
+O *refresh token* é guardado na base de dados, e é associado ao utilizador. Se o *refresh token* não for válido (não existir na base de dados ou a assinatura já ter expirado), esse *token* é revogado e o utilizador é redirecionado para a página inicial, tendo de fazer novamente o processo autenticação.
+
+O *refresh token* também é um *JWT*, que contém as seguintes informações:
+- `username`: Nome do utilizador;
+- `exp`: Validade do *token* (em segundos);
+- `iss`: Emissor do *token* (Authorization Server);
+- `aud`: Recetor do *token* (Resource Server);
+- `type`: Tipo do *token* (*refresh*).
+
+> Este *token* é também assinado usando o algoritmo `RS256`.
+
+#### Integridade de *tokens*
 
 Para validar a assinatura dos *tokens* de acesso, é feito através de **JWKS** (*JSON Web Key Set*), que contém todas as chaves públicas do *IdP*. 
 
@@ -571,9 +565,9 @@ def verify_token(f):
 
 Este *decorator* é aplicado a todos os *endpoints* que requerem autenticação (`@verify_token`), garantindo que apenas pedidos com *tokens* válidos têm acesso aos recursos.
 
-#### *Middleware*
+### *Middleware*
 
-Para a implementação do controlo de acesso, foi criado um *middleware* que verifica o nível de acesso do utilizador e o recurso a que está a tentar aceder, e permite ou nega o acesso ao recurso, consoante o nível de acesso do utilizador.
+Para a implementação do **controlo de acesso**, foi criado um *middleware* que verifica o nível de acesso do utilizador e o recurso a que está a tentar aceder, e permite ou nega o acesso ao recurso, consoante o nível de acesso do utilizador.
 
 Esta verificação é feita usando o *decorator* `check_permission`, que recebe uma lista de níveis de acesso e verifica se o nível de acesso do utilizador está presente na lista, da seguinte forma:
 ```python
@@ -590,10 +584,10 @@ def check_permission(roles: list):
                 return jsonify({"message": "No username provided"}), STATUS_CODE['FORBIDDEN']
             
             user_role = get_user_role(username)
-            if user_role[0] is None:
+            if user_role is None:
                 return jsonify({"message": "No role found"}), STATUS_CODE['FORBIDDEN']
             
-            if user_role[0] not in roles:
+            if user_role not in roles:
                 return jsonify({"message": "Unauthorized"}), STATUS_CODE['FORBIDDEN']
             
             return func(*args, **kwargs)
@@ -609,13 +603,9 @@ def get_resource():
     return resource
 ```
 
-> Além disso o *middleware* também é responsável pelos pedidos de *refresh* de *tokens*, usando a classe `TokenRefresher`.
+Todos os controlos anteriormente enumerados foram implementados no *Resource Server*, garantindo que apenas utilizadores autenticados e autorizados têm acesso aos recursos.
 
-#### Controlo de Acesso
-
-Todos os controlos de acesso anteriormente enumerados foram implementados no *Resource Server*, garantindo que apenas utilizadores autenticados e autorizados têm acesso aos recursos.
-
-Na página de *dashboard* de cada uma das aplicações cliente, é possível visualizar os recursos disponíveis:
+Por exemplo, na página de *dashboard* de cada uma das aplicações cliente, é possível visualizar os recursos disponíveis:
 
 <p align="center">
   <img src="img/dashboard.png" width="500" title="Dashboard">
@@ -633,7 +623,6 @@ Onde se o utilizador não tenha permissão para aceder a um recurso, é apresent
   <i>Figura 15 - Mensagem de erro de acesso negado</i>
 </p>
 
-
 Caso o mesmo tenha permissão, é apresentado o recurso correspondente:
 
 <p align="center">
@@ -644,6 +633,27 @@ Caso o mesmo tenha permissão, é apresentado o recurso correspondente:
 </p>
 
 Além disso, o *Resource Server* guarda *logs* de acesso a recursos, que contêm informações como o ip de origem do pedido, o tipo de pedido, o nível de acesso do utilizador, que podem ser usados para auditoria e análise de risco.
+
+### *Logs*: Armazenamento e Auditoria
+
+Os *logs*, tanto de autenticação (*Authorization Server*) como de acesso a recursos (*Resource Server*), são guardados na base de dados, contendo as seguintes informações, consoante o propósito do *log*:
+
+| Informação                    | Auditoria | Análise de Risco |
+| ----------------------------- | :-------: | :--------------: |
+| Data e hora do pedido         |     x     |        x         |
+| IP de origem do pedido        |     -     |        x         |
+| Sucesso ou falha do pedido    |     x     |        x         |
+| Tipo de pedido                |     x     |        x         |
+| Nível de acesso do utilizador |     x     |        x         |
+| Nome do utilizador            |     -     |        x         |
+
+Existem dois tipos de *logs*:
+- `ERROR`: *Logs* de erro, que contêm informações sobre pedidos que falharam;
+  - `AUTHENTICATION_ERROR`: *Logs* de erro de autenticação, que contêm informações sobre pedidos de autenticação que falharam;
+  - `ACCESS_ERROR`: *Logs* de erro de acesso, que contêm informações sobre pedidos de acesso a recursos que falharam.
+- `INFO`: *Logs* de informação, que contêm informações sobre pedidos com sucesso.
+  - `AUTHENTICATION_INFO`: *Logs* de informação de autenticação, que contêm informações sobre pedidos de autenticação com sucesso;
+  - `ACCESS_INFO`: *Logs* de informação de acesso, que contêm informações sobre pedidos de acesso a recursos com sucesso.
 
 ## Conclusão
 
@@ -656,6 +666,8 @@ Em suma, todos os objetivos propostos para a segunda parte do trabalho foram alc
 - [Auth0 - JSON Web Key Set (JWKS)](https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-key-sets)
 - [Auth0 - Authorization Code Flow](https://auth0.com/docs/flows/authorization-code-flow)
 - [Auth0 - Which OAuth 2.0 Flow Should I Use?](https://auth0.com/docs/get-started/authentication-and-authorization-flow/which-oauth-2-0-flow-should-i-use)
+- [Auth0 - Refresh Tokens](https://auth0.com/docs/secure/tokens/refresh-tokens)
+- [Auth0 - Revoke Refresh Tokens](https://auth0.com/docs/secure/tokens/refresh-tokens/revoke-refresh-tokens)
 - [Authlib Documentation](https://docs.authlib.org/en/latest/)
 - [Bootstrap](https://getbootstrap.com/)
 - [Flask Documentation](https://flask.palletsprojects.com/en/2.0.x/)

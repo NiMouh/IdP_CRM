@@ -33,6 +33,9 @@ STATUS_CODE = {
 DATABASE_RELATIVE_PATH = r'./database/db.sql'
 DATABASE_PATH = os.path.abspath(DATABASE_RELATIVE_PATH)
 
+RESOURCE_SERVER_URL = 'http://127.0.0.1:5020'
+AUTHORIZATION_SERVER_URL = 'http://127.0.0.1:5010'
+
 PRIVATE_KEY_PATH = os.path.abspath('./keys/private_key.pem')
 PUBLIC_KEY_PATH = os.path.abspath('./keys/public_key.pem')
 
@@ -811,13 +814,14 @@ def access_token() -> jsonify: # STEP 4 - Access Token Grant
 def generate_token(username : str) -> str:
 
     now = datetime.now()
-    access_exp = now + timedelta(minutes=5)
+    access_exp = now + timedelta(minutes=1)
     
     payload_access = {
         'username': username,
         'exp': access_exp.timestamp(),
-        'iss': 'http://127.0.0.1:5010', # Authorization Server
-        'aud': 'http://127.0.0.1:5020' # Resource Server
+        'iss': AUTHORIZATION_SERVER_URL,
+        'aud': RESOURCE_SERVER_URL,
+        'type': 'access'
     }
 
     private_key = None
@@ -836,8 +840,8 @@ def generate_refresh_token(username : str, client_id : str) -> str:
     payload_refresh = {
         'username': username,
         'exp': refresh_exp.timestamp(),
-        'iss': 'http://127.0.0.1:5010',
-        'aud': 'http://127.0.0.1:5020',
+        'iss': AUTHORIZATION_SERVER_URL,
+        'aud': RESOURCE_SERVER_URL,
         'type': 'refresh'
     }
 
@@ -854,7 +858,6 @@ def generate_refresh_token(username : str, client_id : str) -> str:
 @app.route('/refresh', methods=['POST'])
 def refresh_token() -> jsonify:
 
-    # verificar o client_id e o client_secret
     client_id_received = request.form.get('client_id')
 
     CLIENTS = fetch_clients()
@@ -869,7 +872,7 @@ def refresh_token() -> jsonify:
         with open(PUBLIC_KEY_PATH, 'r') as file:
             public_key_pem = file.read()
 
-        payload = jwt.decode(refresh_token, public_key_pem, audience='http://127.0.0.1:5020', algorithms=['RS256'])
+        payload = jwt.decode(refresh_token, public_key_pem, audience=RESOURCE_SERVER_URL, algorithms=['RS256'])
 
         if payload['type'] != 'refresh':
             raise jwt.InvalidTokenError('Invalid token type')

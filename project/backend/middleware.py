@@ -44,17 +44,17 @@ def create_connection() -> connect:
 
 def get_public_key() -> bytes:
     response = requests.get(JWKS_URL)
-    if response.status_code != 200:
-        return None
+    if response.status_code != STATUS_CODE['SUCCESS']:
+        return b''
 
     jwks = response.json()
     if 'keys' not in jwks or len(jwks['keys']) == 0:
-        return None
+        return b''
 
     key = jwks['keys'][0]
     if 'kty' not in key or key['kty'] != 'RSA':
-        return None
-
+        return b''
+    
     public_key = RSAAlgorithm.from_jwk(json.dumps(key))
     return public_key
 
@@ -75,18 +75,14 @@ class TokenRefresher:
             host = request.host  # Accessing request context here
 
             if self.token_expired(access_token):
-                new_access_token, refresh_token = self.refresh_token(refresh_token, host)  # Passing host to refresh_token
-                if new_access_token:
+                new_access_token, refresh_token = self.refresh_token(refresh_token, host)
+                if new_access_token is not None:
                     response = make_response(redirect(request.path))
                     response.set_cookie('access_token', new_access_token, httponly=True, secure=True)
                     response.set_cookie('refresh_token', refresh_token, httponly=True, secure=True)
                     return response
                 else:
-                    response = make_response(redirect('/login'))
-                    response.delete_cookie('access_token')
-                    response.delete_cookie('refresh_token')
-                    response.delete_cookie('username')
-                    return response
+                    return self.clear_cookies()
         else:
             return redirect('/login')
 
@@ -104,20 +100,20 @@ class TokenRefresher:
                 return True
         return False
 
-    def refresh_token(self, refresh_token, host):
+    def refresh_token(self, refresh_token : str, host : str):
         if refresh_token:
             try:
                 public_key = get_public_key()
-                if public_key is None:
-                    return None
+                if not public_key:
+                    return None, None
                 token_decoded = jwt.decode(refresh_token, public_key, audience=RESOURCE_SERVER, algorithms=['RS256'])
                 if token_decoded.get('exp') < int(time.time()):
-                    return None
+                    return None, None
             except jwt.ExpiredSignatureError:
                 self.revoke_refresh_token(refresh_token, host)
-                return None
+                return None, None
             except jwt.InvalidTokenError:
-                return None
+                return None, None
 
             payload = {
                 'grant_type': 'refresh_token',
@@ -131,8 +127,8 @@ class TokenRefresher:
                 token = response.json()
                 return token.get('access_token'), token.get('refresh_token')
             except requests.exceptions.HTTPError:
-                return None
-        return None
+                return None, None
+        return None, None
 
     def revoke_refresh_token(self, refresh_token, host):
         payload = {
@@ -145,8 +141,15 @@ class TokenRefresher:
             return True
         except requests.exceptions.HTTPError:
             return False
+    
+    def clear_cookies(self):
+        response = make_response(redirect('/'))
+        response.delete_cookie('access_token')
+        response.delete_cookie('refresh_token')
+        response.delete_cookie('username')
+        return response
 
-def get_user(token):
+def get_user(token : str):
     if token:
         try:
             public_key = get_public_key()
@@ -160,7 +163,7 @@ def get_user(token):
             return None
     return None
 
-def get_user_role(username):
+def get_user_role(username : str):
     connection = create_connection()
     cursor = connection.cursor()
     cursor.execute("SELECT nivel_acesso_nome FROM utilizador u JOIN nivel_acesso n ON u.fk_nivel_acesso = n.nivel_acesso_id WHERE utilizador_nome = ?", (username,))

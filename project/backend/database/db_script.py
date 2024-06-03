@@ -40,7 +40,7 @@ cursor.execute('''
         log_tipo VARCHAR(50) NOT NULL,
         log_data DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
         log_mensagem TEXT NOT NULL,
-        log_username VARCHAR(50) NOT NULL,
+        log_username VARCHAR(50),
         log_ip VARCHAR(50) NOT NULL,
         log_nivel_acesso VARCHAR(50) NOT NULL,
         log_segmentacao VARCHAR(50) NOT NULL
