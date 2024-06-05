@@ -100,24 +100,6 @@ def dashboard():
     username = request.cookies.get('username')
     return render_template('dashboard.html', username=username)
 
-@app.route('/ver_clientes', methods=['GET'])
-@check_permission(['vendedor', 'diretor_telecomunicacoes'])
-def ver_clientes():
-    if ('access_token' and 'refresh_token') not in request.cookies:
-        return redirect('/')
-    
-    url = 'http://127.0.0.1:5020/api/ver_clientes'
-    headers = {
-        'Authorization': 'Bearer ' + request.cookies.get('access_token')
-    }
-    response = requests.get(url, headers=headers)
-    print('Ver Clientes', response.json())
-
-    if response.status_code != 200:
-        return redirect('/login')
-    return render_template('tables_ver_clients.html', clientes=response.json(), username=request.cookies.get('username'))
-
-
 @app.route('/obra_estado', methods=['GET'])
 @check_permission(['vendedor', 'diretor_de_obra'])
 def obra_estado():
@@ -133,6 +115,69 @@ def obra_estado():
     if response.status_code != 200:
         return redirect('/login')
     return render_template('tables_obra_estado.html', estados=response.json(), username=request.cookies.get('username'))
+
+@app.route('/obra_estado/update', methods=['POST'])
+@check_permission(['vendedor', 'tecnico_telecomunicacoes', 'diretor_de_obra'])
+def update_obra_estado():
+    if ('access_token' and 'refresh_token') not in request.cookies:
+        return redirect('/')
+
+    construction = request.form.getlist('obra')
+    state = request.form.getlist('estado')
+
+    print('Construção', construction)
+    print('Estado', state)
+
+    if not construction or not state:
+        print('bad request')
+        return redirect('/obra_estado')
+    
+    payload = [
+        {
+            'construction': c,
+            'state': s
+        }
+        for c, s in zip(construction, state)
+    ]
+    
+    url = 'http://127.0.0.1:5020/api/obra_estado'
+    headers = {
+        'Authorization': 'Bearer ' + request.cookies.get('access_token')
+    }
+    response = requests.post(url, headers=headers, json=payload)
+
+    if response.json()['status'] != STATUS_CODE['SUCCESS']:
+        return redirect('/login')
+    return redirect('/obra_estado')
+
+@app.route('/obra_estado/delete', methods=['POST'])
+@check_permission(['vendedor', 'tecnico_telecomunicacoes', 'diretor_de_obra'])
+def delete_obra_estado():
+    print('delete obra')
+    if ('access_token' and 'refresh_token') not in request.cookies:
+        return redirect('/')
+
+    construction = request.form.get('obra_delete')
+    state = request.form.get('estado_delete')
+
+    print('Construção', construction)
+    print('Estado', state)
+
+    url = 'http://127.0.0.1:5020/api/obra_estado'
+    headers = {
+        'Authorization': 'Bearer ' + request.cookies.get('access_token')
+    }
+
+    payload = {
+        'construction': construction,
+        'state': state
+    }
+
+    response = requests.delete(url, headers=headers, json=payload)
+
+    if response.json()['status'] != STATUS_CODE['SUCCESS']:
+        return redirect('/login')
+    return redirect('/obra_estado')
 
 @app.route('/morada_obra', methods=['GET'])
 @check_permission(['vendedor', 'diretor_telecomunicacoes'])

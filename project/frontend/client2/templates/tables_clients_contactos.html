@@ -103,7 +103,7 @@
                     </div>
                     <div class="sb-sidenav-footer">
                         <div class="small">Logged in as:</div>
-                        Start Bootstrap
+                        {{username}}
                     </div>
                 </nav>
             </div>
@@ -121,34 +121,50 @@
                                 Contactos Clientes
                             </div>
                             <div class="card-body">
-                                <table id="datatablesSimple">
-                                    <thead>
-                                        <tr>
-                                            <th>Nome</th>
-                                            <th>Email</th>
-                                            <th>Telefone</th>
-                                            <th>Fax</th>
-                                        </tr>
-                                    </thead>
-                                    <tfoot>
-                                        <tr>
-                                            <th>Nome</th>
-                                            <th>Email</th>
-                                            <th>Telefone</th>
-                                            <th>Fax</th>
-                                        </tr>
-                                    </tfoot>
-                                    <tbody>
-                                        {% for client_name, details in contactos.items() %}
-                                        <tr>
-                                            <td>{{ client_name }}</td>
-                                            <td>{{ details['email'] }}</td>
-                                            <td>{{ details['telefone'] }}</td>
-                                            <td>{{ details['fax'] }}</td>
-                                        </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
+                                <form method="POST" action="/contacto_clientes/update" id="updateForm">
+                                    <table id="datatablesSimple">
+                                        <thead>
+                                            <tr>
+                                                <th>Nome</th>
+                                                <th>Email</th>
+                                                <th>Telefone</th>
+                                                <th>Fax</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tfoot>
+                                            <tr>
+                                                <th>Nome</th>
+                                                <th>Email</th>
+                                                <th>Telefone</th>
+                                                <th>Fax</th>
+                                                <th></th>
+                                            </tr>
+                                        </tfoot>
+                                        <tbody>
+                                            {% if contactos %}
+                                            {% for client_name, details in contactos.items() %}
+                                            <tr>
+                                                <td><input type="text" value="{{ client_name }}" name="nome" readonly class="input-no-style"></td>
+                                                <td><input type="email" value="{{ details['email'] }}" name="email" class="input-no-style"></td>
+                                                <td><input type="number" value="{{ details['telefone'] }}" name="telefone" class="input-no-style"></td>
+                                                <td><input type="number" value="{{ details['fax'] }}" name="fax" class="input-no-style"></td>
+                                                <td>
+                                                    <form method="POST" action="/contacto_clientes/delete" class="deleteForm">
+                                                        <input type="hidden" name="nome_delete" value="{{ client_name }}">
+                                                        <input type="hidden" name="email_delete" value="{{ details['email'] }}">
+                                                        <input type="hidden" name="telefone_delete" value="{{ details['telefone'] }}">
+                                                        <input type="hidden" name="fax_delete" value="{{ details['fax'] }}">
+                                                        <button type="submit" class="btn btn-danger">Apagar</button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                            {% endif %}
+                                        </tbody>
+                                    </table>
+                                    <button type="submit" class="btn btn-primary">Atualizar</button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -172,4 +188,17 @@
         <script src="https://cdn.jsdelivr.net/npm/simple-datatables@7.1.2/dist/umd/simple-datatables.min.js" crossorigin="anonymous"></script>
         <script src="{{ url_for('static', filename='js/datatables-simple-demo.js') }}"></script>
     </body>
+    <style>
+        .input-no-style {
+            background: none;
+            border: none;
+            outline: none;
+            padding: 0;
+            margin: 0;
+            box-shadow: none;
+            font: inherit;
+            color: inherit;
+            appearance: none;
+        }
+    </style>
 </html>

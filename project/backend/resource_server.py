@@ -137,9 +137,9 @@ def show_clients() -> jsonify:
     add_log(SUCCESS_LOG, datetime.now(), 'Clients fetched successfully', request.remote_addr, 'vendedor', 'clients')
     return jsonify(clientes), STATUS_CODE['SUCCESS']
 
-@app.route('/api/contactos_clientes', methods=['GET'])
+@app.route('/api/contacto_clientes', methods=['GET'])
 @verify_token
-def dashboard() -> jsonify:
+def contactos_clientes() -> jsonify:
     connection = create_connection()
     if connection is None:
         add_log(ERROR_LOG, datetime.now(), 'Failed to connect to database', request.remote_addr, 'vendedor', 'contacts')
@@ -175,7 +175,81 @@ def dashboard() -> jsonify:
 
     add_log(SUCCESS_LOG, datetime.now(), 'Contacts fetched successfully', request.remote_addr, 'vendedor', 'contacts')
     return jsonify(contacts), STATUS_CODE['SUCCESS']
+
+@app.route('/api/contacto_clientes', methods=['POST', 'DELETE'])
+@verify_token
+def edit_contactos_clientes() -> jsonify:
+    connection = create_connection()
+    if connection is None:
+        add_log(ERROR_LOG, datetime.now(), 'Failed to connect to database', request.remote_addr, 'trabalhador_de_fabrica', 'contactosCliente')
+        return jsonify({'status': STATUS_CODE['INTERNAL_SERVER_ERROR']})
+    cursor = connection.cursor()
     
+    if request.method == 'DELETE':
+        print('edit_contactos_clientes')
+        clientes_contactos_data = request.get_json()
+        client = clientes_contactos_data.get('nome')
+        email = clientes_contactos_data.get('email')
+        telefone = clientes_contactos_data.get('telefone')
+        fax = clientes_contactos_data.get('fax')
+        
+        if not email or not fax or not telefone or not client:
+            add_log(ERROR_LOG, datetime.now(), 'Invalid client contacts data', request.remote_addr, 'trabalhador_de_fabrica', 'contactosCliente')
+            return jsonify({'status': STATUS_CODE['BAD_REQUEST']})
+        
+        cursor.execute('''
+            DELETE FROM contactosCliente
+            WHERE fk_cliente_id = (SELECT cliente_id FROM cliente WHERE cliente_nome = ?);
+        ''', (client,))
+        connection.commit()
+    elif request.method == 'POST':
+        clientes_contactos_data = request.get_json()
+        
+        clients : list = []
+        emails : list = []
+        telefones : list = []
+        faxs : list = []
+        for item in clientes_contactos_data:
+            client = item.get('nome')
+            email = item.get('email')
+            telefone = item.get('telefone')
+            fax = item.get('fax')
+            clients.append(client)
+            emails.append(email)
+            telefones.append(telefone)
+            faxs.append(fax)
+
+        if not clientes_contactos_data or not isinstance(clientes_contactos_data, list):
+            add_log(ERROR_LOG, datetime.now(), 'Invalid client contacts data', request.remote_addr, 'trabalhador_de_fabrica', 'contactosCliente')
+            return jsonify({'status': STATUS_CODE['BAD_REQUEST']})
+
+        for item in clientes_contactos_data:
+            clients = item['nome']
+            emails = item['email']
+            telefones = item['telefone']
+            faxs = item['fax']
+            
+            if not clients or not emails or not telefones or not faxs:
+                add_log(ERROR_LOG, datetime.now(), 'Invalid client contacts data', request.remote_addr, 'trabalhador_de_fabrica', 'contactosCliente')
+                return jsonify({'status': STATUS_CODE['BAD_REQUEST']})
+            
+            cursor.execute('''
+                UPDATE 
+                    contactosCliente
+                SET 
+                    contactosCliente_email = ?,
+                    contactosCliente_telefone = ?,
+                    contactosCliente_fax = ?
+                WHERE fk_cliente_id = (SELECT cliente_id FROM cliente WHERE cliente_nome = ?)
+            ''', (emails, telefones, faxs, clients))
+        connection.commit()
+
+    cursor.close()
+    connection.close()
+
+    add_log(SUCCESS_LOG, datetime.now(), 'client contacts updated successfully', request.remote_addr, 'trabalhador_de_fabrica', 'contactosCliente')
+    return jsonify({'status': STATUS_CODE['SUCCESS']})
+ 
 @app.route('/api/moradas_clientes', methods=['GET'])
 @verify_token
 def clients_addresses() -> jsonify:
@@ -311,6 +385,60 @@ def obra_estado() -> jsonify:
 
     add_log(SUCCESS_LOG, datetime.now(), 'States fetched successfully', request.remote_addr, 'vendedor', 'states')
     return jsonify(estados), STATUS_CODE['SUCCESS']
+
+@app.route('/api/obra_estado', methods=['POST', 'DELETE'])
+@verify_token
+def edit_obra_estado() -> jsonify:
+    connection = create_connection()
+    if connection is None:
+        print('bad request3')
+        add_log(ERROR_LOG, datetime.now(), 'Failed to connect to database', request.remote_addr, 'vendedor', 'states')
+        return jsonify({'status': STATUS_CODE['INTERNAL_SERVER_ERROR']})
+    cursor = connection.cursor()
+    print('edit_obra_estado')
+    if request.method == 'DELETE':
+        print('edit_obra_estado')
+        obra_estado_data = request.get_json()
+        obra = obra_estado_data.get('construction')
+        estado = obra_estado_data.get('state')
+        
+        if not obra:
+            add_log(ERROR_LOG, datetime.now(), 'Invalid obra data', request.remote_addr, 'vendedor', 'states')
+            return jsonify({'status': STATUS_CODE['BAD_REQUEST']})
+        
+        cursor.execute('''
+            DELETE FROM estado WHERE estado_id = (SELECT fk_estado FROM obra WHERE obra_nome = ?);
+        ''', (obra,))
+        connection.commit()
+    elif request.method == 'POST':
+        obra_estado_data = request.get_json()
+        
+        if not obra_estado_data or not isinstance(obra_estado_data, list):
+            print('Este Log')
+            add_log(ERROR_LOG, datetime.now(), 'Invalid obra data', request.remote_addr, 'vendedor', 'states')
+            return jsonify({'status': STATUS_CODE['BAD_REQUEST']})
+
+        for item in obra_estado_data:
+            obra = item['construction']
+            estado = item['state']
+            
+            if not obra or not estado:
+                print('bad request2')
+                add_log(ERROR_LOG, datetime.now(), 'Invalid obra data', request.remote_addr, 'vendedor', 'states')
+                return jsonify({'status': STATUS_CODE['BAD_REQUEST']})
+            
+            cursor.execute('''
+                UPDATE obra
+                SET fk_estado = (SELECT estado_id FROM estado WHERE estado_nome = ?)
+                WHERE obra_nome = ?;
+            ''', (estado, obra))
+        connection.commit()
+
+    cursor.close()
+    connection.close()
+
+    add_log(SUCCESS_LOG, datetime.now(), 'States updated successfully', request.remote_addr, 'vendedor', 'states')
+    return jsonify({'status': STATUS_CODE['SUCCESS']})
 
 @app.route('/api/morada_obra', methods=['GET'])
 @verify_token

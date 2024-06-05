@@ -101,21 +101,86 @@ def dashboard():
     username = request.cookies.get('username')
     return render_template('dashboard.html', username=username)
 
-@app.route('/contactos_clientes', methods=['GET'])
+@app.route('/contacto_clientes', methods=['GET'])
 @check_permission(['vendedor', 'diretor_de_obra'])
 def contactos_clientes():
     if ('access_token' and 'refresh_token') not in request.cookies:
         return redirect('/')
     
-    url = 'http://127.0.0.1:5020/api/contactos_clientes'
+    url = 'http://127.0.0.1:5020/api/contacto_clientes'
     headers = {
         'Authorization': 'Bearer ' + request.cookies.get('access_token')
     }
     response = requests.get(url, headers=headers)
 
-    if response.status_code != 200:
+    if response.status_code != STATUS_CODE['SUCCESS']:
         return redirect('/login')
     return render_template('tables_clients_contactos.html', contactos=response.json(), username=request.cookies.get('username'))
+
+@app.route('/contacto_clientes/update', methods=['POST'])
+@check_permission(['vendedor', 'diretor_de_obra'])
+def contacto_clientes():
+    print('estou cá')
+    if ('access_token' and 'refresh_token') not in request.cookies:
+        return redirect('/')
+    
+    client = request.form.getlist('nome')
+    email = request.form.getlist('email')
+    telefone = request.form.getlist('telefone')
+    fax = request.form.getlist('fax')
+
+    if not client or not email or not telefone or not fax:
+        return redirect('/contacto_clientes')
+    
+    payload = [
+    {
+        'nome': client,
+        'email': email,
+        'telefone': telefone,
+        'fax': fax
+    }
+    for client, email, telefone, fax in zip(client, email, telefone, fax)]
+
+    url = 'http://127.0.0.1:5020/api/contacto_clientes'
+    headers = {
+        'Authorization': 'Bearer ' + request.cookies.get('access_token')
+    }
+    response = requests.post(url, headers=headers, json=payload)
+    
+    if response.status_code != STATUS_CODE['SUCCESS']:
+        return redirect('/login')
+    return redirect('/contacto_clientes')
+
+@app.route('/contacto_clientes/delete', methods=['POST'])
+@check_permission(['vendedor', 'diretor_de_obra'])
+def delete_contacto_clientes():
+    print('estou cá')
+    if ('access_token' and 'refresh_token') not in request.cookies:
+        return redirect('/')
+    
+    client = request.form.get('nome_delete')
+    email = request.form.get('email_delete')
+    telefone = request.form.get('telefone_delete')
+    fax = request.form.get('fax_delete')
+    
+    url = f'http://127.0.0.1:5020/api/contacto_clientes'
+    headers = {
+        'Authorization': 'Bearer ' + request.cookies.get('access_token')
+    }
+ 
+    payload = {
+        'nome': client,
+        'email': email,
+        'telefone': telefone,
+        'fax': fax
+    }
+
+    response = requests.delete(url, headers=headers, json=payload)
+
+    if response.status_code != STATUS_CODE['SUCCESS']:
+        return redirect('/login')
+    
+    return redirect('/contacto_clientes')
 
 @app.route('/moradas_clientes', methods=['GET'])
 @check_permission(['vendedor', 'diretor_de_obra'])
