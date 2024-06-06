@@ -886,6 +886,14 @@ Existem dois tipos de *logs*:
   - `AUTHENTICATION_INFO`: *Logs* de informação de autenticação, que contêm informações sobre pedidos de autenticação com sucesso;
   - `ACCESS_INFO`: *Logs* de informação de acesso, que contêm informações sobre pedidos de acesso a recursos com sucesso.
 
+## Contribuições
+
+<p align="center">
+  <img src="img/contribuicoes.png" width="1000" title="Contribuições">
+</p>
+
+A imagem acima mostra o esforço e a contribuição minha e do meu colega V1dal9 no projeto, destacando os commits individuais de cada um. No entanto, é importante mencionar que muitos dos nossos trabalhos foram feitos em colaboração estreita. Frequentemente, trabalhamos juntos e discutimos as melhores abordagens e estratégias de implementação. Revisávamos mutuamente o código um do outro para garantir a qualidade e resolver problemas. 
+
 ## Conclusão
 
 Com este trabalho, foi possível aprofundar os conhecimentos sobre processos de autenticação e autorização, bem como a implementação de sistemas de controlo de acesso, que são fundamentais para garantir a segurança dos sistemas de informação.
