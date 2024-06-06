@@ -11,7 +11,7 @@ Este projeto foi desenvolvido por:
 
 ## Descrição de Serviços
 
-O sistema CRM desenvolvido é uma ferramenta abrangente projetada para gestão todas as facetas dos projetos e atividades de negócios relacionados. 
+O sistema CRM desenvolvido é uma ferramenta abrangente projetada para gestão todas as facetas dos projetos e atividades de negócios relacionados.
 
 Uma característica fundamental é a capacidade de gestão um repositório de projetos, fornecendo informações detalhadas sobre cada obra, incluindo dados sobre *stakeholder*'s, contactos com clientes diretos e indiretos (*prospect*'s) que solicitam cotações diretamente à empresa e os materiais necessários para a execução de cada projeto. Além disso, o sistema mantém informações de gestão de clientes, como endereços das sedes e filiais dos clientes.
 
@@ -24,6 +24,7 @@ A arquitetura do sistema é composta por três componentes principais: o *IdP* (
 ### Entidades e relações
 
 No sistema descrito, temos as seguintes entidades:
+
 - Diretor da Obra;
 - Diretor de Telecomunicações;
 - Fornecedor;
@@ -63,7 +64,6 @@ Para uma melhor compreensão das medidas de segurança a se tomar, foi descrito 
     </div>
 </div>
 
-
 ### Controlo de Acesso
 
 O sistema foi desenvolvido com base no controlo de acesso, de forma a garantir que os utilizadores apenas têm acesso aos recursos que são necessários para a realização das suas tarefas.
@@ -87,10 +87,10 @@ Sendo, o **Nível 3** o acesso **mais restrito** e o **Nível 1** o acesso **mai
 #### Regras de Confidencialidade TODO: Rever e modificar consoante a tabela de cima
 
 1. **Regra de Não-Leitura (No Read Up):** Esta regra impede que indivíduos em níveis de segurança mais baixos acessem informações em níveis de segurança mais altos, evitando assim a divulgação não autorizada de informações sensíveis. Por exemplo:
-   - Um vendedor, um diretor de obra, um fornecedor, um técnico de telecomunicações e um trabalhador de fábrica, todos eles possuem permissão para aceder informações sobre clientes, diretores de obra, moradas e contatos de clientes, moradas da obra, materiais da obra, tabelas de preços e status da obra. No entanto, nenhum deles pode aceder a informações sobre materiais em stock ou escalões de desconto, pois essas informações são consideradas mais sensíveis e podem afetar a segurança e a integridade do sistema se divulgadas a pessoas não autorizadas.
+   - Um vendedor, um diretor de obra, um fornecedor, um técnico de telecomunicações e um trabalhador de fábrica, todos eles possuem permissão para aceder informações sobre clientes, diretores de obra, moradas e contactos de clientes, moradas da obra, materiais da obra, tabelas de preços e status da obra. No entanto, nenhum deles pode aceder a informações sobre materiais em stock ou escalões de desconto, pois essas informações são consideradas mais sensíveis e podem afetar a segurança e a integridade do sistema se divulgadas a pessoas não autorizadas.
 
 1. **Regra de Não-Escrita (No Write Down):** Esta regra impede que informações em níveis de segurança mais altos sejam gravadas em níveis de segurança mais baixos, garantindo assim a proteção das informações confidenciais. Por exemplo:
-   - Um vendedor, um diretor de obra, um fornecedor, um técnico de telecomunicações e um trabalhador de fábrica podem fornecer informações sobre clientes, diretores de obra, moradas e contatos de clientes, moradas da obra, materiais da obra, tabelas de preços e status da obra, mas nenhum deles pode registrar informações sobre materiais em stock ou escalões de desconto em um sistema de segurança mais baixo. Isso evita que informações sensíveis sejam divulgadas a partes não autorizadas e mantém a integridade e a confidencialidade do sistema.
+   - Um vendedor, um diretor de obra, um fornecedor, um técnico de telecomunicações e um trabalhador de fábrica podem fornecer informações sobre clientes, diretores de obra, moradas e contactos de clientes, moradas da obra, materiais da obra, tabelas de preços e status da obra, mas nenhum deles pode registrar informações sobre materiais em stock ou escalões de desconto em um sistema de segurança mais baixo. Isso evita que informações sensíveis sejam divulgadas a partes não autorizadas e mantém a integridade e a confidencialidade do sistema.
 
 Essas regras garantem que apenas as pessoas autorizadas tenham acesso e permissão para visualizar e modificar informações relevantes, protegendo assim a confidencialidade e a segurança dos dados no sistema.
 
@@ -186,6 +186,7 @@ De modo a garantir a segurança do sistema, foi desenvolvido um modelo de gestã
 ### Identificação de riscos
 
 Para a identificação dos riscos associados ao sistema, foi feita uma enumeração das possíveis ameaças e vulnerabilidades que podem afetar a segurança do sistema.
+
 - **Ameaças**:
   1. Comprometimento de dados sensíveis;
   2. Acesso de colaborados a documentos sensíveis;
@@ -201,7 +202,7 @@ Para a identificação dos riscos associados ao sistema, foi feita uma enumeraç
 
 ### Análise/Avaliação de riscos do software
 
-A partir desta enumeração, foi feita uma **análise quantitativa** de risco para determinar a probabilidade de ocorrência e o impacto de cada risco identificado. 
+A partir desta enumeração, foi feita uma **análise quantitativa** de risco para determinar a probabilidade de ocorrência e o impacto de cada risco identificado.
 
 Onde a **matriz de risco** é a seguinte:
 
@@ -233,7 +234,6 @@ Cujo **impacto** representa:
 | Nível 4          |    Alto     | Mais que um departamento parado |
 | Nível 5          | Muito Alto  |        A empresa parada         |
 
-
 Obtendo-se a seguinte **tabela de risco**:
 
 | Risco = f(Ameaça, Vulnerabilidade)                                          | Probabilidade | Impacto | Valor do Risco = (P * I) |
@@ -246,7 +246,7 @@ Obtendo-se a seguinte **tabela de risco**:
 
 ### Identificação de controlos a implementar
 
-Com base nos riscos anteriormente enumerados, foram identificados os controlos a implementar para mitigar os mesmos. 
+Com base nos riscos anteriormente enumerados, foram identificados os controlos a implementar para mitigar os mesmos.
 
 A presente tabela, mostra os controlos identificados junto do novo valor do risco:
 
@@ -257,7 +257,6 @@ A presente tabela, mostra os controlos identificados junto do novo valor do risc
 | Integridade dos dados comprometida por falta de validação de entrada        | Implementação de validação de *inputs*                                   |        3         |     3      |           9           |
 | Exposição de informações sensíveis devido a falha na autenticação           | Gestão de *tokens* de autenticação                                       |        2         |     3      |           6           |
 | Roubo de credenciais devido a ataques de força bruta                        | Implementação de bloqueio de contas/*timeout*'s após tentativas falhadas |        2         |     3      |           6           |
-
 
 Agora, podemos realizar uma avaliação de risco semelhante à anterior, atribuindo valores de probabilidade e impacto para esses riscos e calculando a pontuação de risco total.
 
@@ -271,7 +270,9 @@ Agora, podemos realizar uma avaliação de risco semelhante à anterior, atribui
 ### Autenticação de dois fatores (MFA)
 
 #### Métodos escolhidos
+
 O sistema de autenticação irá ter os seguintes modos de autenticação:
+
 - **Autenticação via palavra-passe**: Será pedido ao utilizador que insira as credencias;
 - **Autenticação via *One-Time Password***: Será enviado um código de autenticação para o email/aplicação móvel do utilizador;
 - **PIN**: Serão feitas PIN ao utilizador que foram solicitadas no registo;
@@ -288,6 +289,7 @@ O sistema de autenticação irá ter os seguintes modos de autenticação:
 #### Gestão dos pedidos de autenticação
 
 Além do risco variar consoante o nível de acesso do agente, o mesmo também poderá variar dependendo do:
+
 - IP de origem do pedido;
 - Hora do pedido;
 - Tipo de dispositivo;
@@ -298,10 +300,11 @@ Além do risco variar consoante o nível de acesso do agente, o mesmo também po
 Estas variáveis serão avaliadas usando os *logs* de autenticação e, com base nisso, será pedido ou não uma segunda via de autenticação.
 
 **Para todos os níveis de acesso definimos as seguintes regras:**
-- Hora do pedido: Fora do horário de trabalho (19h - 7h); 
+
+- Hora do pedido: Fora do horário de trabalho (19h - 7h);
 - Endereço IP/Localização: Fora do país;
 - Número de tentativas de autenticação falhadas: 3 ou mais, num intervalo de 5 minutos;
-- Nível de confiança do dispositivo: pelo menos 5 autenticações bem-sucedidas num intervalo de 30 dias. 
+- Nível de confiança do dispositivo: pelo menos 5 autenticações bem-sucedidas num intervalo de 30 dias.
   
 **Nível 1**: Um pedido de autenticação MFA, se as pelo menos duas das regras acima não for seguida;
 
@@ -319,7 +322,6 @@ As regras descritas encontram-se representadas no seguinte diagrama:
   Figura 7: Diagrama de estados para a gestão de autenticação.
 </p>
 
-
 # Trabalho Prático de Integridade, Autenticação e Autorização - Parte 2
 
 Esta segunda parte do trabalho abarca o processo de implementação do sistema CRM com controlo de acessos e sistema de autenticação descrito na primeira parte.
@@ -327,23 +329,26 @@ Esta segunda parte do trabalho abarca o processo de implementação do sistema C
 ## Ferramentas Utilizadas
 
 Para a implementação do sistema, foram utilizadas as seguintes ferramentas:
+
 - **Python**: Linguagem de programação utilizada para o desenvolvimento do *backend* da aplicação;
 - **Flask**: *Framework* de desenvolvimento web utilizado para a criação do *backend* da aplicação;
 - **SQLite**: Sistema de gestão de base de dados utilizado para a criação e gestão da base de dados da aplicação;
 - **HTML/CSS/JS**: Linguagens de marcação e estilização utilizadas para o desenvolvimento do *frontend* da aplicação;
 
 Dentro da linguagem de programação Python, foram utilizadas as seguintes bibliotecas:
+
 - **JWT**: Criação e validação de *tokens* de autenticação;
 - **Authlib**: Implementação do *OAuth 2.0*;
 - **SQLite3**: Criação e gestão da base de dados da aplicação.
 
 Além disso foi utilizado:
+
 - **Postman**: Realização de testes de *endpoints* e validação de *tokens*.
 - **Figma**: Criação de *wireframes* e *mockups* do *frontend* da aplicação.
 
 A escolha destas ferramentas foi feita com base na sua facilidade de uso, documentação extensiva e suporte ativo.
 
-## Base de Dados TODO: Alterar Imagem
+## Base de Dados
 
 Com base na descrição do sistema das entidades e relações feita na primeira parte do trabalho, foi desenvolvida uma base de dados que reflete a estrutura do sistema CRM.
 
@@ -358,16 +363,19 @@ Com base na descrição do sistema das entidades e relações feita na primeira 
 
 ## Arquitetura do Sistema
 
-A arquitetura encontra-se dividida em três componentes principais: 
+A arquitetura encontra-se dividida em três componentes principais:
+
 - **Client's**: Onde se encontra o *frontend* e *backend* das aplicações;
 - **IdP**: Onde se encontra o *frontend* e *backend* da aplicação responsável pela autenticação e autorização dos utilizadores;
 - **Resource Server**: Onde se encontra o *backend* da aplicação, responsável pela gestão dos recursos e controlo de acessos.
 
-Cada *Client* tem acesso a diferentes recursos, e o seu acesso é condicionado por: 
-- *IdP*: gestão de acessos (autenticação), 
+Cada *Client* tem acesso a diferentes recursos, e o seu acesso é condicionado por:
+
+- *IdP*: gestão de acessos (autenticação),
 - *Resource Server*: gestão de recursos (autorização).
 
 Temos três *Client's* com as seguintes funcionalidades (dependendo do seu nível de risco):
+
 1. Visualização do material da obra;
 2. Gestão do material em stock e utilizado por obra;
 3. Gestão de moradas e contactos dos clientes, diretores de obra e gestão de preços.
@@ -375,7 +383,7 @@ Temos três *Client's* com as seguintes funcionalidades (dependendo do seu níve
 A estrutura do projeto encontra-se organizada da seguinte forma:
 
 <p align="center">
-  <img src="img/Implementacao_Diagrama.png" width="600" title="Implementação">
+  <img src="img/Implementacao_Diagrama.png" width="400" title="Implementação">
 </p>
 <p align="center" style="font-size: 10px;">
   <i>Figura 9 - Diagrama de Implementação</i>
@@ -383,28 +391,25 @@ A estrutura do projeto encontra-se organizada da seguinte forma:
 
 ## Implementação
 
-### *Client Applications* TODO: Rever
-
-#### Client 1
-Gestão do stock de material e ver preços dos produtos(fornecedor);(trabalhador de fábrica)
-
-#### Client 2
-Gestão de moradas, clientes e diretores de obra(fornecedor);(vendedor)
-
-#### Client 3
-Gestão de preços dos produtos (Diretor Telecom), material obra(técnico Telecom, vendedor), status obra(diretorTelcom, vendedor, técnico telecom) e ver clientes.(Diretor Telecom)
-
-Claro! Vamos detalhar um pouco mais as funcionalidades de cada aplicação cliente e explicar o que foi implementado em termos de gestão e permissões.
-
 ### *Client Applications*
 
-As aplicações cliente são responsáveis por diferentes partes do sistema, cada uma com funcionalidades específicas e permissões de acesso determinadas pelos papéis dos utilizadores. A seguir, vamos detalhar cada aplicação.
+As aplicações cliente são responsáveis por diferentes partes do sistema, cada uma com funcionalidades específicas e permissões de acesso determinadas pelos papéis dos utilizadores.
+
+Tendo a seguinte template base para as aplicações cliente:
+
+<p align="center">
+  <img src="img/template.png" width="600" title="Template Client">
+</p>
+<p align="center" style="font-size: 10px;">
+  <i>Figura 10 - Template Base das Aplicações Cliente</i>
+</p>
 
 #### Cliente 1: Gestão de Stock
 
 Esta aplicação gere o stock de materiais. As funcionalidades incluem visualizar, atualizar e eliminar informações de stock. O acesso a estas funcionalidades é restrito por papéis específicos.
 
 - **Visualizar Stock**:
+
     ```python
     @app.route('/stock', methods=['GET'])
     @check_permission(['trabalhador_de_fabrica', 'vendedor'])
@@ -415,9 +420,11 @@ Esta aplicação gere o stock de materiais. As funcionalidades incluem visualiza
         stock = make_api_get_request('stock')
         return render_template('tables_obra_stock.html', stock=stock, username=request.cookies.get('username'))
     ```
+
     Esta rota permite que `trabalhador_de_fabrica` e `vendedor` visualizem o stock atual. Se os tokens de acesso não estiverem presentes, o utilizador é redirecionado para a página inicial.
 
 - **Atualizar Stock**:
+
     ```python
     @app.route('/stock/update', methods=['POST'])
     @check_permission(['fornecedor', 'trabalhador_de_fabrica'])
@@ -440,9 +447,11 @@ Esta aplicação gere o stock de materiais. As funcionalidades incluem visualiza
 
         return redirect('/stock')
     ```
+
     Esta rota permite que `fornecedor`e `trabalhador_de_fabrica` atualizem o stock. O payload é formado a partir dos produtos e quantidades enviados via formulário.
 
 - **Eliminar Item do Stock**:
+
     ```python
     @app.route('/stock/delete', methods=['POST'])
     @check_permission(['fornecedor', 'trabalhador_de_fabrica'])
@@ -464,6 +473,7 @@ Esta aplicação gere o stock de materiais. As funcionalidades incluem visualiza
 
         return redirect('/stock')
     ```
+
     Esta rota permite que `fornecedor`e `trabalhador_de_fabrica` eliminem itens do stock. O produto a ser eliminado é especificado no formulário.
 
 #### Cliente 2: Gestão de Contactos de Clientes
@@ -471,6 +481,7 @@ Esta aplicação gere o stock de materiais. As funcionalidades incluem visualiza
 Esta aplicação gere os contactos de clientes, permitindo visualizar, atualizar e eliminar essas informações. As permissões são restritas a `vendedor` e `diretor_de_obra`.
 
 - **Visualizar Contactos**:
+
     ```python
     @app.route('/contacto_clientes', methods=['GET'])
     @check_permission(['vendedor', 'diretor_de_obra'])
@@ -486,9 +497,11 @@ Esta aplicação gere os contactos de clientes, permitindo visualizar, atualizar
             return redirect('/login')
         return render_template('tables_clients_contactos.html', contactos=response.json(), username=request.cookies.get('username'))
     ```
+
     Esta rota permite que `vendedor` e `diretor_de_obra` visualizem os contactos de clientes.
 
 - **Atualizar Contactos**:
+
     ```python
     @app.route('/contacto_clientes/update', methods=['POST'])
     @check_permission(['vendedor', 'diretor_de_obra'])
@@ -513,9 +526,11 @@ Esta aplicação gere os contactos de clientes, permitindo visualizar, atualizar
             return redirect('/login')
         return redirect('/contacto_clientes')
     ```
+
     Esta rota permite que `vendedor` e `diretor_de_obra` atualizem os contactos de clientes. O payload é formado a partir dos dados enviados via formulário.
 
 - **Eliminar Contactos**:
+
     ```python
     @app.route('/contacto_clientes/delete', methods=['POST'])
     @check_permission(['vendedor', 'diretor_de_obra'])
@@ -539,6 +554,7 @@ Esta aplicação gere os contactos de clientes, permitindo visualizar, atualizar
         
         return redirect('/contacto_clientes')
     ```
+
     Esta rota permite que `vendedor` e `diretor_de_obra` eliminem os contactos de clientes. As informações do contacto a ser eliminado são especificadas no formulário.
 
 #### Cliente 3: Gestão do Estado da Obra
@@ -546,6 +562,7 @@ Esta aplicação gere os contactos de clientes, permitindo visualizar, atualizar
 Esta aplicação gere o estado das obras, permitindo visualizar, atualizar e eliminar informações sobre o estado das obras. As permissões são restritas a `vendedor`, `tecnico_telecomunicacoes` e `diretor_de_obra`.
 
 - **Visualizar Estado das Obras**:
+
     ```python
     @app.route('/obra_estado', methods=['GET'])
     @check_permission(['vendedor', 'diretor_de_obra'])
@@ -561,9 +578,11 @@ Esta aplicação gere o estado das obras, permitindo visualizar, atualizar e eli
             return redirect('/login')
         return render_template('tables_obra_estado.html', estados=response.json(), username=request.cookies.get('username'))
     ```
+
     Esta rota permite que `vendedor` e `diretor_de_obra` visualizem o estado das obras.
 
 - **Atualizar Estado das Obras**:
+
     ```python
     @app.route('/obra_estado/update', methods=['POST'])
     @check_permission(['vendedor', 'tecnico_telecomunicacoes'])
@@ -586,11 +605,13 @@ Esta aplicação gere o estado das obras, permitindo visualizar, atualizar e eli
             return redirect('/login')
         return redirect('/obra_estado')
     ```
+
     Esta rota permite que `vendedor` e `tecnico_telecomunicacoes` atualizem o estado das obras
 
 . O payload é formado a partir dos dados enviados via formulário.
 
 - **Eliminar Estado das Obras**:
+
     ```python
     @app.route('/obra_estado/delete', methods=['POST'])
     @check_permission(['vendedor', 'tecnico_telecomunicacoes'])
@@ -611,6 +632,7 @@ Esta aplicação gere o estado das obras, permitindo visualizar, atualizar e eli
             return redirect('/login')
         return redirect('/obra_estado')
     ```
+
     Esta rota permite que `vendedor` e `tecnico_telecomunicacoes` eliminem informações de estado das obras. As informações do estado a ser eliminado são especificadas no formulário.
 
 ### Permissões Definidas pelos Papéis
@@ -632,6 +654,7 @@ Cada aplicação cliente possui as suas funcionalidades específicas e restringe
 Assim como foi referido anteriormente na primeira parte do relatório, o fluxo escolhido para o processo de autenticação foi o *Authorization Code flow*.
 
 Sempre que o utilizador tenta **autenticar-se**, o fluxo de mensagens é o seguinte:
+
 1. *Client* **redireciona** o utilizador para o *IdP* para autenticação, enviando o `client_id`, `response_type`, `redirect_uri` e `scope` (`/authorize` *endpoint*);
 2. *IdP* **autentica** o utilizador e **redireciona** (usando o uri de redirecionamento) o utilizador para o *Client* com o `authorization_code`;
 3. Já com o `authorization_code`, o *Client* **envia** um pedido para o *IdP* para obter o *token* de acesso (`/access_token` *endpoint*), em conjunto com o `client_id`, `client_secret`, `grant_type` e `redirect_uri`;
@@ -641,7 +664,8 @@ Sempre que o utilizador tenta **autenticar-se**, o fluxo de mensagens é o segui
 
 > Este fluxo de mensagens encontra-se representado no diagrama presente na Figura 6.
 
-Existem três tipos de **provas de autenticação**: 
+Existem três tipos de **provas de autenticação**:
+
 - **Algo que o utilizador sabe**: *passwords*, *PINs*, etc.;
 - **Algo que o utilizador tem**: *smartcards*, *tokens*, etc.;
 - **Algo que o utilizador é**: impressões digitais, reconhecimento facial, etc.
@@ -669,7 +693,7 @@ Este fluxo encontra-se representado no seguinte diagrama:
   <img src="img/challenge-response.png" width="300" title="Challenge-Response">
 </p>
 <p align="center" style="font-size: 10px;">
-  <i>Figura 10 - Representação do protocolo de autenticação Challenge-Response</i>
+  <i>Figura 11 - Representação do protocolo de autenticação Challenge-Response</i>
 </p>
 
 #### OTP (*One-Time Password*)
@@ -682,7 +706,7 @@ A geração de um código de autenticação, recebe como argumentos a *seed* (qu
   <img src="img/totp.png" width="400" title="OTP">
 </p>
 <p align="center" style="font-size: 10px;">
-  <i>Figura 11 - Código de autenticação gerado com base no algoritmo TOTP</i>
+  <i>Figura 12 - Código de autenticação gerado com base no algoritmo TOTP</i>
 </p>
 
 O *QR code* é gerado com base no URI, usando a biblioteca `qrcode`, e é guardado num *buffer* de imagem para ser enviado ao utilizador por email.
@@ -697,7 +721,7 @@ E foi utilizada a biblioteca `smtplib` para o envio de emails sobre o domínio d
   <img src="img/email_otp.jpg" width="200" title="Email OTP">
 </p>
 <p align="center" style="font-size: 10px;">
-  <i>Figura 12 - Email de autenticação com o código de autenticação e o QR Code</i>
+  <i>Figura 13 - Email de autenticação com o código de autenticação e o QR Code</i>
 </p>
 
 > Os QRCodes gerados são compatíveis com aplicações como o *Google Authenticator*.
@@ -705,6 +729,7 @@ E foi utilizada a biblioteca `smtplib` para o envio de emails sobre o domínio d
 #### Autorização c/ *tokens* de acesso
 
 Os *tokens* de acesso são gerados sobre o formato JWT (*JSON Web Token*), que contêm as seguintes informações:
+
 - `username`: Nome do utilizador;
 - `exp`: Validade do *token* (em segundos);
 - `iss`: Emissor do *token* (Authorization Server);
@@ -723,6 +748,7 @@ Para a implementação dos mesmos, foi criada uma classe no *Middleware* que ver
 O *refresh token* é guardado na base de dados, e é associado ao utilizador. Se o *refresh token* não for válido (não existir na base de dados ou a assinatura já ter expirado), esse *token* é revogado e o utilizador é redirecionado para a página inicial, tendo de fazer novamente o processo autenticação.
 
 O *refresh token* também é um *JWT*, que contém as seguintes informações:
+
 - `username`: Nome do utilizador;
 - `exp`: Validade do *token* (em segundos);
 - `iss`: Emissor do *token* (Authorization Server);
@@ -733,9 +759,10 @@ O *refresh token* também é um *JWT*, que contém as seguintes informações:
 
 #### Integridade de *tokens*
 
-Para validar a assinatura dos *tokens* de acesso, é feito através de **JWKS** (*JSON Web Key Set*), que contém todas as chaves públicas do *IdP*. 
+Para validar a assinatura dos *tokens* de acesso, é feito através de **JWKS** (*JSON Web Key Set*), que contém todas as chaves públicas do *IdP*.
 
-Exemplo de um *JWKS*: 
+Exemplo de um *JWKS*:
+
 ```json
 {
   "keys": [
@@ -757,12 +784,10 @@ Envolve a criação de um *endpoint* que retorna as chaves públicas do *IdP* us
   <img src="img/jwks-flow.png" width="300" title="JWKS Endpoint">
 </p>
 <p align="center" style="font-size: 10px;">
-  <i>Figura 13 - Fluxo de mensagens para a obtenção das chaves públicas do IdP</i>
+  <i>Figura 14 - Fluxo de mensagens para a obtenção das chaves públicas do IdP</i>
 </p>
 
-
 > Mais informação sobre este *standard* (RFC 7517): [Auth0 - JSON Web Key Set (JWKS)](https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-key-sets)
-
 > Conversor de JWK para PEM: [JWK to PEM](https://8gwifi.org/jwkconvertfunctions.jsp)
 
 ### *Resource Server*
@@ -801,6 +826,7 @@ Este *decorator* é aplicado a todos os *endpoints* que requerem autenticação 
 Para a implementação do **controlo de acesso**, foi criado um *middleware* que verifica o nível de acesso do utilizador e o recurso a que está a tentar aceder, e permite ou nega o acesso ao recurso, consoante o nível de acesso do utilizador.
 
 Esta verificação é feita usando o *decorator* `check_permission`, que recebe uma lista de níveis de acesso e verifica se o nível de acesso do utilizador está presente na lista, da seguinte forma:
+
 ```python
 def check_permission(roles: list):
     def decorator(func):
@@ -827,6 +853,7 @@ def check_permission(roles: list):
 ```
 
 Este é aplicado a todos os *endpoints* que requerem controlo de acesso, garantindo que apenas utilizadores com o nível de acesso adequado têm acesso aos recursos, da seguinte forma:
+
 ```python
 @app.route('/exemplo', methods=['GET'])
 @check_permission(['nivel_1', 'nivel_2', 'nivel_3'])
@@ -842,7 +869,7 @@ Por exemplo, na página de *dashboard* de cada uma das aplicações cliente, é 
   <img src="img/dashboard.png" width="500" title="Dashboard">
 </p>
 <p align="center" style="font-size: 10px;">
-  <i>Figura 14 - Página de Dashboard de uma aplicação cliente</i>
+  <i>Figura 15 - Página de Dashboard de uma aplicação cliente</i>
 </p>
 
 Onde se o utilizador não tenha permissão para aceder a um recurso, é apresentada uma mensagem de erro a informar que o acesso foi negado (HTTP 403):
@@ -851,7 +878,7 @@ Onde se o utilizador não tenha permissão para aceder a um recurso, é apresent
   <img src="img/error_message.png" width="500" title="Forbidden">
 </p>
 <p align="center" style="font-size: 10px;">
-  <i>Figura 15 - Mensagem de erro de acesso negado</i>
+  <i>Figura 16 - Mensagem de erro de acesso negado</i>
 </p>
 
 Caso o mesmo tenha permissão, é apresentado o recurso correspondente:
@@ -860,7 +887,7 @@ Caso o mesmo tenha permissão, é apresentado o recurso correspondente:
   <img src="img/success_message.png" width="500" title="Resource">
 </p>
 <p align="center" style="font-size: 10px;">
-  <i>Figura 16 - Recurso disponível para o utilizador</i>
+  <i>Figura 17 - Recurso disponível para o utilizador</i>
 </p>
 
 Além disso, o *Resource Server* guarda *logs* de acesso a recursos, que contêm informações como o ip de origem do pedido, o tipo de pedido, o nível de acesso do utilizador, que podem ser usados para auditoria e análise de risco.
@@ -879,6 +906,7 @@ Os *logs*, tanto de autenticação (*Authorization Server*) como de acesso a rec
 | Nome do utilizador            |     -     |        x         |
 
 Existem dois tipos de *logs*:
+
 - `ERROR`: *Logs* de erro, que contêm informações sobre pedidos que falharam;
   - `AUTHENTICATION_ERROR`: *Logs* de erro de autenticação, que contêm informações sobre pedidos de autenticação que falharam;
   - `ACCESS_ERROR`: *Logs* de erro de acesso, que contêm informações sobre pedidos de acesso a recursos que falharam.
@@ -891,8 +919,11 @@ Existem dois tipos de *logs*:
 <p align="center">
   <img src="img/contribuicoes.png" width="1000" title="Contribuições">
 </p>
+<p align="center" style="font-size: 10px;">
+  <i>Figura 18 - Contribuições dos membros do grupo</i>
+</p>
 
-A imagem acima mostra o esforço e a contribuição do grupo no projeto, destacando os commits individuais de cada um. No entanto, é importante mencionar que muitos dos nossos trabalhos foram feitos em colaboração estreita. Frequentemente, trabalhamos juntos e discutimos as melhores abordagens e estratégias de implementação. Revisávamos mutuamente o código um do outro para garantir a qualidade e resolver problemas. 
+O esforço e a contribuição do grupo no projeto encontra-se aqui representado, destacando nos commits individuais de cada um. No entanto, é importante mencionar que muitas das implementações foram feitas em colaboração estreita. Frequentemente, trabalhamos juntos e discutimos as melhores abordagens e estratégias de implementação. Revisávamos mutuamente o código um do outro para garantir a qualidade e resolver problemas.
 
 ## Conclusão
 
