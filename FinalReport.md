@@ -892,7 +892,7 @@ Existem dois tipos de *logs*:
   <img src="img/contribuicoes.png" width="1000" title="Contribuições">
 </p>
 
-A imagem acima mostra o esforço e a contribuição minha e do meu colega V1dal9 no projeto, destacando os commits individuais de cada um. No entanto, é importante mencionar que muitos dos nossos trabalhos foram feitos em colaboração estreita. Frequentemente, trabalhamos juntos e discutimos as melhores abordagens e estratégias de implementação. Revisávamos mutuamente o código um do outro para garantir a qualidade e resolver problemas. 
+A imagem acima mostra o esforço e a contribuição do grupo no projeto, destacando os commits individuais de cada um. No entanto, é importante mencionar que muitos dos nossos trabalhos foram feitos em colaboração estreita. Frequentemente, trabalhamos juntos e discutimos as melhores abordagens e estratégias de implementação. Revisávamos mutuamente o código um do outro para garantir a qualidade e resolver problemas. 
 
 ## Conclusão
 
