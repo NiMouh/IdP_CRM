@@ -84,29 +84,6 @@ Com base nas funções desempenhadas pelos utilizadores do sistema e sensibilida
 
 Sendo, o **Nível 3** o acesso **mais restrito** e o **Nível 1** o acesso **mais permissivo**.
 
-#### Regras de Confidencialidade TODO: Rever e modificar consoante a tabela de cima
-
-1. **Regra de Não-Leitura (No Read Up):** Esta regra impede que indivíduos em níveis de segurança mais baixos acessem informações em níveis de segurança mais altos, evitando assim a divulgação não autorizada de informações sensíveis. Por exemplo:
-   - Um vendedor, um diretor de obra, um fornecedor, um técnico de telecomunicações e um trabalhador de fábrica, todos eles possuem permissão para aceder informações sobre clientes, diretores de obra, moradas e contactos de clientes, moradas da obra, materiais da obra, tabelas de preços e status da obra. No entanto, nenhum deles pode aceder a informações sobre materiais em stock ou escalões de desconto, pois essas informações são consideradas mais sensíveis e podem afetar a segurança e a integridade do sistema se divulgadas a pessoas não autorizadas.
-
-1. **Regra de Não-Escrita (No Write Down):** Esta regra impede que informações em níveis de segurança mais altos sejam gravadas em níveis de segurança mais baixos, garantindo assim a proteção das informações confidenciais. Por exemplo:
-   - Um vendedor, um diretor de obra, um fornecedor, um técnico de telecomunicações e um trabalhador de fábrica podem fornecer informações sobre clientes, diretores de obra, moradas e contactos de clientes, moradas da obra, materiais da obra, tabelas de preços e status da obra, mas nenhum deles pode registrar informações sobre materiais em stock ou escalões de desconto em um sistema de segurança mais baixo. Isso evita que informações sensíveis sejam divulgadas a partes não autorizadas e mantém a integridade e a confidencialidade do sistema.
-
-Essas regras garantem que apenas as pessoas autorizadas tenham acesso e permissão para visualizar e modificar informações relevantes, protegendo assim a confidencialidade e a segurança dos dados no sistema.
-
-#### Regras de Integridade TODO: Rever e modificar consoante a tabela de cima
-
-1. **Regra de Não-Escrita (No Write Up):** Esta regra é crucial para evitar que informações sensíveis ou críticas sejam alteradas por indivíduos que não têm autorização para fazê-lo. Por exemplo:
-   - Um vendedor pode precisar aceder a informações sobre clientes, diretores de obra e materiais, mas não deve ter permissão para modificar detalhes sobre a obra, fornecedores, tecnologia de telecomunicações ou trabalho de fábrica, pois isso pode interferir nas operações internas.
-   - Um diretor de obra pode precisar atualizar informações sobre a obra, mas não deve ter permissão para modificar detalhes sobre fornecedores, tecnologia de telecomunicações ou trabalho de fábrica, pois isso pode afetar os processos de aquisição e comunicação.
-   - Um fornecedor pode fornecer informações sobre materiais, mas não deve ter permissão para alterar detalhes sobre tecnologia de telecomunicações ou trabalho de fábrica, pois isso pode comprometer a integridade dos dados de produção.
-
-2. **Regra de Não-Leitura (No Read Down):** Esta regra impede que informações confidenciais sejam acessadas por indivíduos que não têm autorização para fazê-lo. Por exemplo:
-   - Os trabalhadores da fábrica podem precisar aceder a informações sobre materiais em stock e escalões de desconto para realizar suas funções, mas não devem ter permissão para visualizar dados sobre clientes, diretores de obra ou fornecedores, pois isso pode expor informações confidenciais a pessoal não autorizado.
-   - Da mesma forma, os técnicos de telecomunicações podem precisar de acesso a informações sobre materiais em stock e escalões de desconto para fins de manutenção, mas não devem ter permissão para visualizar dados sobre clientes, diretores de obra ou fornecedores, pois isso pode comprometer a segurança das informações.
-
-Estas regras garantem que apenas as pessoas autorizadas tenham acesso e permissão para modificar informações relevantes, mantendo assim a integridade e a segurança dos dados no sistema.
-
 #### Mapeamento de recursos
 
 Para a implementação do controlo de acesso, foi feito um enumeração dos recursos que cada tipo de utilizador pode aceder nas diferentes client applications.
@@ -115,33 +92,82 @@ Com isto, foi definida a seguinte estrutura baseada:
 
 ##### Client 1
 
-| Acessos           | Vendedor | Dir. da Obra | Fornecedor | Tec. Telecom | Trab. de Fábrica | Dir. de Telecom |
-| ----------------- | -------- | ------------ | ---------- | ------------ | ---------------- | --------------- |
-| Material da obra  | Sim      | Não          | Não        | Sim          | Sim              | Sim             |
-| Material em stock | Sim      | Não          | Não        | Não          | Sim              | Não             |
-| Tabela de preços  | Sim      | Sim          | Sim        | Sim          | Sim              | Sim             |
-| Status da obra    | Sim      | Não          | Não        | Não          | Não              | Sim             |
-| Ver Clientes      | Sim      | Não          | Não        | Não          | Não              | Sim             |
+| Acessos                   | Vendedor | Dir. da Obra | Fornecedor | Tec. Telecom | Trab. de Fábrica | Dir. de Telecom |
+| --------------------------| -------- | ------------ | ---------- | ------------ | ---------------- | --------------- |
+| Material da obra          | Não      | Não*         | Não        | Sim          | Sim              | Sim             |
+| Material em stock         | Não      | Não          | Sim        | Não          | Sim              | Não             |
+| Tabela de preços          | Sim      | Sim          | Não        | Não          | Não              | Sim             |
+| Status da obra            | Sim      | Não*         | Não        | Não          | Não              | Sim             |
+| Clientes                  | Sim      | Não          | Não        | Não          | Não              | Sim             |
+| Morada do Cliente         | Sim      | Não*         | Não        | Não          | Não              | Sim             |
+| Contacto do Cliente       | Sim      | Não*         | Não        | Não          | Não              | Sim             |
+| Contacto do colaborador   | Sim      | Não*         | Não        | Não          | Não              | Sim             |
+| Morada da Obra            | Sim      | Não*         | Não        | Não          | Não              | Sim             |
+| Morada do Cliente         | Sim      | Não          | Não        | Não          | Não              | Sim             |
 
 ##### Client 2
 
 | Acessos                         | Vendedor | Dir. da Obra | Fornecedor | Tec. Telecom | Trab. de Fábrica | Dir. de Telecom |
 | ------------------------------- | -------- | ------------ | ---------- | ------------ | ---------------- | --------------- |
-| Morada e contactos dos Clientes | Sim      | Não          | Não        | Não          | Não              | Sim             |
-| Morada da obra                  | Sim      | Não          | Não        | Não          | Não              | Sim             |
+| Morada do Cliente               | Sim      | Não*         | Não        | Não          | Não              | Sim             |
+| Morada da obra                  | Sim      | Não*         | Não        | Não          | Não              | Sim             |
+| Contactos do Cliente            | Sim      | Não*         | Não        | Não          | Não              | Sim             |
+| Contactos do colaborador        | Sim      | Não*         | Não        | Não          | Não              | Sim             |
 
 ##### Client 3
 
-| Acessos           | Vendedor | Dir. da Obra | Fornecedor | Tec. Telecom | Trab. de Fábrica | Dir. de Telecom |
-| ----------------- | -------- | ------------ | ---------- | ------------ | ---------------- | --------------- |
-| Ver Clientes      | Sim      | Não          | Não        | Não          | Não              | Sim             |
-| Morada da obra    | Sim      | Não          | Não        | Não          | Não              | Sim             |
-| Material da obra  | Sim      | Não          | Não        | Sim          | Sim              | Sim             |
-| Material em stock | Sim      | Não          | Sim        | Não          | Sim              | Não             |
-| Tabela de preços  | Sim      | Sim          | Sim        | Sim          | Sim              | Sim             |
-| Status da obra    | Sim      | Não          | Não        | Não          | Não              | Sim             |
+| Acessos                   | Vendedor | Dir. da Obra | Fornecedor | Tec. Telecom | Trab. de Fábrica | Dir. de Telecom |
+| --------------------------| -------- | ------------ | ---------- | ------------ | ---------------- | --------------- |
+| Clientes                  | Sim      | Não*         | Não        | Não          | Não              | Sim             |
+| Morada da obra            | Sim      | Não*         | Não        | Não          | Não              | Sim             |
+| Material da obra          | Não      | Não*         | Não        | Sim          | Sim              | Sim             |
+| Material em stock         | Não      | Não          | Sim        | Não          | Sim              | Não             |
+| Tabela de preços          | Sim      | Sim          | Não        | Não          | Não              | Sim             |
+| Status da obra            | Sim      | Não*         | Não        | Não          | Não              | Sim             |
+| Morada do Cliente         | Sim      | Não*         | Não        | Não          | Não              | Sim             |
+| Contacto do Cliente       | Sim      | Não*         | Não        | Não          | Não              | Sim             |
+| Contacto do colaborador   | Sim      | Não*         | Não        | Não          | Não              | Sim             |
+| Morada da Obra            | Sim      | Não*         | Não        | Não          | Não              | Sim             |
+| Morada do Cliente         | Sim      | Não*         | Não        | Não          | Não              | Sim             |
 
 > **Nota:** O Diretor da obra apenas tem acesso às informações da obra do próprio.
+
+#### Regras de Confidencialidade 
+
+1. **Regra de Não-Leitura (No Read Up):** Esta regra impede que indivíduos em níveis de segurança mais baixos acessem informações em níveis de segurança mais altos, evitando assim a divulgação não autorizada de informações sensíveis. Por exemplo:
+
+  - Um trabalhador de fábrica pode precisar de acessar informações sobre materiais em stock e materiais da obra para realizar suas funções, mas não deve ter permissão para visualizar dados sobre clientes, estado da obra, tabela de preços, fornecedores e outros detalhes da obra;
+  - Um técnico de telecomunicações pode precisar de acesso a informações sobre materiais da obra para realizar suas funções, mas não deve ter permissão para visualizar dados sobre clientes, estado da obra, tabela de preços, fornecedores e outros detalhes da obra;
+  - Um fornecedor pode ver informações sobre o material em stock, mas não deve ter permissão para visualizar dados sobre clientes, tabela de preços e qualquer informação da obra;
+  - Um diretor de obra pode precisar de acesso a informações sobre a sua obra e tabelas de preços, mas não deve ter permissão para visualizar dados sobre clientes, estado da obra, fornecedores e outros detalhes da obra a não ser da sua.
+
+1. **Regra de Não-Escrita (No Write Down):** Esta regra impede que informações em níveis de segurança mais altos sejam gravadas em níveis de segurança mais baixos, garantindo assim a proteção das informações confidenciais. Por exemplo:
+
+  - Um vendedor pode precisar de atualizar informações sobre clientes e outros detalhes da obra, mas não deve ter permissão para modificar detalhes sobre materiais em stock, materiais da obra, fornecedores e tabela de preços;
+  - O diretor de telecomunicações não pode atualizar informações sobre clientes, estado da obra, tabela de preços e fornecedores e qualquer outra informação da obra;
+  - Um técnico de telecomunicações pode precisar de atualizar informações sobre materiais da obra, mas não deve ter permissão para modificar detalhes sobre clientes, estado da obra, tabela de preços, fornecedores e outros detalhes da obra;
+  - Um trabalhador de fábrica pode precisar de atualizar informações sobre o stock disponível, mas não deve ter permissão para modificar detalhes sobre os clientes, estado da obra, tabela de preços, fornecedores, materiais da obra e outros detalhes da obra.
+
+Essas regras garantem que apenas as pessoas autorizadas tenham acesso e permissão para visualizar e modificar informações relevantes, protegendo assim a confidencialidade e a segurança dos dados no sistema.
+
+#### Regras de Integridade
+
+1. **Regra de Não-Escrita (No Write Up):** Esta regra é crucial para evitar que informações sensíveis ou críticas sejam alteradas por indivíduos que não têm autorização para fazê-lo. Por exemplo:
+
+   - Um diretor de obra pode precisar atualizar informações sobre a sua obra, mas não deve ter permissão para modificar detalhes sobre fornecedores e materiais da obra, stock, tabela de preço e estado da obra;
+   - Um fornecedor pode fornecer informações sobre materiais, mas não deve ter permissão para alterar detalhes sobre a obra, Materiais da obra, stock, Tabela de preço e estado da obra;
+   - Técnico de telecomunicações pode fornecer informações sobre materiais a serem utilizados, mas não deve ter permissão para alterar detalhes sobre a obra, stock, tabela de preço, fornecedores e estado da obra;
+    - Trabalhador de fábrica pode fornecer informações sobre o stock disponível, mas não deve ter permissão para alterar detalhes sobre contactos e clientes associados à obra, materiais da obra, tabela de preço, fornecedores e estado da obra.
+
+2. **Regra de Não-Leitura (No Read Down):** Esta regra impede que informações confidenciais sejam acedidas por indivíduos que não têm autorização para fazê-lo. Por exemplo:
+
+   - Os trabalhadores da fábrica podem precisar aceder a informações sobre materiais em stock e materiais da obra para realizar suas funções, mas não devem ter permissão para visualizar dados sobre clientes, estado da obra, tabela de preços, fornecedores e outros detalhes da obra;
+   - Os técnicos de telecomunicações podem precisar de acesso a informações sobre materiais da obra para realizar suas funções, mas não devem ter permissão para visualizar dados sobre clientes, estado da obra, tabela de preços, fornecedores e outros detalhes da obra;
+   - Os vendedores podem precisar de acesso a informações sobre clientes, estado da obra, tabela de preços e outros detalhes da obra para realizar suas funções, mas não devem ter permissão para visualizar dados sobre materiais em stock, materiais da obra, fornecedores.
+
+Estas regras garantem que apenas as pessoas autorizadas tenham acesso e permissão para modificar informações relevantes, mantendo assim a integridade e a segurança dos dados no sistema.
+
+> Entende-se por detalhes da obra, contactos de clientes e colaboradores e moradas associadas à obra.
 
 ## *Authentication* e *Authorization flow*
 
