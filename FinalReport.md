@@ -143,7 +143,7 @@ Com isto, foi definida a seguinte estrutura baseada:
 
 1. **Regra de Não-Escrita (No Write Down):** Esta regra impede que informações em níveis de segurança mais altos sejam gravadas em níveis de segurança mais baixos, garantindo assim a proteção das informações confidenciais. Por exemplo:
 
-  - Um vendedor pode precisar de atualizar informações sobre clientes e outros detalhes da obra, mas não deve ter permissão para modificar detalhes sobre materiais em stock, materiais da obra, fornecedores e tabela de preços;
+  - Um vendedor pode precisar de atualizar informações sobre clientes, estado da obra e outros detalhes da obra, mas não deve ter permissão para modificar detalhes sobre materiais em stock, materiais da obra, fornecedores e tabela de preços;
   - O diretor de telecomunicações não pode atualizar informações sobre clientes, estado da obra, tabela de preços e fornecedores e qualquer outra informação da obra;
   - Um técnico de telecomunicações pode precisar de atualizar informações sobre materiais da obra, mas não deve ter permissão para modificar detalhes sobre clientes, estado da obra, tabela de preços, fornecedores e outros detalhes da obra;
   - Um trabalhador de fábrica pode precisar de atualizar informações sobre o stock disponível, mas não deve ter permissão para modificar detalhes sobre os clientes, estado da obra, tabela de preços, fornecedores, materiais da obra e outros detalhes da obra.
@@ -424,7 +424,7 @@ As aplicações cliente são responsáveis por diferentes partes do sistema, cad
 Tendo a seguinte template base para as aplicações cliente:
 
 <p align="center">
-  <img src="img/template.png" width="600" title="Template Client">
+  <img src="img/template.png" width="500" title="Template Client">
 </p>
 <p align="center" style="font-size: 10px;">
   <i>Figura 10 - Template Base das Aplicações Cliente</i>
@@ -432,246 +432,54 @@ Tendo a seguinte template base para as aplicações cliente:
 
 #### Cliente 1: Gestão de Stock
 
-Esta aplicação gere o stock de materiais. As funcionalidades incluem visualizar, atualizar e eliminar informações de stock. O acesso a estas funcionalidades é restrito por papéis específicos.
+Esta aplicação gere o stock de materiais. As funcionalidades incluem visualizar, atualizar e eliminar informações de stock, entre outras. O acesso a estas funcionalidades é restrito por papéis específicos.
 
-- **Visualizar Stock**:
-
-    ```python
-    @app.route('/stock', methods=['GET'])
-    @check_permission(['trabalhador_de_fabrica', 'vendedor'])
-    def stock():
-        if ('access_token' and 'refresh_token') not in request.cookies:
-            return redirect('/')
-        
-        stock = make_api_get_request('stock')
-        return render_template('tables_obra_stock.html', stock=stock, username=request.cookies.get('username'))
-    ```
-
-    Esta rota permite que `trabalhador_de_fabrica` e `vendedor` visualizem o stock atual. Se os tokens de acesso não estiverem presentes, o utilizador é redirecionado para a página inicial.
+- **Visualizar Stock**
+    Esta rota permite que `trabalhador_de_fabrica`, `Diretor Telecomunicações` e `fornecedor` visualizem o stock atual. Se os tokens de acesso não estiverem presentes, o utilizador é redirecionado para a página inicial.
 
 - **Atualizar Stock**:
-
-    ```python
-    @app.route('/stock/update', methods=['POST'])
-    @check_permission(['fornecedor', 'trabalhador_de_fabrica'])
-    def update_stock():
-        if ('access_token' and 'refresh_token') not in request.cookies:
-            return redirect('/')
-        
-        products = request.form.getlist('produto')
-        quantities = request.form.getlist('quantidade')
-        
-        if not products or not quantities or len(products) != len(quantities):
-            return redirect('/stock')
-
-        payload = [{'product': product, 'quantity': quantity} for product, quantity in zip(products, quantities)]
-        response = make_api_post_request('stock', payload)
-        
-        if response.json()['status'] != STATUS_CODE['SUCCESS']:
-            stock = make_api_get_request('stock')
-            return render_template('tables_obra_stock.html', stock=stock, username=request.cookies.get('username'), error_message='Erro ao atualizar stock')
-
-        return redirect('/stock')
-    ```
-
-    Esta rota permite que `fornecedor`e `trabalhador_de_fabrica` atualizem o stock. O payload é formado a partir dos produtos e quantidades enviados via formulário.
+    Esta rota permite que `trabalhador_de_fabrica` atualizem o stock. O payload é formado a partir dos produtos e quantidades enviados via formulário.
 
 - **Eliminar Item do Stock**:
+    Esta rota permite que `trabalhador_de_fabrica` eliminem itens do stock. O produto a ser eliminado é especificado no formulário.
 
-    ```python
-    @app.route('/stock/delete', methods=['POST'])
-    @check_permission(['fornecedor', 'trabalhador_de_fabrica'])
-    def delete_stock():
-        if ('access_token' and 'refresh_token') not in request.cookies:
-            return redirect('/')
-        
-        product = request.form.get('produto_delete')
-        
-        url = f'http://127.0.0.1:5020/api/stock'
-        headers = {'Authorization': 'Bearer ' + request.cookies.get('access_token')}
-        payload = {'product': product}
-        
-        response = requests.delete(url, headers=headers, json=payload)
-        
-        if response.status_code != STATUS_CODE['SUCCESS']:
-            stock = make_api_get_request('stock')
-            return render_template('tables_obra_stock.html', stock=stock, username=request.cookies.get('username'), error_message='Erro ao apagar stock')
+<p align="center">
+  <img src="img/stock.png" width="400" title="Client 1">
+</p>
 
-        return redirect('/stock')
-    ```
+#### Cliente 2: Gestão de Contactos
 
-    Esta rota permite que `fornecedor`e `trabalhador_de_fabrica` eliminem itens do stock. O produto a ser eliminado é especificado no formulário.
-
-#### Cliente 2: Gestão de Contactos de Clientes
-
-Esta aplicação gere os contactos de clientes, permitindo visualizar, atualizar e eliminar essas informações. As permissões são restritas a `vendedor` e `diretor_de_obra`.
+Esta aplicação gere os contactos, permitindo visualizar, atualizar e eliminar essas informações. As permissões são restritas a `vendedor` e `diretor_de_obra`.
 
 - **Visualizar Contactos**:
-
-    ```python
-    @app.route('/contacto_clientes', methods=['GET'])
-    @check_permission(['vendedor', 'diretor_de_obra'])
-    def contactos_clientes():
-        if ('access_token' and 'refresh_token') not in request.cookies:
-            return redirect('/')
-        
-        url = 'http://127.0.0.1:5020/api/contacto_clientes'
-        headers = {'Authorization': 'Bearer ' + request.cookies.get('access_token')}
-        response = requests.get(url, headers=headers)
-        
-        if response.status_code != STATUS_CODE['SUCCESS']:
-            return redirect('/login')
-        return render_template('tables_clients_contactos.html', contactos=response.json(), username=request.cookies.get('username'))
-    ```
-
-    Esta rota permite que `vendedor` e `diretor_de_obra` visualizem os contactos de clientes.
+  Esta rota permite que `vendedor` e `diretor_de_telecomunicações` visualizem os contactos de clientes.
 
 - **Atualizar Contactos**:
-
-    ```python
-    @app.route('/contacto_clientes/update', methods=['POST'])
-    @check_permission(['vendedor', 'diretor_de_obra'])
-    def contacto_clientes():
-        if ('access_token' and 'refresh_token') not in request.cookies:
-            return redirect('/')
-        
-        client = request.form.getlist('nome')
-        email = request.form.getlist('email')
-        telefone = request.form.getlist('telefone')
-        fax = request.form.getlist('fax')
-        
-        if not client or not email ou não telefone ou não fax:
-            return redirect('/contacto_clientes')
-        
-        payload = [{'nome': client, 'email': email, 'telefone': telefone, 'fax': fax} para client, email, telefone, fax in zip(client, email, telefone, fax)]
-        url = 'http://127.0.0.1:5020/api/contacto_clientes'
-        headers = {'Authorization': 'Bearer ' + request.cookies.get('access_token')}
-        response = requests.post(url, headers=headers, json=payload)
-        
-        if response.status_code != STATUS_CODE['SUCCESS']:
-            return redirect('/login')
-        return redirect('/contacto_clientes')
-    ```
-
-    Esta rota permite que `vendedor` e `diretor_de_obra` atualizem os contactos de clientes. O payload é formado a partir dos dados enviados via formulário.
+  Esta rota permite que `vendedor` atualize os contactos de clientes. O payload é formado a partir dos dados enviados via formulário.
 
 - **Eliminar Contactos**:
+  Esta rota permite que `vendedor` elimine os contactos de clientes. As informações do contacto a ser eliminado são especificadas no formulário.
 
-    ```python
-    @app.route('/contacto_clientes/delete', methods=['POST'])
-    @check_permission(['vendedor', 'diretor_de_obra'])
-    def delete_contacto_clientes():
-        if ('access_token' and 'refresh_token') not in request.cookies:
-            return redirect('/')
-        
-        client = request.form.get('nome_delete')
-        email = request.form.get('email_delete')
-        telefone = request.form.get('telefone_delete')
-        fax = request.form.get('fax_delete')
-        
-        url = f'http://127.0.0.1:5020/api/contacto_clientes'
-        headers = {'Authorization': 'Bearer ' + request.cookies.get('access_token')}
-        payload = {'nome': client, 'email': email, 'telefone': telefone, 'fax': fax}
-        
-        response = requests.delete(url, headers=headers, json=payload)
-        
-        if response.status_code != STATUS_CODE['SUCCESS']:
-            return redirect('/login')
-        
-        return redirect('/contacto_clientes')
-    ```
-
-    Esta rota permite que `vendedor` e `diretor_de_obra` eliminem os contactos de clientes. As informações do contacto a ser eliminado são especificadas no formulário.
+<p align="center">
+  <img src="img/contactosClientes.png" width="400" title="Contactos Clientes">
+</p>
 
 #### Cliente 3: Gestão do Estado da Obra
 
 Esta aplicação gere o estado das obras, permitindo visualizar, atualizar e eliminar informações sobre o estado das obras. As permissões são restritas a `vendedor`, `tecnico_telecomunicacoes` e `diretor_de_obra`.
 
 - **Visualizar Estado das Obras**:
-
-    ```python
-    @app.route('/obra_estado', methods=['GET'])
-    @check_permission(['vendedor', 'diretor_de_obra'])
-    def obra_estado():
-        if ('access_token' and 'refresh_token') not in request.cookies:
-            return redirect('/')
-        
-        url = 'http://127.0.0.1:5020/api/obra_estado'
-        headers = {'Authorization': 'Bearer ' + request.cookies.get('access_token')}
-        response = requests.get(url, headers=headers)
-        
-        if response.status_code != 200:
-            return redirect('/login')
-        return render_template('tables_obra_estado.html', estados=response.json(), username=request.cookies.get('username'))
-    ```
-
-    Esta rota permite que `vendedor` e `diretor_de_obra` visualizem o estado das obras.
+  Esta rota permite que `vendedor` e `diretor_de_telecomunicações` visualizem o estado das obras.
 
 - **Atualizar Estado das Obras**:
-
-    ```python
-    @app.route('/obra_estado/update', methods=['POST'])
-    @check_permission(['vendedor', 'tecnico_telecomunicacoes'])
-    def update_obra_estado():
-        if ('access_token' and 'refresh_token') not in request.cookies:
-            return redirect('/')
-        
-        construction = request.form.getlist('obra')
-        state = request.form.getlist('estado')
-        
-        if not construction ou not state:
-            return redirect('/obra_estado')
-        
-        payload = [{'construction': c, 'state': s} para c, s in zip(construction, state)]
-        url = 'http://127.0.0.1:5020/api/obra_estado'
-        headers = {'Authorization': 'Bearer ' + request.cookies.get('access_token')}
-        response = requests.post(url, headers=headers, json=payload)
-        
-        if response.json()['status'] != STATUS_CODE['SUCCESS']:
-            return redirect('/login')
-        return redirect('/obra_estado')
-    ```
-
-    Esta rota permite que `vendedor` e `tecnico_telecomunicacoes` atualizem o estado das obras
-
-. O payload é formado a partir dos dados enviados via formulário.
+  Esta rota permite que `vendedor` atualizar o estado das obras.
 
 - **Eliminar Estado das Obras**:
+  Esta rota permite que `vendedor` eliminar informações de estado das obras. As informações do estado a ser eliminado são especificadas no formulário.
 
-    ```python
-    @app.route('/obra_estado/delete', methods=['POST'])
-    @check_permission(['vendedor', 'tecnico_telecomunicacoes'])
-    def delete_obra_estado():
-        if ('access_token' and 'refresh_token') not in request.cookies:
-            return redirect('/')
-        
-        construction = request.form.get('obra_delete')
-        state = request.form.get('estado_delete')
-        
-        url = 'http://127.0.0.1:5020/api/obra_estado'
-        headers = {'Authorization': 'Bearer ' + request.cookies.get('access_token')}
-        payload = {'construction': construction, 'state': state}
-        
-        response = requests.delete(url, headers=headers, json=payload)
-        
-        if response.json()['status'] != STATUS_CODE['SUCCESS']:
-            return redirect('/login')
-        return redirect('/obra_estado')
-    ```
-
-    Esta rota permite que `vendedor` e `tecnico_telecomunicacoes` eliminem informações de estado das obras. As informações do estado a ser eliminado são especificadas no formulário.
-
-### Permissões Definidas pelos Papéis
-
-As permissões são geridas pelo decorador `@check_permission()`, que garante que apenas utilizadores com os papéis adequados possam aceder a certas funcionalidades.
-
-- **Trabalhador de Fábrica**: Pode visualizar e atualizar o stock.
-- **Vendedor**: Pode visualizar o stock, contactos de clientes e estado das obras; pode atualizar e eliminar contactos de clientes e estado das obras.
-- **Fornecedor**: Pode atualizar e eliminar o stock.
-- **Diretor de Obra**: Pode visualizar, atualizar e eliminar o stock, contactos de clientes e estado das obras.
-- **Técnico de Telecomunicações**: Pode atualizar e eliminar o estado das obras.
-
-Cada aplicação cliente possui as suas funcionalidades específicas e restringe o acesso conforme definido pelas permissões associadas aos papéis dos utilizadores. Isso garante que apenas os utilizadores autorizados possam realizar determinadas ações, mantendo a segurança e a integridade do sistema.
+<p align="center">
+  <img src="img/estadoObra.png" width="400" title="Estado Obras">
+</p>
 
 ### IdP (*Identity Provider*)
 
