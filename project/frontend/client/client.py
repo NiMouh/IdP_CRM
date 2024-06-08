@@ -168,7 +168,7 @@ def tabela_preco():
     return render_template('tables_obra_preco.html', prices=prices, username=request.cookies.get('username'))
 
 @app.route('/stock', methods=['GET'])
-@check_permission(['trabalhador_de_fabrica', 'vendedor'])
+@check_permission(['trabalhador_de_fabrica', 'vendedor', 'diretor_de_obra'])
 def stock():
     if ('access_token' and 'refresh_token') not in request.cookies:
         return redirect('/')
@@ -197,7 +197,6 @@ def update_stock():
         for product, quantity in zip(products, quantities)]
 
     response = make_api_post_request('stock', payload)
-    response = response.json()
 
     if response['status'] != STATUS_CODE['SUCCESS']:
         stock = make_api_get_request('stock')

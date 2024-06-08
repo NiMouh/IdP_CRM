@@ -142,7 +142,14 @@
                                         {% for obra, details in estados.items() %}
                                         <tr>
                                             <td><input type="text" value="{{ obra }}" name="obra" readonly class="input-no-style"></td>
-                                            <td><input type="text" value="{{ details }}" name="estado" class="input-no-style"></td>
+                                            <td>
+                                                <select name="estado" class="input-no-style">
+                                                    <option hidden selected value="{{ details }}">{{ details }}</option>
+                                                    <option value="Concluída">Concluída</option>
+                                                    <option value="Pendente">Pendente</option>
+                                                    <option value="Cancelada">Cancelada</option>
+                                                </select>
+                                            </td>
                                             <td>
                                                 <form method="POST" action="/obra_estado/delete" id="updateForm">
                                                     <input type="hidden" name="obra_delete" value="{{ obra }}">
