@@ -82,7 +82,7 @@ $ bash generate_rsa.bash
   - [x] Validação dos *tokens* de acesso;
   - [x] Controlo de acessos;
   - [x] Implementação de um sistema de logs;
-  - [ ] Validação e sanitização dos dados inseridos pelo utilizador;
+  - [x] Validação e sanitização dos dados inseridos pelo utilizador;
 - Desenvolvimento do IdP (Simão Andrade e Ana Vidal):
   - [x] Desenvolvimento do *backend*;
   - [x] Desenvolvimento do *frontend* (design e interação com o utilizador);
@@ -91,12 +91,12 @@ $ bash generate_rsa.bash
   - [x] Gestão de *tokens* e *sessões*;
   - [x] Definição do cálculo do risco;
   - [x] Proteção contra erros de CSRF (*Cross-Site Request Forgery*);
-  - [ ] Validação e sanitização dos dados inseridos pelo utilizador;
+  - [x] Validação e sanitização dos dados inseridos pelo utilizador;
   - [ ] Implementação de autenticação por *smartcard*;
 - Desenvolvimento dos três Client Applications (Ana Vidal):
   - [x] Implementação do *authentication code flow* do lado do cliente;
   - [x] Implementação do *frontend* (design e interação com o utilizador);
-  - [ ] Validação e sanitização dos dados inseridos pelo utilizador;
+  - [x] Validação e sanitização dos dados inseridos pelo utilizador;
 - Testes à aplicação feita (Ana Vidal e Simão Andrade):
   - [x] Testes de validação;
   - [x] Testes de stress;
@@ -110,14 +110,3 @@ $ bash generate_rsa.bash
   - [x] Resultados obtidos; 
 - Extra:
   - [ ] Documentação do projeto;
-
-
-## TODO:
-
-- [x] Acabar todos os routes de acesso
-  - [x] Tabela de preços
-- [x] Fazer os routes de inserção de dados
-- [x] Replicar para os três clientes (ideia: em cada cliente ter um serviço diferente, exemplo, no client app 1 é para gestão de stocks, no client app 2 é para gestão de clientes, no client app 3 é para gestão de obras)
-- [ ] Mudar a tabela da base de dados no relatório
-- [ ] Tirar prints do projeto para o relatório
-- [ ] Rever o relatório
