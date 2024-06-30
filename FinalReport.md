@@ -132,21 +132,21 @@ Com isto, foi definida a seguinte estrutura baseada:
 
 > **Nota:** O Diretor da obra apenas tem acesso às informações da obra do próprio.
 
-#### Regras de Confidencialidade 
+#### Regras de Confidencialidade
 
 1. **Regra de Não-Leitura (No Read Up):** Esta regra impede que indivíduos em níveis de segurança mais baixos acessem informações em níveis de segurança mais altos, evitando assim a divulgação não autorizada de informações sensíveis. Por exemplo:
 
-  - Um trabalhador de fábrica pode precisar de acessar informações sobre materiais em stock e materiais da obra para realizar suas funções, mas não deve ter permissão para visualizar dados sobre clientes, estado da obra, tabela de preços, fornecedores e outros detalhes da obra;
-  - Um técnico de telecomunicações pode precisar de acesso a informações sobre materiais da obra para realizar suas funções, mas não deve ter permissão para visualizar dados sobre clientes, estado da obra, tabela de preços, fornecedores e outros detalhes da obra;
-  - Um fornecedor pode ver informações sobre o material em stock, mas não deve ter permissão para visualizar dados sobre clientes, tabela de preços e qualquer informação da obra;
-  - Um diretor de obra pode precisar de acesso a informações sobre a sua obra e tabelas de preços, mas não deve ter permissão para visualizar dados sobre clientes, estado da obra, fornecedores e outros detalhes da obra a não ser da sua.
+- Um trabalhador de fábrica pode precisar de acessar informações sobre materiais em stock e materiais da obra para realizar suas funções, mas não deve ter permissão para visualizar dados sobre clientes, estado da obra, tabela de preços, fornecedores e outros detalhes da obra;
+- Um técnico de telecomunicações pode precisar de acesso a informações sobre materiais da obra para realizar suas funções, mas não deve ter permissão para visualizar dados sobre clientes, estado da obra, tabela de preços, fornecedores e outros detalhes da obra;
+- Um fornecedor pode ver informações sobre o material em stock, mas não deve ter permissão para visualizar dados sobre clientes, tabela de preços e qualquer informação da obra;
+- Um diretor de obra pode precisar de acesso a informações sobre a sua obra e tabelas de preços, mas não deve ter permissão para visualizar dados sobre clientes, estado da obra, fornecedores e outros detalhes da obra a não ser da sua.
 
 1. **Regra de Não-Escrita (No Write Down):** Esta regra impede que informações em níveis de segurança mais altos sejam gravadas em níveis de segurança mais baixos, garantindo assim a proteção das informações confidenciais. Por exemplo:
 
-  - Um vendedor pode precisar de atualizar informações sobre clientes, estado da obra e outros detalhes da obra, mas não deve ter permissão para modificar detalhes sobre materiais em stock, materiais da obra, fornecedores e tabela de preços;
-  - O diretor de telecomunicações não pode atualizar informações sobre clientes, estado da obra, tabela de preços e fornecedores e qualquer outra informação da obra;
-  - Um técnico de telecomunicações pode precisar de atualizar informações sobre materiais da obra, mas não deve ter permissão para modificar detalhes sobre clientes, estado da obra, tabela de preços, fornecedores e outros detalhes da obra;
-  - Um trabalhador de fábrica pode precisar de atualizar informações sobre o stock disponível, mas não deve ter permissão para modificar detalhes sobre os clientes, estado da obra, tabela de preços, fornecedores, materiais da obra e outros detalhes da obra.
+- Um vendedor pode precisar de atualizar informações sobre clientes, estado da obra e outros detalhes da obra, mas não deve ter permissão para modificar detalhes sobre materiais em stock, materiais da obra, fornecedores e tabela de preços;
+- O diretor de telecomunicações não pode atualizar informações sobre clientes, estado da obra, tabela de preços e fornecedores e qualquer outra informação da obra;
+- Um técnico de telecomunicações pode precisar de atualizar informações sobre materiais da obra, mas não deve ter permissão para modificar detalhes sobre clientes, estado da obra, tabela de preços, fornecedores e outros detalhes da obra;
+- Um trabalhador de fábrica pode precisar de atualizar informações sobre o stock disponível, mas não deve ter permissão para modificar detalhes sobre os clientes, estado da obra, tabela de preços, fornecedores, materiais da obra e outros detalhes da obra.
 
 Essas regras garantem que apenas as pessoas autorizadas tenham acesso e permissão para visualizar e modificar informações relevantes, protegendo assim a confidencialidade e a segurança dos dados no sistema.
 
@@ -480,10 +480,13 @@ Esta aplicação gere o estado das obras, permitindo visualizar, atualizar e eli
 <p align="center">
   <img src="img/estadoObra.png" width="400" title="Estado Obras">
 </p>
+<p align="center" style="font-size: 10px;">
+  <i>Figura 11 - Interface do Cliente 3</i>
+</p>
 
 ### IdP (*Identity Provider*)
 
-#### OAuth 2.0
+#### OAuth 2.0 (**ALTERADO**)
 
 Assim como foi referido anteriormente na primeira parte do relatório, o fluxo escolhido para o processo de autenticação foi o *Authorization Code flow*.
 
@@ -493,6 +496,13 @@ Sempre que o utilizador tenta **autenticar-se**, o fluxo de mensagens é o segui
 2. *IdP* **autentica** o utilizador e **redireciona** (usando o uri de redirecionamento) o utilizador para o *Client* com o `authorization_code`;
 3. Já com o `authorization_code`, o *Client* **envia** um pedido para o *IdP* para obter o *token* de acesso (`/access_token` *endpoint*), em conjunto com o `client_id`, `client_secret`, `grant_type` e `redirect_uri`;
 4. *IdP* **verifica** o `authorization_code` e **envia** o *token* de acesso para o *Client*;
+
+<p align="center">
+  <img src="img/oauth2.png" width="300" title="OAuth 2.0">
+</p>
+<p align="center" style="font-size: 10px;">
+  <i>Figura 12 - Screenflow do processo de autenticação OAuth 2.0</i>
+</p>
 
 > Para que o fluxo se concretize **com sucesso**, o *Client* deve estar registado no *IdP* e o *state* deve ser mantido entre os pedidos, caso contrário, o pedido é considerado **inválido** devido a possíveis ataques de CSRF (*Cross-Site Request Forgery*).
 
@@ -506,9 +516,9 @@ Existem três tipos de **provas de autenticação**:
 
 Para a implementação do sistema, foram utilizadas as seguintes provas de autenticação:
 
-#### *Challenge-Response*
+#### *Challenge-Response* (**ALTERADO**)
 
-Aqui é feita uma abordagem com base em PIN enviado por SMS (**algo que o utilizador sabe**). Para isso foi guardada na base de dados, uma tabela com o *challenge response* de cada utilizador com a respetiva data e hora de criação. Durante a autenticação, é enviado um *challenge* ao utilizador, neste caso um nonce (*number used once*), que é uma string aleatória gerada pelo *IdP*.
+Aqui é feita uma abordagem com base em PIN enviado por mensagem (**algo que o utilizador sabe**). Para isso foi guardada na base de dados, uma tabela com o *challenge response* de cada utilizador com a respetiva data e hora de criação. Durante a autenticação, é enviado um *challenge* ao utilizador, neste caso um nonce (*number used once*), que é uma string aleatória gerada pelo *IdP*.
 
 A seguinte mensagens SMS é enviada através da API da *Twilio*:
 
@@ -516,7 +526,16 @@ A seguinte mensagens SMS é enviada através da API da *Twilio*:
   <img src="img/sms_challenge.jpg" width="300" title="SMS Challenge">
 </p>
 <p align="center" style="font-size: 10px;">
-  <i>Figura 9 - Mensagem de SMS com o PIN de autenticação</i>
+  <i>Figura 13 - Mensagem de SMS com o PIN de autenticação</i>
+</p>
+
+Alternativamente, o PIN pode ser enviado via WhatsApp, usando a API da *Twilio*.
+
+<p align="center">
+  <img src="img/whatsapp_challenge.png" width="300" title="WhatsApp Challenge">
+</p>
+<p align="center" style="font-size: 10px;">
+  <i>Figura 14 - Mensagem de WhatsApp com o PIN de autenticação</i>
 </p>
 
 O utilizador responde com o PIN recebido, junto com o *nonce*, sendo estes computados com uma função *digest* (SHA-256) e comparados com os valores guardados na base de dados.
@@ -527,7 +546,7 @@ Este fluxo encontra-se representado no seguinte diagrama:
   <img src="img/challenge-response.png" width="300" title="Challenge-Response">
 </p>
 <p align="center" style="font-size: 10px;">
-  <i>Figura 11 - Representação do protocolo de autenticação Challenge-Response</i>
+  <i>Figura 15 - Representação do protocolo de autenticação Challenge-Response</i>
 </p>
 
 #### OTP (*One-Time Password*)
@@ -540,7 +559,7 @@ A geração de um código de autenticação, recebe como argumentos a *seed* (qu
   <img src="img/totp.png" width="400" title="OTP">
 </p>
 <p align="center" style="font-size: 10px;">
-  <i>Figura 12 - Código de autenticação gerado com base no algoritmo TOTP</i>
+  <i>Figura 16 - Código de autenticação gerado com base no algoritmo TOTP</i>
 </p>
 
 O *QR code* é gerado com base no URI, usando a biblioteca `qrcode`, e é guardado num *buffer* de imagem para ser enviado ao utilizador por email.
@@ -555,7 +574,7 @@ E foi utilizada a biblioteca `smtplib` para o envio de emails sobre o domínio d
   <img src="img/email_otp.jpg" width="200" title="Email OTP">
 </p>
 <p align="center" style="font-size: 10px;">
-  <i>Figura 13 - Email de autenticação com o código de autenticação e o QR Code</i>
+  <i>Figura 17 - Email de autenticação com o código de autenticação e o QR Code</i>
 </p>
 
 > Os QRCodes gerados são compatíveis com aplicações como o *Google Authenticator*.
@@ -618,11 +637,24 @@ Envolve a criação de um *endpoint* que retorna as chaves públicas do *IdP* us
   <img src="img/jwks-flow.png" width="300" title="JWKS Endpoint">
 </p>
 <p align="center" style="font-size: 10px;">
-  <i>Figura 14 - Fluxo de mensagens para a obtenção das chaves públicas do IdP</i>
+  <i>Figura 18 - Fluxo de mensagens para a obtenção das chaves públicas do IdP</i>
 </p>
 
 > Mais informação sobre este *standard* (RFC 7517): [Auth0 - JSON Web Key Set (JWKS)](https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-key-sets)
 > Conversor de JWK para PEM: [JWK to PEM](https://8gwifi.org/jwkconvertfunctions.jsp)
+
+### Avaliação do Risco (**ALTERADO**)
+
+Com base nas restrições implementadas, é dado um valor de risco que corresponde ao somatório de cada um dos alertas:
+
+<p align="center">
+  <img src="img/risk.png" width="300" title="Risk">
+</p>
+<p align="center" style="font-size: 10px;">
+  <i>Figura 19 - Cálculo do risco</i>
+</p>
+
+Neste caso, o risco foi considerado alto, pois passou o threshold do nível de acesso do role 'trabalhador_de_fabrica'. Isto deve-se ao facto de ter sido uma autenticação por um endereço novo, e o próprio utilizador não ter feito autenticação com o *IdP* nos últimos 30 dias.
 
 ### *Resource Server*
 
@@ -697,34 +729,72 @@ def get_resource():
 
 Todos os controlos anteriormente enumerados foram implementados no *Resource Server*, garantindo que apenas utilizadores autenticados e autorizados têm acesso aos recursos.
 
-Por exemplo, na página de *dashboard* de cada uma das aplicações cliente, é possível visualizar os recursos disponíveis:
+#### Bell-LaPadula (**ALTERADO**)
+
+Para demonstrar a implementação do Bell-LaPadula, temos por exemplo, na página de *dashboard* de cada uma das aplicações cliente, é possível visualizar os recursos disponíveis:
 
 <p align="center">
   <img src="img/dashboard.png" width="500" title="Dashboard">
 </p>
 <p align="center" style="font-size: 10px;">
-  <i>Figura 15 - Página de Dashboard de uma aplicação cliente</i>
+  <i>Figura 20 - Página de Dashboard de uma aplicação cliente</i>
 </p>
 
-Onde se o utilizador não tenha permissão para aceder a um recurso, é apresentada uma mensagem de erro a informar que o acesso foi negado (HTTP 403):
+Onde se o utilizador não tenha o cargo de um vendedor ou diretor de telecomunicações, o mesmo não tem permissão para aceder às informações dos clientes, sendo apresentada uma mensagem de erro a informar que o acesso foi negado:
 
 <p align="center">
   <img src="img/error_message.png" width="500" title="Forbidden">
 </p>
 <p align="center" style="font-size: 10px;">
-  <i>Figura 16 - Mensagem de erro de acesso negado</i>
+  <i>Figura 21 - Mensagem de erro de acesso negado (Forbidden)</i>
 </p>
 
-Caso o mesmo tenha permissão, é apresentado o recurso correspondente:
+Caso o mesmo tenha permissão (tenha um dos cargos anteriormente mencionados), é apresentado o recurso correspondente:
 
 <p align="center">
-  <img src="img/success_message.png" width="500" title="Resource">
+  <img src="img/success_ver_clientes.png" width="500" title="Resource">
 </p>
 <p align="center" style="font-size: 10px;">
-  <i>Figura 17 - Recurso disponível para o utilizador</i>
+  <i>Figura 22 - Recurso disponível para o utilizador</i>
 </p>
 
-Além disso, o *Resource Server* guarda *logs* de acesso a recursos, que contêm informações como o ip de origem do pedido, o tipo de pedido, o nível de acesso do utilizador, que podem ser usados para auditoria e análise de risco.
+> Além disso, o *Resource Server* guarda *logs* de acesso a recursos, que contêm informações como o ip de origem do pedido, o tipo de pedido, o nível de acesso do utilizador, que podem ser usados para auditoria e análise de risco.
+
+#### Biba (**ALTERADO**)
+
+Para demonstrar a implementação do Biba, temos por exemplo, na página de *dashboard* de cada uma das aplicações cliente, é possível visualizar os recursos disponíveis:
+
+<p align="center">
+  <img src="img/dashboard_stock.png" width="500" title="Dashboard">
+</p>
+
+
+Onde se o utilizador não tenha o cargo de fornecedor, trabalhador de fabrica ou diretor de obra o mesmo não tem permissão para atualizar o stock, sendo que apenas o fornecedor e trabalhador de fabrica têm permissão para eliminar um item do stock.
+
+<p align="center">
+  <img src="img/stock.png" width="400" title="Client 1">
+</p>
+<p align="center" style="font-size: 10px;">
+  <i>Figura 21 - Template Base das Aplicações Cliente</i>
+</p>
+
+Caso o mesmo não tenha permissão para atualizar o stock, é apresentada uma mensagem de erro a informar que o acesso foi negado:
+
+<p align="center">
+  <img src="img/error_message_stock.png" width="500" title="Forbidden">
+</p>
+<p align="center" style="font-size: 10px;">
+  <i>Figura 22 - Mensagem de erro de acesso negado (Forbidden)</i>
+</p>
+
+Caso o mesmo tenha permissão (tenha um dos cargos anteriormente mencionados), é feita a atualização do stock:
+
+<p align="center">
+  <img src="img/success_stock.png" width="500" title="Resource">
+</p>
+<p align="center" style="font-size: 10px;">
+  <i>Figura 23 - Recurso atualizado pelo utilizador</i>
+</p>
 
 ### *Logs*: Armazenamento e Auditoria
 
@@ -754,7 +824,7 @@ Existem dois tipos de *logs*:
   <img src="img/contribuicoes.png" width="1000" title="Contribuições">
 </p>
 <p align="center" style="font-size: 10px;">
-  <i>Figura 18 - Contribuições dos membros do grupo</i>
+  <i>Figura 23 - Contribuições dos membros do grupo</i>
 </p>
 
 O esforço e a contribuição do grupo no projeto encontra-se aqui representado, destacando nos commits individuais de cada um. No entanto, é importante mencionar que muitas das implementações foram feitas em colaboração estreita. Frequentemente, trabalhamos juntos e discutimos as melhores abordagens e estratégias de implementação. Revisávamos mutuamente o código um do outro para garantir a qualidade e resolver problemas.

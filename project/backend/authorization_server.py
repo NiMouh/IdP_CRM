@@ -342,14 +342,35 @@ def send_sms(to: str, message: str):
         print(f"Failed to send SMS: {e}")
         raise
 
+def send_whatsapp_message(to: str, message: str):
+    if not re.match(r'^\+351\d{9}$', to):
+        raise ValueError(f'Invalid phone number format: {to}')
+    
+    client = Client(SENDER_SMS_ACCOUNT_SID, SENDER_SMS_AUTH_TOKEN)
+    try:
+        message = client.messages.create(
+            body=message,
+            from_='whatsapp:' + SENDER_SMS_NUMBER,
+            to='whatsapp:' + to
+        )
+    except Exception as e:
+        print(f"Failed to send WhatsApp message: {e}")
+        raise
+
 def generate_sms_code(to : str) -> str:
     code = ''.join(random.choices(string.digits, k=6))
     send_sms(to, f'Your verification code is {code}')
     return code
 
+def generate_whatsapp_code(to : str) -> str:
+    code = ''.join(random.choices(string.digits, k=6))
+    send_whatsapp_message(to, f'Your verification code is {code}')
+    return code
+
 def start_challenge(username: str, phone : str) -> str:
     challenge = generate_challenge()
     code = generate_sms_code(phone)
+    # WHATSAPP - MESSAGE : code = generate_whatsapp_code(phone)
     save_challenge_code(challenge, code, username)
     return challenge
 
@@ -732,7 +753,6 @@ def authorize(): # STEP 2 - Authorization Code Request
 
         print("Risk Thresholds: ", RISK_THRESHOLDS)
 
-        # FIXME: Implement the logic for the different access levels
         if USERS[username]['access_level'] in ACCESS_LEVELS['1']:
             print("Access Level 1")
             if risk_score >= RISK_THRESHOLDS['low'] and risk_score < RISK_THRESHOLDS['medium']:
@@ -771,7 +791,7 @@ def authorize(): # STEP 2 - Authorization Code Request
                     return render_template('error.html', error_message='Failed to start challenge'), STATUS_CODE['INTERNAL_SERVER_ERROR']
                 return redirect(f'/challenge?client_id={client_id_received}&redirect_uri={redirect_uri}&state={state}&username={username}&challenge={challenge}')
             elif risk_score >= RISK_THRESHOLDS['high']:
-                print("Risk Level: Very High - Smartcard required") # FIXME: Implement Smartcard
+                print("Risk Level: Very High - Smartcard required") # FIXME: Implement smartcard
                 return render_template('error.html', error_message='Smartcard required'), STATUS_CODE['UNAUTHORIZED']
         else:
             print("Access Level not found")
